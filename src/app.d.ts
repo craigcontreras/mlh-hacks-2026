@@ -6,7 +6,7 @@ declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals { account: DemoAccount | null }
-		// interface PageData {}
+		interface PageData { guide?: { owner?: DemoAccount; signedBy?: string } | null }
 		// interface PageState {}
 		// interface Platform {}
 	}

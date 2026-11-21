@@ -1,12 +1,13 @@
 <script lang="ts">
-	let { line, doc = 'ED-104', label }: { line: number; doc?: string; label?: string } = $props();
+	import DemoStep from './DemoStep.svelte';
+	let { line, doc = 'ED-104', label, guideReport = false }: { line: number; doc?: string; label?: string; guideReport?: boolean } = $props();
 	function reveal(event: MouseEvent) {
 		window.dispatchEvent(new CustomEvent('intake-view-source', {
 			detail: { doc, line, trigger: event.currentTarget }
 		}));
 	}
 </script>
-<button type="button" class="source-link" onclick={reveal}>{label ?? 'View transfer note'}</button>
+<button type="button" class="source-link" onclick={reveal}>{#if guideReport}<DemoStep n={14} owner="doctor-morgan"/>{/if}{label ?? 'View transfer note'}</button>
 
 <style>
 	.source-link {

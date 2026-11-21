@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import type { PageData } from '../../routes/handoffs/$types';
 	import ChartCitation from './ChartCitation.svelte';
+	import DemoStep from './DemoStep.svelte';
 
 	let { data, message }: { data: PageData; message?: string } = $props();
 	let busy = $state('');
@@ -51,9 +52,9 @@
 			{#if plan.priority !== 'unspecified'}<p><strong>Coordination priority</strong> <span class:raised-priority={plan.priority === 'urgent' || plan.priority === 'critical'}>{plan.priority}</span></p>{/if}
 			{#if plan.impact}<p><strong>Impact</strong> {plan.impact}</p>{/if}
 		</div>{/if}
-		{#if admin}<label for="replace-doctor">New receiving doctor</label>
+		{#if admin}<label for="replace-doctor"><DemoStep n={10} owner="admin"/>New receiving doctor</label>
 			<select id="replace-doctor" name="doctorId" required><option value="">Choose a doctor</option>{#each data.doctors.filter(doctor => doctor.id !== delivery?.recipientAccountId) as doctor (doctor.id)}<option value={doctor.id}>{doctor.name}</option>{/each}</select>
-			<button type="submit" class="button" formaction="?/reassign" disabled={Boolean(busy)}>Sign and reassign</button>{/if}
+			<button type="submit" class="button" formaction="?/reassign" disabled={Boolean(busy)}><DemoStep n={11} owner="admin"/>Sign and reassign</button>{/if}
 	{:else if reviewed && delivery?.reviewed}
 		<h2>Report review signed</h2><p>{delivery.reviewed.reviewedBy} signed the review for this transfer.</p>
 		{#if record.imageFollowup}

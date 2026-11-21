@@ -15,7 +15,7 @@ Open the local URL printed by Vite. For optional model extraction, install the C
 
 ## Watch the walkthrough
 
-Open **Glossary → Watch the walkthrough** to follow Jordan from Riley’s inbox to the doctor’s signed review. [Download the narrated video](docs/Intake-Desk-walkthrough.mp4)
+On the sign-in page, choose **Guide Jordan’s demo** to turn on the numbered click cues. On the event laptop, [start the rehearsal](http://localhost:5174/login?guide=jordan). Craig can drive while Yousif reads the [numbered presenter card and demo results](docs/Jordan-presenter-card.pdf). Open **Glossary → Watch the walkthrough** for the card or the [76-second narrated video](docs/Intake-Desk-walkthrough.mp4).
 
 ## Show the benefit in 30 seconds
 
@@ -37,7 +37,7 @@ To share additional synthetic paperwork, choose **Add files to this chart**, sel
 
 **Open with Jordan’s problem.** “Jordan’s ankle was X-rayed today. The doctor’s written report is here. Pictures from an earlier visit were requested separately. How does the next person know which item is ready, where that information came from, and who is chasing the rest?”
 
-For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the second run. At **/login**, select a name, click **Fill passcode → Sign in**. To switch people, sign out and repeat. You can also sign into each account in a separate browser profile on the same laptop. The steps below follow the original Jordan sample. To rehearse this branch with the older images still outstanding, start a fresh original sample before simulating delivery.
+Use the original Jordan sample with the older pictures pending. In the numbered guide, sign in as the person named by each bubble to open their workspace. Steps **1–3** are Riley’s handoff, **4–8** are Avery’s return, **9–11** are Maya’s reassignment and **12–16** are Morgan’s review. The table below includes optional evidence you can open along the way. Outside the guide, switch accounts with **Sign out → Fill passcode → Sign in**.
 
 <details>
 <summary>Demo account passcodes for manual sign-in</summary>
@@ -60,7 +60,11 @@ For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the se
 
 **Rehearse a different answer.** In Maya’s transfer workspace, click **Reset and randomize sample**. Use the new study number to find the Imaging Records reply. A verified missing study produces a pending assignment in Riley’s inbox. An already available study needs no missing-file task. An unclear match goes to review.
 
-**What you can claim.** You demonstrated a source lookup, a named handoff and a follow-up that survives sign-off. The timed result below measures how quickly the sample brief appears. Time saved by hospital staff or patients would require observation in a real workflow. [Timing and method](#extraction-and-storage) · [Illustrated doctor walkthrough](docs/Jordan-doctor-walkthrough.pdf)
+**What we measured.** In a browser replay of the original synthetic packet, the earlier prototype required Maya to submit **Prepare transfer brief** and **Sign and send to nurse** before Jordan appeared in Riley’s inbox. The current demo required **zero** admin submissions. After three refreshes it still showed one assignment and one Imaging Records request for MB-082-LA. Morgan signed today’s report with that request still open. All four accounts saw 7 of 8 expected files before simulated delivery and could open the eighth file once it arrived. These counts compare two versions of Intake Desk and exclude navigation and sign-in. [Rehearsal evidence](docs/Jordan-demo-evidence.json)
+
+**Why would a hospital build this internally?** A hospital can specify who owns a missing-file request, where the team can find its source, and what happens when a doctor returns the case. Microsoft already offers managed record and image exchange. The demo runs this particular follow-up rule locally on synthetic records. Connecting a live chart and imaging archive, supporting it over time and comparing full operating costs are part of the hospital’s build-or-buy decision. [Microsoft’s Azure Health Data Services](https://learn.microsoft.com/en-us/azure/healthcare-apis/healthcare-apis-overview)
+
+A single-center study of a different follow-up program for lung nodules saw on-time follow-up increase from 64.5% to 84.3% after the center introduced electronic alerts and a coordination team. To test Intake Desk’s benefit, a hospital could run matched handoffs through its current process and the prototype, then compare time to a named owner, staff contacts per case, and unresolved or duplicate requests at shift change. Hospital savings, comparative cost and patient outcomes for Intake Desk remain unmeasured. [Desai et al., RADAR study](https://pubmed.ncbi.nlm.nih.gov/33478839/)
 
 **If a judge asks whether this is only for transfers**, open **Patient overview → Casey Rowan** and click **Patient log**. Show the nursing reassessment and physician progress note from the same hospital visit. Maya can add a dated entry with **Add coordination update**. Open Casey under another account to see the same update and author.
 
@@ -99,6 +103,7 @@ npm run check
 npm run lint
 npm test
 npm run build
+node src/scripts/verify-jordan.ts
 ```
 
-Tests exercise signed corrections, ambiguous and matching packets, model provenance, SQLite persistence, repeated approval, stale requests and a failed storage write.
+The last command replays all 16 numbered steps in an isolated local preview with a fresh database. It checks the assignment, the receipt after three reloads, and Morgan’s sign-off with the earlier image still pending. The existing tests also cover signed corrections, ambiguous packets, source evidence, SQLite persistence and failed writes.

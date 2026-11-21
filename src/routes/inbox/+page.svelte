@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { refreshAll } from '$app/navigation';
+	import DemoStep from '#lib/ui/DemoStep.svelte';
 	import type { PageProps } from './$types';
 	import '#lib/ui/flow.css';
 
@@ -19,7 +20,9 @@
 		{#each group.rows as patient (patient.patientId)}
 			<a href={resolve('/inbox/[patientId]', {patientId: patient.patientId})} class="case-row">
 				<span class="patient-mark" aria-hidden="true">{patient.name.split(' ').map(part => part[0]).join('')}</span>
-				<span><small>{patient.visitId}</small><strong>{patient.name}</strong><span>{patient.text}</span></span><span class="row-arrow" aria-hidden="true">→</span>
+				<span><small>{patient.visitId}</small><strong>{#if patient.patientId === 'J-104' && patient.active && data.account}
+					<DemoStep n={data.account.id === 'nurse' ? 2 : data.account.id === 'doctor' ? 5 : 13} owner={data.account.id}/>
+				{/if}{patient.name}</strong><span>{patient.text}</span></span><span class="row-arrow" aria-hidden="true">→</span>
 			</a>
 		{/each}
 	</section>{/if}

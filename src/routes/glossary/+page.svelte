@@ -3,6 +3,7 @@
 	import tutorialUrl from '../../../docs/Intake-Desk-walkthrough.mp4?url';
 	import captionsUrl from '../../../docs/Intake-Desk-walkthrough.vtt?url&no-inline';
 	import dictionaryUrl from '../../../docs/Intake-Desk-visual-dictionary.pdf?url';
+	import presenterCardUrl from '../../../docs/Jordan-presenter-card.pdf?url';
 
 	const terms = [
 		{ title: 'Reading a chart', entries: [
@@ -39,6 +40,7 @@
 		<video controls preload="none" playsinline aria-label="Jordan’s chart and handoff walkthrough" src={tutorialUrl}>
 			<track kind="captions" srclang="en" label="English" src={captionsUrl} />
 		</video>
+		<a class="open-map" href={presenterCardUrl} rel="external" download="Jordan-presenter-card.pdf">Download the numbered presenter card and demo results (PDF)</a>
 	</details>
 
 	<section class="example" aria-labelledby="visual-title">

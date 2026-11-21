@@ -1,5 +1,6 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { error, redirect, type Cookies } from '@sveltejs/kit';
+import { demoPasscodes } from '../demo-accounts';
 
 export type AccountId = 'admin' | 'doctor' | 'nurse' | 'doctor-morgan';
 export type AccountRole = 'Administrative staff' | 'Doctor' | 'Nurse';
@@ -20,13 +21,6 @@ export const demoAccounts: readonly DemoAccount[] = [
 
 export const doctorAccounts = demoAccounts.filter((account) => account.role === 'Doctor');
 
-const passcodes: Record<AccountId, string> = {
-	admin: 'maya-demo-104',
-	doctor: 'avery-demo-104',
-	nurse: 'riley-demo-104',
-	'doctor-morgan': 'morgan-demo-104'
-};
-
 export const sessionCookie = 'intake_session';
 const sessionMaxAge = 8 * 60 * 60;
 const sessions = new Map<string, { account: DemoAccount; expiresAt: number }>();
@@ -34,7 +28,7 @@ const sessions = new Map<string, { account: DemoAccount; expiresAt: number }>();
 export function authenticateDemoAccount(id: unknown, passcode: unknown): DemoAccount | null {
 	const account = demoAccounts.find((candidate) => candidate.id === id);
 	if (!account || typeof passcode !== 'string') return null;
-	const expected = Buffer.from(passcodes[account.id]);
+	const expected = Buffer.from(demoPasscodes[account.id]);
 	const supplied = Buffer.from(passcode);
 	return expected.length === supplied.length && timingSafeEqual(expected, supplied) ? account : null;
 }

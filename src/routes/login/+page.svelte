@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { untrack } from 'svelte';
+	import { demoPasscodes } from '../../lib/demo-accounts';
+	import DemoStep from '#lib/ui/DemoStep.svelte';
 	import type { PageProps } from './$types';
 	let { data, form }: PageProps = $props();
-	const demoCodes = { admin: 'maya-demo-104', doctor: 'avery-demo-104', nurse: 'riley-demo-104', 'doctor-morgan': 'morgan-demo-104' };
-	let accountId = $state<keyof typeof demoCodes>('admin');
-	let passcode = $state('');
+	let accountId = $state<keyof typeof demoPasscodes>(untrack(() => data.guide ? 'nurse' : 'admin'));
+	let passcode = $state(untrack(() => data.guide ? demoPasscodes.nurse : ''));
 </script>
 
 <svelte:head><title>Sign in · Intake Desk</title></svelte:head>
@@ -25,8 +27,8 @@
 			</select>
 			<label for="passcode">Passcode</label>
 			<input id="passcode" type="password" name="passcode" required autocomplete="current-password" bind:value={passcode} />
-			<div class="demo-code"><span>Demo passcode <code>{demoCodes[accountId]}</code></span><button type="button" class="text-button" onclick={() => passcode = demoCodes[accountId]}>Fill passcode</button></div>
-			<button class="button sign-in" type="submit">Sign in</button>
+			<div class="demo-code"><span>Demo passcode <code>{demoPasscodes[accountId]}</code></span><button type="button" class="text-button" onclick={() => passcode = demoPasscodes[accountId]}>Fill passcode</button></div>
+			<button class="button sign-in" type="submit">{#if accountId === 'nurse'}<DemoStep n={1} owner="nurse"/>{/if}Sign in</button>
 		</form>
 	</section>
 </div>

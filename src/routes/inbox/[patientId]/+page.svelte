@@ -7,6 +7,7 @@
 	import HandoffBrief from '#lib/ui/HandoffBrief.svelte';
 	import HandoffDocument from '#lib/ui/HandoffDocument.svelte';
 	import DeliveryHistory from '#lib/ui/DeliveryHistory.svelte';
+	import DemoStep from '#lib/ui/DemoStep.svelte';
 	import '#lib/ui/flow.css';
 	let {data,form}:PageProps = $props();
 	let busy = $state(false);
@@ -70,7 +71,7 @@
 					<ChartCitation doc={data.practiceReply.documentId} line={data.practiceReply.line} label="Read Imaging Records reply" />
 				{/if}
 			{/if}
-			{#if data.role === 'Doctor' && impression}<ChartCitation doc={'documentId' in impression ? impression.documentId : 'ED-104'} line={impression.line} label="Read signed radiology impression" />{/if}
+			{#if data.role === 'Doctor' && impression}<ChartCitation doc={'documentId' in impression ? impression.documentId : 'ED-104'} line={impression.line} label="Read signed radiology impression" guideReport />{/if}
 			{#if !finished || !current.reviewed}
 				<p class="small">{automatic ? 'Intake Desk assigned this check automatically.' : 'Handoff from ' + current.signedBy + '.'}</p>
 				{#if task}<ChartCitation line={task.line} label={data.role + ' assignment in transfer note'}/>{/if}
@@ -102,13 +103,18 @@
 							<div class="route-next">
 								<p>{next.text} <ChartCitation line={next.line} label="Doctor assignment in transfer note" /></p>
 								<p>Receiving doctor · <strong>{data.nextDoctor}</strong></p>
-								<button type="submit" class="button" formaction="?/forward" formnovalidate name="taskId" value={next.id} disabled={busy}>Sign and send report to doctor</button>
+								<button type="submit" class="button" formaction="?/forward" formnovalidate name="taskId" value={next.id} disabled={busy}><DemoStep n={3} owner="nurse"/>Sign and send report to doctor</button>
 							</div>
 					{/if}
 				{:else if ordered && data.role === 'Doctor'}
 					{#if !imageReceived && data.record.imageStatus && data.record.imageStatus.status !== 'arrived'}<p class="small">Signing sends the outstanding image check back to {data.record.imageStatus.recordedBy}.</p>{/if}
-					<button class="button" type="submit" formaction="?/signReview" disabled={busy}>Sign report review</button>
-					<details class="return-menu"><summary>Return to administrative staff</summary><label for="return-reason">Reason for returning</label><textarea id="return-reason" name="reason" rows="2" maxlength="500"></textarea><button class="button secondary" type="submit" formaction="?/returnToAdmin" disabled={busy}>Return handoff to admin</button></details>
+					<button class="button" type="submit" formaction="?/signReview" disabled={busy}><DemoStep n={16} owner="doctor-morgan"/>Sign report review</button>
+					<details class="return-menu">
+						<summary><DemoStep n={6} owner="doctor"/>Return to administrative staff</summary>
+						<label for="return-reason"><DemoStep n={7} owner="doctor"/>Reason for returning</label>
+						<textarea id="return-reason" name="reason" rows="2" maxlength="500"></textarea>
+						<button class="button secondary" type="submit" formaction="?/returnToAdmin" disabled={busy}><DemoStep n={8} owner="doctor"/>Return handoff to admin</button>
+					</details>
 				{:else}
 					{#if !current.acknowledgedAt}<button class="button" type="submit" formaction="?/acknowledge" disabled={busy}>Acknowledge receipt</button>{:else}<p class="request-receipt">Receipt acknowledged</p>{/if}
 					{#if next}<div class="route-next"><p>{next.text} <ChartCitation line={next.line} label={next.role + ' instruction'}/></p><button class="button secondary" type="submit" formaction="?/forward" name="taskId" value={next.id} disabled={busy}>Sign and forward to {next.role.toLowerCase()}</button></div>{/if}
@@ -117,7 +123,7 @@
 		</form>
 		<div class="paper-card"><HandoffBrief items={data.packetPoints} record={data.record} documents={data.documents}/></div>
 		</div><div class="case-column">
-			<HandoffDocument overviews={data.overviews} documents={data.documents}/>
+			<HandoffDocument overviews={data.overviews} documents={data.documents} guideReport/>
 			<DeliveryHistory record={data.record}/>
 		</div></div>
 	{:else if data.completions.length}

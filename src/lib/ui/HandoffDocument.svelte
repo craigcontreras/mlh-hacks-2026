@@ -4,14 +4,16 @@
 	import type { ChartDocument } from '../server/chart';
 	import type { FileInventory } from '../server/file-inventory';
 	import SourceRecord from './SourceRecord.svelte';
+	import DemoStep from './DemoStep.svelte';
 	import transferText from '../../../samples/records/ED-104-transfer-note.txt?raw';
 	import radiologyText from '../../../samples/records/ED-104-radiology.txt?raw';
 	import physicianText from '../../../samples/records/ED-116-physician.txt?raw';
 
-	let { documents, overviews, viewerOnly = false, priorImage = null }: {
+	let { documents, overviews, viewerOnly = false, priorImage = null, guideReport = false }: {
 		documents: ChartDocument[];
 		overviews: Record<string, { id: string; text: string; lines: number[] }[]>;
 		viewerOnly?: boolean;
+		guideReport?: boolean;
 		priorImage?: FileInventory['priorImage'];
 	} = $props();
 	const visits = $derived([...new Map(documents.map(doc => [doc.visitId, doc.date])).entries()].sort((a,b) => b[1].localeCompare(a[1])));
@@ -113,7 +115,7 @@
 <dialog id={dialogId} onclose={onClose} aria-labelledby="source-view-title" class="source-dialog">
 	<header class="source-toolbar">
 		<div><p class="kicker">{typeof selected === 'string' ? 'Image attachment' : 'Source document'}</p><h2 id="source-view-title">{title ?? 'Source document'}</h2></div>
-		<button type="button" class="button secondary" onclick={event => event.currentTarget.closest('dialog')?.close()}>Close</button>
+		<button type="button" class="button secondary" onclick={event => event.currentTarget.closest('dialog')?.close()}>{#if guideReport && typeof selected === 'object' && selected.id === 'ED-104-radiology'}<DemoStep n={15} owner="doctor-morgan"/>{/if}Close</button>
 	</header>
 	{#if typeof selected === 'object'}
 		<div class="source-meta">
