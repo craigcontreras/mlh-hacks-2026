@@ -36,15 +36,21 @@
 		<p role="status">{data.practiceAccession ? 'Practice sample · Prior study ' + data.practiceAccession : 'Original sample · Jordan’s transfer'}</p>
 		<details>
 			<summary>Presenter notes</summary>
-			<p>Show the judges where today’s report came from and who will check the older images.</p>
+			<p>Open Jordan’s chart and choose <b>Documents</b>. Today’s report and X-ray are already filed. The earlier X-ray has its own receipt.</p>
+			{#if data.imagingNotice.status === 'requested'}
+				<p>Open <b>View request</b> to show the message in Imaging Records’ local demo inbox. In <b>Demo controls</b>, choose <b>Simulate file arrival</b>. Open the earlier X-ray from the updated chart.</p>
+			{:else if data.imagingNotice.status === 'received'}
+				<p>The earlier X-ray is already available. Open it in <b>Documents</b> and show the file receipt.</p>
+			{:else}
+				<p>The source records need a human check. Open <b>Review file match</b> to see why.</p>
+			{/if}
+			<p>To demonstrate the separate clinical handoff, return here.</p>
 			<ol>
 				<li><strong>Maya, administrator.</strong> Prepare the brief. Expand <b>Compare current and prior records</b>, open a source, then sign and send to nursing.</li>
-				<li><strong>Riley, nurse.</strong> Open Jordan in <b>My inbox</b>.
-					{data.practiceAccession ? 'Read the Imaging Records reply and record what it says.' : 'Choose Still pending to rehearse a missing-image follow-up.'}
-					Send the report to the named doctor.</li>
+				<li><strong>Riley, nurse.</strong> Open Jordan in <b>My inbox</b>. Check the displayed image status and choose <b>Sign and send report to doctor</b>. If receipt is unclear, record the observation first.</li>
 				<li><strong>Receiving doctor.</strong> Open the signed radiology impression and sign the review. To practice reassignment, Avery can return it with a reason, and Maya can send it to Morgan.</li>
 			</ol>
-			<p>After sign-off, show the patient log. If the older images still need checking, Riley has a follow-up. If they have arrived, the review is complete.</p>
+			<p>After sign-off, open <b>Patient log</b> to show who reviewed the report.</p>
 		</details>
 	</section>
 {/if}
@@ -59,7 +65,9 @@
 		{#if data.record}<DeliveryHistory record={data.record}/>{/if}
 	</div>
 </div>
-{#if (data.record || data.practiceAccession) && admin}<details class="demo-setting"><summary>Demo controls</summary><p>Restore Jordan’s original packet and restart the handoff.</p><form method="POST" action="?/reset" use:enhance><input type="hidden" name="version" value={data.version}/><button type="submit" class="button secondary">Reset handoff demo</button></form></details>{/if}
+{#if admin && (data.record || data.practiceAccession || data.imagingNotice.receivedVia === 'matched-delivery')}
+	<details class="demo-setting"><summary>Demo controls</summary><p>Restore Jordan’s original packet and restart the handoff.</p><form method="POST" action="?/reset" use:enhance><input type="hidden" name="version" value={data.version}/><button type="submit" class="button secondary">Reset handoff demo</button></form></details>
+{/if}
 
 <style>
 	.practice-control { display: grid; justify-items: start; gap: 4px; }

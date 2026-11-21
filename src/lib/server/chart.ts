@@ -38,6 +38,10 @@ const replies: Record<ImageStatus, string> = {
 	'unable-to-confirm': 'Imaging Records could not confirm delivery of the comparison images for study'
 };
 
+export function imagingReplyStatus(quote: string, accession: string) {
+	return (Object.keys(replies) as ImageStatus[]).find(status => quote === replyPrefix + replies[status] + ' ' + accession + '.');
+}
+
 export function practiceDocuments(practice: PracticeRound | null): ChartDocument[] {
 	if (!practice) return chartDocuments;
 	return chartDocuments.map(doc => {
@@ -128,11 +132,10 @@ export function reconcileChart(docs: ChartDocument[], mode: 'codex' | 'local', r
 	const reply = practiceReplyEvidence(docs);
 	let imagesArrived = false;
 	if (reply && archive) {
-		const delivery = (Object.entries(replies) as [ImageStatus, string][]).find(([, message]) =>
-			reply.quote === replyPrefix + message + ' ' + archive.capture[2] + '.');
+		const delivery = imagingReplyStatus(reply.quote, archive.capture[2]);
 		if (!delivery) appendIssue('The later imaging reply does not confirm a status for the prior accession.');
 		else {
-			imagesArrived = delivery[0] === 'arrived';
+			imagesArrived = delivery === 'arrived';
 			checks.push({ label: 'Imaging Records reply at 13:42', result: reply.quote.slice(replyPrefix.length), evidence: [reply] });
 		}
 	}

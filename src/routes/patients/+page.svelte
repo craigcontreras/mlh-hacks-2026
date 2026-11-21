@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
+	import { refreshAll } from '$app/navigation';
 	import EvidenceMap from '#lib/ui/EvidenceMap.svelte';
 	import { resolve } from '$app/paths';
 	import HandoffDocument from '#lib/ui/HandoffDocument.svelte';
 	import ChartCitation from '#lib/ui/ChartCitation.svelte';
 	import ChartBrief from '#lib/ui/ChartBrief.svelte';
 	import PatientUpdate from '#lib/ui/PatientUpdate.svelte';
+	import SharedUploads from '#lib/ui/SharedUploads.svelte';
+	import ImagingRequestReceipt from '#lib/ui/ImagingRequestReceipt.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+	let receiving = $state(false);
 	const tabs = [['summary', 'Summary'], ['ontology', 'Ontology'], ['log', 'Patient log'], ['documents', 'Documents']];
 	const section = $derived(tabs.find(([id]) => id === page.url.searchParams.get('tab'))?.[0] ?? (page.url.hash === '#patient-log' ? 'log' : 'summary'));
 	const visitDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
@@ -18,17 +23,20 @@
 		return value.length === 10 ? visitDate.format(new Date(value + 'T12:00:00Z')) : timestamp.format(new Date(value));
 	}
 
-	function portalUrl(patient = '', mine = data.mine, query = data.query, tab = 'summary') {
+	function portalUrl(patient = '', mine = data.mine, query = data.query, tab = 'summary', anchor = '') {
 		const params = new URLSearchParams({
 			...(patient && { patient }),
 			...(tab !== 'summary' && { tab }),
 			...(mine && { scope: 'mine' }),
 			...(query && { q: query })
 		});
-		return params.size ? resolve(`/patients?${params}`) : resolve('/patients');
+		return params.size ? resolve(`/patients?${params}${anchor}`) : resolve('/patients');
 	}
 </script>
 
+<svelte:window onfocus={() => {
+	if (data.patient && section !== 'log') void refreshAll();
+}} />
 <svelte:head><title>{data.patient?.name ?? 'Patient overview'} · Intake Desk</title></svelte:head>
 
 {#snippet entry(event: PageProps['data']['timeline'][number])}
@@ -46,6 +54,18 @@
 		<header class="pagehead">
 			<div><p class="kicker">{data.patient.hospital} · Chart {data.patient.id}</p><h1>{data.patient.name}</h1>
 				<p class="lead">{data.patient.visitCount} {data.patient.visitCount === 1 ? 'visit' : 'visits'} · Last visit {recordedAt(data.patient.lastVisit)}</p>
+				{#if section !== 'documents' && data.fileInventory}
+					<div class="file-cues">
+						<a href={portalUrl(data.patient.id, data.mine, data.query, 'documents')}>End-of-day files · {data.fileInventory.available} of {data.fileInventory.expected} available <span aria-hidden="true">→</span></a>
+						{#if data.imagingRequest}
+							<a href={portalUrl(data.patient.id, data.mine, data.query, 'documents', '#imaging-request')}>
+								{#if data.imagingRequest.status === 'requested'}Earlier X-ray requested{data.imagingRequest.requestedBy === 'Intake Desk' ? ' automatically' : ''}
+								{:else if data.imagingRequest.status === 'received'}Earlier X-ray received
+								{:else}Image request needs review{/if} <span aria-hidden="true">→</span>
+							</a>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		</header>
 		<nav class="chart-tabs" aria-label="Patient chart">
@@ -72,7 +92,52 @@
 					{/if}
 				{:else}<p class="empty">No entries recorded.</p>{/if}
 			</section>
-		{:else if section !== 'documents' && data.chartBrief}
+		{:else if section === 'documents' && data.fileInventory}
+			{@const inventory = data.fileInventory}
+			<section class="file-check paper-card" aria-labelledby="files-heading">
+				<p class="kicker">Hospital date · {recordedAt(inventory.date)}</p>
+				<h2 id="files-heading">End-of-day file check</h2>
+				<p><strong>{inventory.available} of {inventory.expected} expected files</strong> available to the care team.</p>
+				{#if inventory.priorImage}
+					<div class="file-exception">
+						<strong>Earlier left ankle X-ray{inventory.priorImage.accession ? ' · ' + inventory.priorImage.accession : ''}</strong>
+						<p><strong>{inventory.priorImage.status === 'available' ? 'Available.' : inventory.priorImage.status === 'pending' ? 'Awaiting images.' : 'Receipt unconfirmed.'}</strong> {inventory.priorImage.detail}</p>
+						{#if inventory.priorImage.url}
+							<ChartCitation doc="prior-image" line={0} label="Open earlier X-ray" />
+						{:else if inventory.priorImage.owner}
+							<p class="owner">Follow-up · {inventory.priorImage.owner}</p>
+						{/if}
+					</div>
+				{/if}
+				{#if data.imagingRequest}
+					<div id="imaging-request">
+						<ImagingRequestReceipt request={data.imagingRequest} />
+						{#if data.deliveryVersion !== null && data.imagingRequest.status === 'requested' && data.imagingRequest.accession}
+							<details class="demo-controls" open={Boolean(form?.deliveryError)}>
+								<summary>Demo controls</summary>
+								<form method="POST" action="?/receiveImagingDelivery&patient=J-104&tab=documents" use:enhance={({ cancel }) => {
+									if (receiving) { cancel(); return; }
+									receiving = true;
+									return async ({ update }) => { try { await update(); } finally { receiving = false; } };
+								}}>
+									<input type="hidden" name="version" value={data.deliveryVersion}/>
+									<input type="hidden" name="visitId" value="ED-104"/>
+									<input type="hidden" name="accession" value={data.imagingRequest.accession}/>
+									<p>For rehearsal, this supplies the imaging office’s reply with the earlier X-ray.</p>
+									<button class="button secondary" disabled={receiving} type="submit">{receiving ? 'Filing image…' : 'Simulate file arrival'}</button>
+								</form>
+							</details>
+						{/if}
+						{#if form?.deliveryError}<p class="notice error" role="alert">{form.deliveryError}</p>{/if}
+					</div>
+				{/if}
+				{#if inventory.missingDocuments.length}
+					<ul aria-label="Outstanding documents">{#each inventory.missingDocuments as doc (doc.id)}
+						<li>{doc.title} · {doc.visitId} · Awaiting file</li>
+					{/each}</ul>
+				{/if}
+			</section>
+		{:else if data.chartBrief}
 			<ChartBrief patientId={data.patient.id} initial={data.chartBrief} result={form} />
 			<section class="paper-card current" id="current-work" aria-label="Current work">
 				<div><p class="kicker">Current work</p><h2>{data.patient.status}</h2>
@@ -83,7 +148,10 @@
 				{/if}
 			</section>
 		{/if}
-		<HandoffDocument overviews={data.overviews} documents={data.documents} viewerOnly={section !== 'documents'} />
+		<HandoffDocument overviews={data.overviews} documents={data.documents} priorImage={data.fileInventory?.priorImage} viewerOnly={section !== 'documents'} />
+		{#if section === 'documents'}
+			<SharedUploads patientId={data.patient.id} documents={data.documents} uploads={data.uploads} {form}/>
+		{/if}
 	{/key}
 {:else}
 	<header class="pagehead"><div><p class="kicker">Mossbridge Community Hospital</p><h1>Patient overview</h1><p class="lead">Open a chart to see the main findings, their sources and who has the next action.</p></div></header>
@@ -126,6 +194,18 @@
 {/if}
 
 <style>
+	.file-cues {display:flex;flex-wrap:wrap;gap:5px 18px;margin-top:8px;font-size:14px;text-underline-offset:3px}
+	#imaging-request {scroll-margin-top:20px}
+	.demo-controls {margin-top:10px;color:var(--muted);font-size:13px}
+	.demo-controls summary {width:fit-content;cursor:pointer;font-weight:600}
+	.demo-controls form p {margin-block:7px}
+	.file-check {padding:18px 22px;margin-bottom:16px}
+	.file-check h2 {margin:3px 0}
+	.file-check p:not(.kicker),.file-check li {font-size:14px}
+	.file-check ul {margin:8px 0 0;padding-left:18px}
+	.file-exception {margin-top:12px;padding:10px 0 0;border-top:1px solid var(--line);font-size:14px}
+	.file-exception p {margin:3px 0}
+	.file-exception .owner {font-weight:600}
 	.chart-tabs {display:flex;gap:clamp(12px,3vw,32px);border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
 	.chart-tabs a {text-decoration:none;color:var(--muted);padding:7px 0 10px;border-bottom:3px solid transparent;font-size:15px;font-weight:600}
 	.chart-tabs a[aria-current] {color:var(--ink);border-color:var(--ink)}

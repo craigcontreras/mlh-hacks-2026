@@ -23,7 +23,8 @@ export const load: PageServerLoad = ({ locals, params }) => {
 		completions: archived.map(item => item.completion),
 		overviews: documentOverviews({ id: patient.patientId, name: patient.name }, documents),
 		packetPoints: record ? summarizeChartDocuments(chartPatient, documents).items : [],
-		documents, practiceReply: practiceReplyEvidence(documents)
+		documents, practiceReply: practiceReplyEvidence(documents),
+		imagingNotice: livePatient ? inbox.imagingNotice : null
 	};
 };
 

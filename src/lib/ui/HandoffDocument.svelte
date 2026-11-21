@@ -2,22 +2,29 @@
 	import { resolve } from '$app/paths';
 	import { onMount, tick } from 'svelte';
 	import type { ChartDocument } from '../server/chart';
+	import type { FileInventory } from '../server/file-inventory';
 	import SourceRecord from './SourceRecord.svelte';
 	import transferText from '../../../samples/records/ED-104-transfer-note.txt?raw';
 	import radiologyText from '../../../samples/records/ED-104-radiology.txt?raw';
 	import physicianText from '../../../samples/records/ED-116-physician.txt?raw';
 
-	let { documents, overviews, viewerOnly = false }: { documents: ChartDocument[]; overviews: Record<string, { id: string; text: string; lines: number[] }[]>; viewerOnly?: boolean } = $props();
+	let { documents, overviews, viewerOnly = false, priorImage = null }: {
+		documents: ChartDocument[];
+		overviews: Record<string, { id: string; text: string; lines: number[] }[]>;
+		viewerOnly?: boolean;
+		priorImage?: FileInventory['priorImage'];
+	} = $props();
 	const visits = $derived([...new Map(documents.map(doc => [doc.visitId, doc.date])).entries()].sort((a,b) => b[1].localeCompare(a[1])));
 	const formatDate = new Intl.DateTimeFormat('en-US', {month:'short', day:'numeric', year:'numeric', timeZone:'UTC'});
 	const dialogId = $props.id();
-	let selected = $state<ChartDocument | 'image'>();
+	type ImageSource = 'image' | 'prior-image';
+	let selected = $state<ChartDocument | ImageSource>();
 	let activeLine = $state<number>();
 	let returnFocus: HTMLElement | undefined;
-	const title = $derived(selected === 'image' ? 'Left ankle X-ray' : selected?.title);
+	const title = $derived(selected === 'image' ? 'Left ankle X-ray' : selected === 'prior-image' ? 'Earlier left ankle X-ray' : selected?.title);
 	const pdfSources: Record<string, string> = { 'ED-104-radiology': radiologyText, 'ED-116-physician': physicianText };
 
-	async function openSource(source: ChartDocument | 'image', line?: number, trigger?: HTMLElement) {
+	async function openSource(source: ChartDocument | ImageSource, line?: number, trigger?: HTMLElement) {
 		selected = source;
 		activeLine = line;
 		returnFocus = trigger;
@@ -26,7 +33,7 @@
 		const scrollArea = dialog.querySelector<HTMLDivElement>('.source-scroll')!;
 		if (!dialog.open) dialog.showModal();
 		scrollArea.scrollTop = 0;
-		if (source !== 'image' && line !== undefined) {
+		if (typeof source === 'object' && line !== undefined) {
 			scrollArea.querySelector('#chart-' + source.id + '-L' + line)?.scrollIntoView({block:'center'});
 		}
 	}
@@ -42,6 +49,10 @@
 			const { doc, line, trigger } = (event as CustomEvent<{doc:string;line?:number;trigger?:HTMLElement}>).detail;
 			if (doc === 'image') {
 				if (documents.some(item => item.visitId === 'ED-104')) void openSource('image', undefined, trigger);
+				return;
+			}
+			if (doc === 'prior-image' && priorImage?.url) {
+				void openSource('prior-image', undefined, trigger);
 				return;
 			}
 			const source = documents.find(item => item.id === doc);
@@ -86,6 +97,14 @@
 					</div>
 				</details>
 			{/if}
+			{#if priorImage?.url && visitId === priorImage.visitId}
+				<details class="chart-file" name="chart-overview">
+					<summary><span class="image-icon" aria-hidden="true">▧</span><strong>Earlier left ankle X-ray</strong><span class="caret" aria-hidden="true">›</span></summary>
+					<div class="overview"><p>Prior visit · Study {priorImage.accession}</p>
+						<button type="button" class="text-button" onclick={event => openSource('prior-image', undefined, event.currentTarget)}>View earlier X-ray</button>
+					</div>
+				</details>
+			{/if}
 		</section>
 	{/each}
 </aside>
@@ -93,10 +112,10 @@
 
 <dialog id={dialogId} onclose={onClose} aria-labelledby="source-view-title" class="source-dialog">
 	<header class="source-toolbar">
-		<div><p class="kicker">{selected === 'image' ? 'Image attachment' : 'Source document'}</p><h2 id="source-view-title">{title ?? 'Source document'}</h2></div>
+		<div><p class="kicker">{typeof selected === 'string' ? 'Image attachment' : 'Source document'}</p><h2 id="source-view-title">{title ?? 'Source document'}</h2></div>
 		<button type="button" class="button secondary" onclick={event => event.currentTarget.closest('dialog')?.close()}>Close</button>
 	</header>
-	{#if selected && selected !== 'image'}
+	{#if typeof selected === 'object'}
 		<div class="source-meta">
 			{#if activeLine}<span><mark></mark> Cited passage · Line {activeLine}</span>{/if}
 			{#if selected.id === 'ED-104' && selected.text === transferText}<a href={resolve('/handoffs/source?format=pdf')} target="_blank" rel="noopener">Open transfer PDF</a>
@@ -111,7 +130,14 @@
 				<img src={resolve('/handoffs/source?format=image')} alt="Synthetic left ankle X-ray for the current visit, shown in AP and lateral views" />
 				<figcaption>Current visit ED-104 · Synthetic illustration</figcaption>
 			</figure>
-		{:else if selected}
+		{:else if selected === 'prior-image' && priorImage?.url}
+			<figure class="image-paper">
+				<img src={priorImage.url} alt="Synthetic left ankle X-ray from the earlier visit" />
+				<figcaption>Prior visit {priorImage.visitId} · {formatDate.format(new Date(priorImage.date + 'T12:00:00Z'))} · Study {priorImage.accession} · Synthetic illustration</figcaption>
+			</figure>
+		{:else if selected === 'prior-image'}
+			<p>The earlier image is no longer available in this chart.</p>
+		{:else if typeof selected === 'object'}
 			<SourceRecord doc={selected} {activeLine} />
 		{/if}
 	</div>

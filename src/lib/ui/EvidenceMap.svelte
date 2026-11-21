@@ -48,7 +48,9 @@
 								<ol>{#each action.history as entry, index (index)}<li>{entry}</li>{/each}</ol>
 							</details>
 						{/if}
-						{#if action.workspace === '/handoffs'}
+						{#if action.requestDetails}
+							<a href={resolve('/patients?patient=J-104&tab=documents#imaging-request')}>View imaging request <span aria-hidden="true">↗</span></a>
+						{:else if action.workspace === '/handoffs'}
 							<a href={resolve('/handoffs')}>Open transfer workspace <span aria-hidden="true">↗</span></a>
 						{:else if action.workspace === '/inbox/J-104'}
 							<a href={resolve('/inbox/[patientId]', { patientId: 'J-104' })}>Open my assignment <span aria-hidden="true">↗</span></a>

@@ -1,6 +1,7 @@
 import type { ChartDocument } from './server/chart';
 import type { ChartPoint } from './server/chart-brief';
 import type { ClinicalState } from './server/clinical-store';
+import type { ImagingNotice } from './server/imaging-notice';
 import type { PatientRegistry } from './server/patient-registry';
 
 type View = ReturnType<PatientRegistry['view']>;
@@ -13,6 +14,7 @@ type Action = {
 	history?: string[];
 	citation: { documentId: string; line: number };
 	workspace?: Patient['workspace'];
+	requestDetails?: boolean;
 };
 export type EvidenceMapRow = ChartPoint & { actions: Action[] };
 
@@ -37,6 +39,7 @@ function handoffActions(id: string, documents: ChartDocument[], patient: Patient
 	const task = doctor ? 'review-report' : 'check-images';
 	const assignments = record?.history.filter(item => item.taskId === task) ?? [];
 	const event = assignments.at(-1);
+	if (!doctor && !event) return [];
 	const active = event && record?.history.at(-1)?.id === event.id;
 	const workspace = patient.assignedToMe ? patient.workspace : null;
 	const action: Action = {
@@ -90,20 +93,22 @@ function handoffActions(id: string, documents: ChartDocument[], patient: Patient
 	}];
 }
 
-function priorStudyAction(documents: ChartDocument[], patient: Patient, record: ClinicalState | null): Action[] {
-	const request = record?.priorStudyRequest;
-	const instruction = request ?? record?.summary.adminAction;
-	if (!instruction || (!request && record?.summary.issues.length)) return [];
-	const reference = instruction.evidence.find(ref => ref.documentId === 'ED-104-registration' && ref.quote.startsWith('Clerk instruction: '));
-	const doc = documents.find(doc => doc.id === reference?.documentId);
-	if (!reference || doc?.text.split(/\r?\n/)[reference.line - 1] !== reference.quote) return [];
+function priorStudyAction(documents: ChartDocument[], notice?: ImagingNotice | null): Action[] {
+	if (!notice || !notice.evidence.length || !notice.evidence.every(ref => documents.some(doc =>
+		doc.id === ref.documentId && doc.text.split(/\r?\n/)[ref.line - 1] === ref.quote))) return [];
+	const reference = notice.evidence.find(ref => ref.quote.startsWith('Clerk instruction:')) ?? notice.evidence[0];
+	const citation = { documentId: reference.documentId, line: reference.line };
+	if (notice.status === 'needs-review') return [{
+		title: 'Check the earlier study match', status: 'Needs review', person: notice.recipient,
+		detail: notice.message, citation, requestDetails: true
+	}];
+	const requested = Boolean(notice.requestedAt && notice.requestedBy);
 	return [{
-		title: 'Request the earlier study',
-		status: request ? 'Queued for Imaging Records' : 'Available to request',
-		person: request ? 'Requested by ' + request.requestedBy : 'Administrative staff',
-		detail: 'Study ' + instruction.accession,
-		citation: { documentId: reference.documentId, line: reference.line },
-		workspace: !request && patient.assignedToMe && patient.workspace === '/handoffs' ? patient.workspace : null
+		title: requested ? 'Request the earlier X-ray' : 'Link the earlier X-ray',
+		status: notice.status === 'received' ? 'Image available' : 'Queued for Imaging Records',
+		person: requested ? 'Requested by ' + notice.requestedBy : notice.recipient,
+		detail: notice.message,
+		citation, requestDetails: true
 	}];
 }
 
@@ -124,7 +129,7 @@ function recordedActions(id: string, documents: ChartDocument[]): Action[] {
 	return [{ title: step.title, status: step.status, person: 'Recorded by ' + signer, citation }];
 }
 
-export function buildEvidenceMap(items: ChartPoint[], view: View, record: ClinicalState | null): EvidenceMapRow[] {
+export function buildEvidenceMap(items: ChartPoint[], view: View, record: ClinicalState | null, notice?: ImagingNotice | null): EvidenceMapRow[] {
 	const patient = view.patient;
 	if (!patient) return [];
 	const documents = view.documents.filter(document => document.patientId === patient.id);
@@ -134,7 +139,7 @@ export function buildEvidenceMap(items: ChartPoint[], view: View, record: Clinic
 			document.text.split(/\r?\n/)[source.line - 1] === source.quote))) return [];
 		const actions = view.hasTransfer ? handoffActions(point.id, documents, patient, record)
 			: recordedActions(point.id, documents);
-		if (view.hasTransfer && point.id === 'comparison-images') actions.push(...priorStudyAction(documents, patient, record));
+		if (view.hasTransfer && point.id === 'comparison-images') actions.push(...priorStudyAction(documents, notice));
 		return [{ ...point, actions }];
 	});
 }

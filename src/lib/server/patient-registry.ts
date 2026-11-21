@@ -1,3 +1,4 @@
+import { MAX_UPLOAD_BYTES, readChartFile, type FiledAttachment } from './chart-attachments';
 import type { DatabaseSync } from 'node:sqlite';
 import { clinicalActivity, type PatientEvent } from '../clinical-activity';
 import { demoAccounts, type DemoAccount } from './accounts';
@@ -30,6 +31,8 @@ const caseyDocuments = [
 	caseyDocument('ED-071-intake', 'Prior visit intake', intake, 'ED-071', '2026-08-18'),
 	caseyDocument('ED-071-access', 'Accessible print delivery', delivery, 'ED-071', '2026-08-18')
 ];
+export const expectedChartDocuments = [...chartDocuments, jordanHistory, ...caseyDocuments];
+
 // The demo records name their chart date and local time. A source prefix locates the cited observation.
 const chartEntries: Record<string, [string, string]> = {
 	'ED-104': ['13:20:00-05:00', 'Prepared by:'],
@@ -102,6 +105,11 @@ export class PatientRegistry {
 				at TEXT NOT NULL, text TEXT NOT NULL, accountId TEXT NOT NULL, source TEXT NOT NULL
 			);
 			CREATE INDEX IF NOT EXISTS hospital_patient_updates ON hospital_updates(patientId, at);
+			CREATE TABLE IF NOT EXISTS hospital_attachments (
+				patientId TEXT NOT NULL REFERENCES hospital_patients(id), visitId TEXT NOT NULL,
+				id TEXT NOT NULL, name TEXT NOT NULL, mime TEXT NOT NULL, bytes BLOB NOT NULL,
+				filedAt TEXT NOT NULL, filedBy TEXT NOT NULL, PRIMARY KEY (patientId,visitId,id)
+			);
 			CREATE TABLE IF NOT EXISTS hospital_completed_assignments (
 				documentId TEXT PRIMARY KEY REFERENCES hospital_documents(id), accountId TEXT NOT NULL
 			)`);
@@ -111,7 +119,7 @@ export class PatientRegistry {
 			for (const patient of [chartPatient, casey]) addPatient.run(patient.id, patient.name, patient.hospital);
 			const addDoc = db.prepare(`INSERT INTO hospital_documents
 				(id,patientId,visitId,date,title,text,sourceUrl,recordedAt,passage) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING`);
-			for (const doc of [...chartDocuments, jordanHistory, ...caseyDocuments]) {
+			for (const doc of expectedChartDocuments) {
 				const [time, passage] = chartEntries[doc.id];
 				const at = new Date(doc.date + 'T' + time).toISOString();
 				addDoc.run(doc.id, doc.patientId, doc.visitId, doc.date, doc.title, doc.text, doc.sourceUrl, at, passage);
@@ -129,6 +137,32 @@ export class PatientRegistry {
 			patientId: doc.patientId, name: doc.name, visitId: doc.visitId, active: false, text: doc.title,
 			completion: entry(doc, doc), document: doc
 		}));
+	}
+
+	async fileAttachments(patientId: string, visitId: string, files: File[], author: DemoAccount) {
+		const visit = this.db.prepare('SELECT 1 FROM hospital_documents WHERE patientId=? AND visitId=? LIMIT 1').get(patientId, visitId);
+		if (!visit) throw new ReviewError('Choose a visit belonging to this patient.', 400);
+		if (!files.length || files.reduce((size, file) => size + file.size, 0) > MAX_UPLOAD_BYTES) {
+			throw new ReviewError('Select at least one file, up to 10 MB in total.', 400);
+		}
+		const attachments = await Promise.all(files.map(readChartFile));
+		const insert = this.db.prepare(`INSERT INTO hospital_attachments (patientId,visitId,id,name,mime,bytes,filedAt,filedBy)
+			VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(patientId,visitId,id) DO NOTHING`);
+		const now = new Date().toISOString();
+		let added = 0;
+		this.db.exec('BEGIN IMMEDIATE');
+		try {
+			for (const attachment of attachments) {
+				added += Number(insert.run(patientId, visitId, attachment.id, attachment.name, attachment.mime, attachment.bytes, now, author.name).changes);
+			}
+			this.db.exec('COMMIT');
+		} catch (err) { this.db.exec('ROLLBACK'); throw err; }
+		return added;
+	}
+
+	filedAttachment(patientId: string, visitId: string, id: string) {
+		return this.db.prepare('SELECT name,mime,bytes FROM hospital_attachments WHERE patientId=? AND visitId=? AND id=?')
+			.get(patientId, visitId, id) as { name: string; mime: string; bytes: Uint8Array<ArrayBuffer> } | undefined;
 	}
 
 	addCoordinationUpdate(patientId: string, visitId: string, text: string, account: DemoAccount, requestId: string) {
@@ -186,6 +220,8 @@ export class PatientRegistry {
 			if (person.id === selectedId) { patient = row; documents = records; timeline = entries; }
 		}
 		matches.sort((a, b) => b.latest.at.localeCompare(a.latest.at) || a.name.localeCompare(b.name));
-		return { query, mine, matches, patient, documents, timeline, hasTransfer: patient?.id === chartPatient.id };
+		const uploads = selectedId && patient ? this.db.prepare(`SELECT id,name,visitId,filedAt,filedBy FROM hospital_attachments
+			WHERE patientId=? ORDER BY filedAt DESC,name,id`).all(selectedId) as unknown as FiledAttachment[] : [];
+		return { query, mine, matches, patient, documents, uploads, timeline, hasTransfer: patient?.id === chartPatient.id };
 	}
 }

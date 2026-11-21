@@ -9,7 +9,7 @@ export interface ChartSource extends ChartEvidence { title: string; visitId: str
 export interface ChartPoint { id: string; title: string; text: string; sources: ChartSource[] }
 export interface ChartBrief { mode: Mode; visitId: string; items: ChartPoint[] }
 
-function sameChart(doc: ChartDocument, patient: Patient) {
+export function sameChart(doc: ChartDocument, patient: Patient) {
 	if (doc.patientId !== patient.id || !doc.visitId) return false;
 	const lines = doc.text.split(/\r?\n/);
 	const names = lines.filter(line => line.startsWith('Patient: '));

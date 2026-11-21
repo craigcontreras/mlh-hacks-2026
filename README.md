@@ -15,23 +15,32 @@ Open the local URL printed by Vite. For optional model extraction, install the C
 
 ## Watch the walkthrough
 
-Open **Glossary → Watch the walkthrough** to rehearse Jordan’s case. Follow Maya’s sign-off, Riley’s image check, Avery’s return and Morgan’s signed review. Use **Reset and randomize sample** in Maya’s transfer workspace when you want another round. [Download the narrated video](docs/Intake-Desk-walkthrough.mp4)
+Open **Glossary → Watch the walkthrough** to rehearse the optional clinical handoff in Jordan’s case. The shorter walkthrough below shows the automatic file request. Follow Maya’s sign-off, Riley’s image check, Avery’s return and Morgan’s signed review. Use **Reset and randomize sample** in Maya’s transfer workspace when you want another round. [Download the narrated video](docs/Intake-Desk-walkthrough.mp4)
 
 ## Show the benefit in 30 seconds
 
-Sign in as Maya, open **Patients → Jordan Vale**, and read the five bullets under **Chart summary**. Ask the audience, “Which X-rays does the doctor already have a report for, and which pictures still need checking?”
+Let Craig drive as Maya and Yousif narrate. Start with the original Jordan sample. If someone already rehearsed on this laptop, Maya can open **Jordan Vale → Open transfer workspace → Demo controls → Reset handoff demo** to restart it.
 
-1. Click **Imaging result**. The **Ontology** tab follows that finding from the signed radiology report to the doctor’s review. Click a source to highlight the original sentence.
-2. Click **Earlier images**. The checklist and the earlier imaging archive explain why the comparison pictures need a separate receipt check. The action shows who owns it or who recorded the result. **See supporting passage** opens the original staff instruction.
-3. Click **Family history**. Jordan’s older intake says their mother has osteoporosis. No genetic test report accompanied that history. The map keeps this as background information.
+1. Open **Patients → Jordan Vale**. Read **Imaging result** in the five-point summary. “Today's written X-ray report is already here.”
+2. Click **Earlier X-ray requested automatically → View request**. Show the message to Imaging Records and the study number **MB-082-LA**. Open a cited passage. “The checklist names the missing pictures. The September archive identifies the study and where it is held. Intake Desk already sent the request to the demo inbox.”
+3. In **Documents → Demo controls**, click **Simulate file arrival**, then **Open earlier X-ray**. “We're playing the part of the imaging office replying. The chart went from seven of eight files to eight of eight. Riley and both doctors can open that same picture.”
+4. Open **Ontology → Imaging result** to show the separate doctor's review. “Filing an image doesn't sign a doctor's name. The receiving doctor opens the report and signs their own review.”
 
-For the judges: “Riley and Morgan can start with the same five findings. Either can check the original sentence, and each can see whether their part is still open.” Open **Glossary** for the illustrated key and the terms used in the demo. [Download the one-page visual dictionary](docs/Intake-Desk-visual-dictionary.pdf)
+If a judge asks how the summary was made, click a source in **Ontology** to highlight the original sentence. Family history has a source there too. Jordan’s older intake records their mother’s osteoporosis. The chart has no accompanying genetic test result.
+
+The automatic request uses the bundled chart’s records and a local Imaging Records inbox. Ordinary staff uploads are filed for the selected visit. An unfamiliar filename or a mention of an X-ray alone cannot establish which study is missing. [One-page visual dictionary](docs/Intake-Desk-visual-dictionary.pdf)
+
+## End-of-day file check
+
+Open **Patients → Jordan Vale → Documents** from any staff account to see which expected records are available and who is following up on anything outstanding. The September X-ray archive entry and the September picture are separate items. When the matching image arrives in the demo, **Open earlier X-ray** displays the shared copy. The original transfer note continues to show what was available at departure.
+
+To share additional synthetic paperwork, choose **Add files to this chart**, select the visit, choose the files and click **File for care team**. Sign in as a different staff member and open the same patient’s Documents to read the files. The count covers the listed expected records and additional filed documents. A file from an outside facility must reach the chart before the team can open it.
 
 ## Three-minute walkthrough
 
 **Open with Jordan’s problem.** “Jordan’s ankle was X-rayed today. The doctor’s written report is here. Pictures from an earlier visit were requested separately. How does the next person know which item is ready, where that information came from, and who is chasing the rest?”
 
-For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the second run. At **/login**, select a name, click **Fill passcode → Sign in**. To switch people, sign out and repeat. You can also sign into each account in a separate browser profile on the same laptop. The steps below follow the original Jordan sample.
+For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the second run. At **/login**, select a name, click **Fill passcode → Sign in**. To switch people, sign out and repeat. You can also sign into each account in a separate browser profile on the same laptop. The steps below follow the original Jordan sample. To rehearse this branch with the older images still outstanding, start a fresh original sample before simulating delivery.
 
 <details>
 <summary>Demo account passcodes for manual sign-in</summary>
@@ -44,13 +53,13 @@ For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the se
 
 | On screen | What the narrator can say |
 | --- | --- |
-| **Maya Chen · administrator.** In **Patient overview**, open **Jordan Vale → Open transfer workspace → Prepare transfer brief**. Expand **Compare current and prior records → Current transfer checklist**. Point to the highlighted sentence about the missing images. Close it and click **Sign and send to nurse**. | “Here’s exactly where the paper says the older pictures are missing. Maya can give Riley one specific thing to check.” |
-| **Riley Ortiz · nurse.** Open **My inbox → Jordan Vale**. For this rehearsal, choose **Still pending → Record image status → Sign and send report to doctor**. Point to the receiving doctor’s name before sending. | “The paperwork told us what was missing at departure. Riley records what’s available now. That update travels with the report.” |
+| **Maya Chen · administrator.** In **Patient overview**, open **Jordan Vale → Open transfer workspace → Prepare transfer brief**. Expand **Compare current and prior records → Current transfer checklist**. Point to the highlighted sentence about the missing images. Close it and click **Sign and send to nurse**. | “Here’s exactly where the paper says the older pictures are missing. Imaging Records already has the request. Maya hands over the clinical paperwork.” |
+| **Riley Ortiz · nurse.** Open **My inbox → Jordan Vale**. For the shortest path, click **Sign and send report to doctor**. To rehearse a separate nursing observation, expand **Add an image observation (optional)** and record **Still pending** before signing. Point to the receiving doctor’s name before sending. | “The paperwork told us what was missing at departure. Riley reviews the handoff and can add what they actually observed. Avery receives the report for a clinical decision.” |
 | **Dr. Avery Shah · first doctor.** Open **My inbox → Jordan Vale → Read signed radiology impression**. Close the source. Expand **Return to administrative staff**, enter “Called to another patient,” and click **Return handoff to admin**. | “This is the original report author’s conclusion. Avery can read it, but another patient needs Avery’s attention. The return records why someone else must take this review.” |
-| **Maya, then Dr. Morgan Lee.** As Maya, reopen Jordan’s transfer workspace. Choose **Dr. Morgan Lee → Sign and reassign**. As Morgan, open **My inbox → Jordan Vale → Read signed radiology impression**, close the source, and click **Sign report review**. Pause on the confirmation. | “Morgan just signed that they reviewed today’s report. The screen still names Riley as responsible for the missing pictures. Those are two separate pieces of work.” |
-| **Riley.** Open Jordan in **My inbox** again. To demonstrate that the older images have now arrived, choose **Arrived → Save follow-up status**. In Jordan’s chart, click **Patient log**. | “The next shift can see who read the report and who confirmed the images arrived, even though those things happened at different times.” |
+| **Maya, then Dr. Morgan Lee.** As Maya, reopen Jordan’s transfer workspace. Choose **Dr. Morgan Lee → Sign and reassign**. As Morgan, open **My inbox → Jordan Vale → Read signed radiology impression**, close the source, and click **Sign report review**. Pause on the confirmation. | “Morgan just signed that they reviewed today’s report. The imaging request already exists. We can check its status on the chart.” |
+| **Any care-team account.** Open Jordan’s **Documents** and show the Imaging Records receipt. As Maya use **Demo controls → Simulate file arrival**, then **Open earlier X-ray**. | “The next shift can see who reviewed the report and when the picture became available.” |
 
-**Check you can explain it.** Pause right after Morgan signs. Ask your teammate to show, without your help, who reviewed today’s report, where its conclusion was written, and who still owns the older images. The answers are **Morgan’s signed review**, **the highlighted passage in the radiology report**, and **Riley’s open follow-up**. If you have only a minute, have Avery click **Sign report review** directly and show the same open follow-up with Avery as the signer.
+**Check you can explain it.** Ask your teammate to show who requested the earlier picture, who reviewed today’s report and which source supports each action. The answers are in the Imaging Records receipt and Morgan’s signed review. If you have one minute, Avery can sign directly.
 
 **Rehearse a different answer.** As Maya, open Jordan’s transfer workspace and click **Reset and randomize sample**, then **Prepare transfer brief**. This starts a fresh Jordan handoff. Find the new lookup number for the older X-ray in the prior imaging archive and the current transfer checklist. As Riley, click **Read Imaging Records reply** and record the status that office actually reports. If the images have arrived, the doctor’s signature finishes the work. If they are still pending or their arrival is unconfirmed, show who owns the follow-up. Ask your teammate to predict which outcome you’ll see before the doctor signs.
 
@@ -58,7 +67,7 @@ For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the se
 
 **If a judge asks whether this is only for transfers**, open **Patient overview → Casey Rowan** and click **Patient log**. Show the nursing reassessment and physician progress note from the same hospital visit. Maya can add a dated entry with **Add coordination update**. Open Casey under another account to see the same update and author.
 
-**Other controls for Jordan.** In the original sample, **Request the prior study (optional)** lets Maya request the archived images by their lookup number, **MB-082-LA**. **Visit history and plan editor** shows the earlier visits and lets Maya edit a planned destination. **Parser options → Summarize with Codex** runs optional model extraction.
+**Other controls for Jordan.** **Visit history and plan editor** shows the earlier visits and lets Maya edit a planned destination. **Parser options → Summarize with Codex** runs optional model extraction.
 
 A plan can record the next doctor, facility, department, staff-entered priority and coordination impact. Same-hospital updates show an internal handoff. A different facility shows a planned external transfer. Original documents, saved plan revisions and the signed handoff each retain their own provenance.
 

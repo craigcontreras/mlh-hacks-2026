@@ -11,12 +11,12 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals }) => {
 	const account = requireAccount(locals);
-	const { record, chart, version, practice } = clinicalStore().snapshot();
+	const { record, chart, version, practice, imagingNotice } = clinicalStore().snapshot();
 	return {
 		document: { ...clinicalDocument, text: record?.sourceText ?? clinicalDocument.text, sourceUrl: '/handoffs/source' },
 		overviews: documentOverviews(chart.patient, chart.documents),
 		packetPoints: record ? summarizeChartDocuments(chart.patient, chart.documents).items : [],
-		record, chart, doctors: doctorAccounts, recordedEncounters: documentedEncounters(chart.documents),
+		record, chart, imagingNotice, doctors: doctorAccounts, recordedEncounters: documentedEncounters(chart.documents),
 		ownsDelivery: isAssignedTo(record?.history.at(-1), account),
 		version, practiceAccession: practice?.accession ?? null
 	};

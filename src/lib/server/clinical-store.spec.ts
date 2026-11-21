@@ -63,13 +63,12 @@ describe('SQLite clinical handoffs', () => {
 		expect(clinical.get()).toEqual(blocked);
 	});
 
-	it('requires the assigned nurse to record image status before routing to the doctor', () => {
+	it('preserves the assigned nurse’s image observation when routing to the doctor', () => {
 		const clinical = store.clinical;
 		const draft = clinical.saveSummary(clinical.version(), summary, 4, sourceText);
 		const sent = clinical.approve(draft.version, admin, 'check-images');
 		expect(() => clinical.acknowledge(sent.version, admin)).toThrow(/receiving role/);
 		expect(() => clinical.acknowledge(sent.version, doctor)).toThrow(/active handoff/);
-		expect(() => clinical.forward(sent.version, nurse, 'review-report')).toThrow(/image status/);
 		expect(() => clinical.recordImageStatus(sent.version, doctor, 'arrived')).toThrow(/assigned nurse/);
 		expect(() => clinical.recordImageStatus(sent.version, nurse, 'received')).toThrow(/valid comparison image status/);
 		const acknowledged = clinical.acknowledge(sent.version, nurse);

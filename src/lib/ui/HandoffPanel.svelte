@@ -15,6 +15,7 @@
 	const plan = $derived(record?.carePlans?.findLast(item => item.visitId === 'ED-104'));
 	const returned = $derived(record?.status === 'returned');
 	const reviewed = $derived(record?.status === 'reviewed');
+	const nurseAction = $derived(data.imagingNotice?.status === 'needs-review' ? 'Check comparison image status' : 'Send the report for doctor review');
 	const owner = $derived(!delivery || returned ? 'Administrative staff' : delivery.recipientName ?? delivery.recipient);
 	const submit: SubmitFunction = ({submitter,cancel}) => {
 		if (busy) { cancel(); return; }
@@ -61,10 +62,10 @@
 			{/if}
 		{/if}
 	{:else if delivery}
-		<h2>{delivery.recipient === 'Nurse' ? 'Check comparison image status' : 'Review the signed report'}</h2>
+		<h2>{delivery.recipient === 'Nurse' ? nurseAction : 'Review the signed report'}</h2>
 		{#if record.flow === 'admin-nurse-doctor'}
-			{#if record.imageStatus}<p>{record.imageStatus.recordedBy} recorded the comparison images as <strong>{record.imageStatus.status.replaceAll('-', ' ')}</strong>.</p>{/if}
-			{#if delivery.recipient === 'Nurse'}<p>For this handoff, nursing records the image status, then sends the report to the doctor for sign-off.</p>
+			{#if record.imageStatus && data.imagingNotice?.status !== 'received'}<p>{record.imageStatus.recordedBy} recorded the comparison images as <strong>{record.imageStatus.status.replaceAll('-', ' ')}</strong>.</p>{/if}
+			{#if delivery.recipient === 'Nurse'}<p>Nursing sends today’s report to the receiving doctor for sign-off.</p>
 			{:else}<p>The assigned doctor can sign the report review or return the assignment to administration.</p>{/if}
 		{:else}<p>Handoff signed by {delivery.signedBy}.</p>{/if}
 		{#if data.ownsDelivery}<a class="button" href={resolve('/inbox/[patientId]', {patientId: data.chart.patient.id})}>Open my assignment</a>{/if}
@@ -75,19 +76,24 @@
 		<h2>Send the handoff to nursing</h2>
 		{#if nurseTask}
 			<p>{nurseTask.text} <ChartCitation line={nurseTask.line} label="Nurse instruction" /></p>
-			{#if doctorTask}<p class="small">After the image status check, the doctor reviews the signed report. <ChartCitation line={doctorTask.line} label="Doctor instruction" /></p>{/if}
+			{#if doctorTask}<p class="small">The receiving doctor reviews today’s signed report. <ChartCitation line={doctorTask.line} label="Doctor instruction" /></p>{/if}
 			<button class="button" type="submit" formaction="?/approve" name="taskId" value={nurseTask.id} disabled={Boolean(busy)}>Sign and send to nurse</button>
 		{/if}
 	{:else}
 		<h2>Awaiting administrative handoff</h2><p>Administrative staff will route the documented follow-up to nursing.</p>
 	{/if}
-	{#if admin && record?.summary.adminAction && !record.summary.issues.length}
-		<details class="return-menu"><summary>{record.priorStudyRequest ? 'Prior study request · Queued' : 'Request the prior study (optional)'}</summary>
-			{#if record.priorStudyRequest}<p class="small">Study {record.priorStudyRequest.accession} requested by {record.priorStudyRequest.requestedBy}.</p>
-			{:else}<p class="small">{record.summary.adminAction.text}
-				{#each record.summary.adminAction.evidence.slice(0,1) as ev (ev.documentId + ev.line)}<ChartCitation line={ev.line} doc={ev.documentId} label="Clerk instruction" />{/each}
-			</p><button class="button secondary" type="submit" formaction="?/requestPriorStudy" disabled={Boolean(busy)} formnovalidate>Request study from Imaging Records</button>{/if}
-		</details>
+	{#if data.imagingNotice}
+		<aside class="imaging-note">
+			<p><strong>{data.imagingNotice.status === 'requested' ? 'Earlier X-ray requested from Imaging Records' : data.imagingNotice.status === 'received' ? 'Earlier X-ray received' : 'Image request needs review'}</strong></p>
+			<p>The doctor signs off on today’s report separately. <a href={resolve('/patients?patient=J-104&tab=documents#imaging-request')}>View imaging {data.imagingNotice.status === 'needs-review' ? 'status' : 'request'}</a></p>
+		</aside>
+	{:else if record?.priorStudyRequest}
+		<p class="small">Study {record.priorStudyRequest.accession} requested by {record.priorStudyRequest.requestedBy}.</p>
 	{/if}
 	{#if busy}<span class="sr" role="status">Processing request.</span>{/if}
 </form>
+
+<style>
+	.imaging-note {border-top:1px solid var(--line);padding-top:12px;margin-top:16px}
+	.imaging-note p {font-size:14px;margin:0 0 3px}
+</style>

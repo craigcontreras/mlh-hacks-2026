@@ -20,7 +20,8 @@ During Jordan’s ER transfer, staff need to distinguish a current signed report
 | Prepare Jordan’s transfer packet. | Four facts and the documented assignments link to the original text. Cross-checks cite evidence across five documents from two visits. The document list opens to a short summary. The source viewer highlights the specific cited passage. |
 | Inspect the current study and prior visit. | Codex reads the visit ID, side marker and training watermark on the current synthetic image. The earlier intake and archive identify the prior study. The current checklist says those images are outstanding. The offline parser labels the image data as coming from the manifest. |
 | Maya edits the planned path and saves a note. | A plan records the next doctor, destination, department, staff-entered priority and coordination impact. The graph distinguishes internal routing from a planned hospital transfer. Notes and plans carry author and time. |
-| Maya requests the study and sends the assignment to Riley. | A single local request stores accession MB-082-LA and its evidence. Riley records the comparison image status and signs the documented report-review task to the planned doctor. |
+| Open the original Jordan chart before anyone signs. | Intake Desk has queued one request to the local Imaging Records inbox. Its message identifies MB-082-LA from the archive and transfer checklist. A refresh preserves the receipt. Conflicting identifiers need review. |
+| Simulate a matched file delivery. | The earlier X-ray becomes available to every signed-in demo care-team account. The receipt keeps its original request time, and the doctor’s review remains independent. |
 | Avery opens the doctor case. | Avery can sign report review or return it to Maya with a reason. Maya can send the returned assignment to another doctor account. The chain records which account owned, acted on and completed the review. |
 | Morgan signs after Riley records that the comparison images are pending. | The same SQLite transaction records Morgan’s signature and opens Riley’s follow-up. A pending recheck keeps it open. Recording arrival closes it. Images already marked as arrived require no follow-up. |
 | Maya starts another practice sample before or after sign-off. | Jordan starts again with no signatures. His checklist and prior imaging archive agree on a new study number. Riley can open the later Imaging Records reply and use it to report the current status. Consecutive randomized samples change both the number and reply. The original sample is available for a scripted rehearsal. |
@@ -84,7 +85,7 @@ Use the repo’s SvelteKit and TypeScript starter, npm, and one local SQLite dat
 
 **States.** A packet starts **In review**. The draft can be ready or blocked, based on its fields. A clerk may put it **On hold** and later resume review. Only a ready draft may become **Approved**. The receiving desk reads the approved snapshot.
 
-**Scope for today.** Both people can develop against the same synthetic fixture. A local staff inbox demonstrates communication. Prioritize the review flow and an observed Design test. Free-form uploads, scanned-document OCR, EHR integration, clinical triage, production identity management and external messaging remain outside the demo.
+**Scope for today.** Both people can develop against the same synthetic fixture. A local staff inbox demonstrates communication. Prioritize the review flow and an observed Design test. Automatic extraction from newly uploaded files, scanned-document OCR, EHR integration, clinical triage, production identity management and external messaging remain outside the demo.
 
 ## Acceptance examples
 
@@ -135,7 +136,7 @@ Suggested split, adjustable between teammates. **Craig** owns the review and rec
 | --- | --- |
 | 0:00–0:25 | Sign in as Maya. Jordan's transfer has arrived and references an earlier X-ray. |
 | 0:25–1:10 | Generate the brief. Open the older archive entry and the current transfer checklist to show which images are still pending. |
-| 1:10–1:50 | Sign the Imaging Records request and route the status check to nursing. Riley records the status and sends the report review to the doctor. |
+| 1:10–1:50 | Show the automatic request in Documents. Riley can forward the separate report review to the doctor. |
 | 1:50–2:25 | Avery opens the cited report and signs the review. Show the signed history or demonstrate the return and reassignment path. |
 | 2:25–3:00 | Show any observed usability finding and retest result. Identify the supported synthetic documents and the next question for staff. |
 

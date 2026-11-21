@@ -3,9 +3,29 @@ import { requireAccountRole } from '../../lib/server/accounts';
 import { packetStore, ReviewError } from '../../lib/server/store';
 import type { Actions } from './$types';
 import { prepareBrief } from './chart-brief.server';
+import { fileAttachments } from './file-attachments.server';
 
 export const actions: Actions = {
-	prepareBrief,
+	prepareBrief, fileAttachments,
+	receiveImagingDelivery: async ({ locals, request, url }) => {
+		requireAccountRole(locals, 'Administrative staff');
+		const patientId = url.searchParams.get('patient') ?? '';
+		const form = await request.formData();
+		const version = form.get('version');
+		const accession = form.get('accession');
+		const visitId = form.get('visitId');
+		if (typeof version !== 'string' || typeof accession !== 'string' || typeof visitId !== 'string') {
+			return fail(400, { patientId, deliveryError: 'Reload the chart and check the open study request.' });
+		}
+		try {
+			packetStore().clinical.receiveImagingDelivery(version, { patientId, accession, visitId });
+			return { patientId, deliveryRecorded: true };
+		} catch (error) {
+			return fail(error instanceof ReviewError ? error.status : 503, {
+				patientId, deliveryError: error instanceof ReviewError ? error.message : 'Could not file the incoming study. Try again.'
+			});
+		}
+	},
 	addUpdate: async ({ locals, request, url }) => {
 		const author = requireAccountRole(locals, 'Administrative staff');
 		const fields = await request.formData();

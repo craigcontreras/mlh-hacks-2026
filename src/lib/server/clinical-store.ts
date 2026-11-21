@@ -2,6 +2,7 @@ import { createHash, randomInt, randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import { demoAccounts, doctorAccounts, type AccountId, type DemoAccount } from './accounts';
 import { chartDocuments, chartPatient, clinicalDocument, practiceDocuments, type ChartDocument, type ChartEvidence, type ImageStatus, type PracticeRound } from './chart';
+import { reconcileImagingNotice, type ImagingNotice } from './imaging-notice';
 import type { ClinicalSummary } from './clinical-summary';
 import { packetStore, ReviewError } from './store';
 
@@ -155,7 +156,8 @@ export class ClinicalStore {
 				version TEXT NOT NULL,
 				data TEXT,
 				last_request TEXT,
-				practice TEXT
+				practice TEXT,
+				imaging_notice TEXT
 			);
 			INSERT INTO clinical_handoff(singleton, version) VALUES (1, '')
 			ON CONFLICT(singleton) DO NOTHING;
@@ -163,16 +165,25 @@ export class ClinicalStore {
 			if (!db.prepare("SELECT 1 FROM pragma_table_info('clinical_handoff') WHERE name='practice'").get()) {
 				db.exec('ALTER TABLE clinical_handoff ADD COLUMN practice TEXT');
 			}
+			if (!db.prepare("SELECT 1 FROM pragma_table_info('clinical_handoff') WHERE name='imaging_notice'").get()) {
+				db.exec('ALTER TABLE clinical_handoff ADD COLUMN imaging_notice TEXT');
+			}
+			const { data, version, practice, imagingNotice } = this.read();
+			const record = data && { ...data, version };
+			const notice = reconcileImagingNotice(chartSnapshot(record, practice).documents, record, imagingNotice, new Date().toISOString());
+			db.prepare('UPDATE clinical_handoff SET imaging_notice=? WHERE singleton=1 AND imaging_notice IS NOT ?')
+				.run(JSON.stringify(notice), JSON.stringify(notice));
 			db.exec('COMMIT');
 		} catch (error) { db.exec('ROLLBACK'); throw error; }
 	}
 
 	private read() {
-		const row = this.db.prepare('SELECT version, data, last_request, practice FROM clinical_handoff WHERE singleton=1').get()!;
+		const row = this.db.prepare('SELECT version, data, last_request, practice, imaging_notice FROM clinical_handoff WHERE singleton=1').get()!;
 		const version = row.version as string;
 		const data = row.data === null ? null : JSON.parse(row.data as string) as StoredState;
 		const practice = row.practice === null ? null : JSON.parse(row.practice as string) as PracticeRound;
-		return { version, data, practice, lastRequest: row.last_request as string | null };
+		const imagingNotice: ImagingNotice | null = row.imaging_notice === null ? null : JSON.parse(row.imaging_notice as string) as ImagingNotice;
+		return { version, data, practice, imagingNotice, lastRequest: row.last_request as string | null };
 	}
 
 	get(): ClinicalState | null {
@@ -183,25 +194,28 @@ export class ClinicalStore {
 	version(): string { return this.read().version; }
 
 	snapshot() {
-		const { data, version, practice } = this.read();
+		const { data, version, practice, imagingNotice } = this.read();
 		const record = data && { ...data, version };
-		return { record, version, practice, chart: chartSnapshot(record, practice) };
+		return { record, version, practice, imagingNotice: imagingNotice!, chart: chartSnapshot(record, practice) };
 	}
 
-	private change(version: string, request: unknown[], update: (state: StoredState | null, practice: PracticeRound | null) => StoredState): ClinicalState;
+	private change(version: string, request: unknown[], update: (state: StoredState | null, practice: PracticeRound | null, notice: ImagingNotice | null) => StoredState): ClinicalState;
 	private change(version: string, request: unknown[], update: () => null, newPractice: (previous: PracticeRound | null) => PracticeRound | null): null;
-	private change(version: string, request: unknown[], update: (state: StoredState | null, practice: PracticeRound | null) => StoredState | null, newPractice?: (previous: PracticeRound | null) => PracticeRound | null) {
+	private change(version: string, request: unknown[], update: (state: StoredState | null, practice: PracticeRound | null, notice: ImagingNotice | null) => StoredState | null, newPractice?: (previous: PracticeRound | null) => PracticeRound | null) {
 		const key = createHash('sha256').update(JSON.stringify([version, ...request])).digest('hex');
 		const before = this.read();
 		if (before.lastRequest === key) return before.data && { ...before.data, version: before.version };
 		if (before.version !== version) throw new ReviewError('This handoff changed. Review the latest version.');
 
-		const data = update(before.data, before.practice);
+		const data = update(before.data, before.practice, before.imagingNotice);
 		const practice = newPractice ? newPractice(before.practice) : before.practice;
-		if (data === before.data && practice === before.practice) return data && { ...data, version: before.version };
+		if (!newPractice && data === before.data && practice === before.practice) return data && { ...data, version: before.version };
 		const newVersion = randomUUID();
-		const saved = this.db.prepare('UPDATE clinical_handoff SET version=?, data=?, last_request=?, practice=? WHERE singleton=1 AND version=?')
-			.run(newVersion, data && JSON.stringify(data), key, practice && JSON.stringify(practice), version);
+		const record = data && { ...data, version: newVersion };
+		const imagingNotice = reconcileImagingNotice(chartSnapshot(record, practice).documents, record,
+			newPractice ? null : before.imagingNotice, new Date().toISOString());
+		const saved = this.db.prepare('UPDATE clinical_handoff SET version=?, data=?, last_request=?, practice=?, imaging_notice=? WHERE singleton=1 AND version=?')
+			.run(newVersion, data && JSON.stringify(data), key, practice && JSON.stringify(practice), JSON.stringify(imagingNotice), version);
 		if (!saved.changes) {
 			const after = this.read();
 			if (after.lastRequest === key) return after.data && { ...after.data, version: after.version };
@@ -253,13 +267,15 @@ export class ClinicalStore {
 	forward(version: string, account: DemoAccount, taskId: string): ClinicalState {
 		const { role } = account;
 		if (!isRecipient(role)) throw new ReviewError('Choose a valid receiving role.', 400);
-		return this.change(version, ['forward', account.id, taskId], (record) => {
+		return this.change(version, ['forward', account.id, taskId], (record, _practice, notice) => {
 			const { state } = requireOwner(record, account);
 			if (state.flow === 'admin-nurse-doctor') {
 				if (role !== 'Nurse' || taskId !== 'review-report') {
 					throw new ReviewError('Only Nurse can send the documented report-review task onward.', 400);
 				}
-				if (!state.imageStatus) throw new ReviewError('Record the comparison image status before forwarding.', 400);
+				if (!state.imageStatus && (!notice || notice.status === 'needs-review')) {
+					throw new ReviewError('Record the comparison image status before forwarding an unclear receipt.', 400);
+				}
 			}
 			return send(state, taskId, account, plannedReportDoctor(state).id);
 		});
@@ -277,12 +293,12 @@ export class ClinicalStore {
 
 	signReview(version: string, account: DemoAccount): ClinicalState {
 		if (account.role !== 'Doctor') throw new ReviewError('This action requires the assigned doctor.', 400);
-		return this.change(version, ['sign-review', account.id], (record) => {
+		return this.change(version, ['sign-review', account.id], (record, _practice, notice) => {
 			const { state, active } = requireOwner(record, account);
 			if (active.taskId !== 'review-report') throw new ReviewError('This assignment is not for report review.', 400);
 			const reviewed = { reviewedBy: account.name, reviewedByAccountId: account.id, reviewedAt: new Date().toISOString() };
 			const initial = state.imageStatus;
-			const imageFollowup = initial && initial.status !== 'arrived' && state.flow === 'admin-nurse-doctor'
+			const imageFollowup = initial && initial.status !== 'arrived' && state.flow === 'admin-nurse-doctor' && notice?.status !== 'received'
 				? { initial, recipientAccountId: initial.recordedByAccountId, recipientName: initial.recordedBy,
 					openedAt: reviewed.reviewedAt, openedBy: account.name, observations: [] }
 				: undefined;
@@ -403,6 +419,37 @@ export class ClinicalStore {
 				}
 			};
 		});
+	}
+
+	receiveImagingDelivery(version: string, receipt: { patientId: string; visitId: string; accession: string }): ImagingNotice {
+		const key = createHash('sha256').update(JSON.stringify([version, 'imaging-delivery', receipt.patientId, receipt.visitId, receipt.accession])).digest('hex');
+		const current = this.read();
+		const notice = current.imagingNotice;
+		if (!notice || receipt.patientId !== chartPatient.id || receipt.visitId !== clinicalDocument.visitId ||
+			!receipt.accession || receipt.accession !== notice.accession) {
+			throw new ReviewError('The file delivery does not match this patient, visit and study.', 400);
+		}
+		if (notice.receivedVia === 'matched-delivery' && (notice.deliveryVersion === version || current.lastRequest === key)) return notice;
+		if (current.version !== version) throw new ReviewError('This practice chart changed. Refresh before receiving the file.');
+		if (notice.status === 'received') return notice;
+		if (notice.status !== 'requested') throw new ReviewError('Match the source documents before filing this delivery.', 400);
+		const receivedAt = new Date().toISOString();
+		const received: ImagingNotice = { ...notice, status: 'received', receivedVia: 'matched-delivery', deliveryVersion: version,
+			receivedAt, message: 'The earlier images for study ' + receipt.accession + ' are available in Jordan’s chart.' };
+		const data = current.data;
+		const followup = data?.imageFollowup;
+		if (data && followup && !followup.resolvedAt) {
+			followup.resolvedAt = receivedAt;
+			followup.observations.push({ id: randomUUID(), status: 'arrived', at: receivedAt, by: notice.recipient });
+		}
+		const saved = this.db.prepare('UPDATE clinical_handoff SET imaging_notice=?, data=?, version=?, last_request=? WHERE singleton=1 AND version=?')
+			.run(JSON.stringify(received), data && JSON.stringify(data), randomUUID(), key, version);
+		if (!saved.changes) {
+			const after = this.read();
+			if (after.imagingNotice?.receivedVia === 'matched-delivery' && (after.lastRequest === key || after.imagingNotice.deliveryVersion === version)) return after.imagingNotice;
+			throw new ReviewError('This practice chart changed. Refresh before receiving the file.');
+		}
+		return received;
 	}
 
 	reset(version: string): void {

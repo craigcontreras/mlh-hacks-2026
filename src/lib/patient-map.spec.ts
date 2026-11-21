@@ -1,9 +1,10 @@
 import { expect, test } from 'vitest';
 import { demoAccounts } from './server/accounts';
-import { chartDocuments, clinicalDocument } from './server/chart';
+import { chartDocuments, clinicalDocument, practiceDocuments } from './server/chart';
 import { summarizePatientChart } from './server/chart-brief';
 import { verifyChartSummary } from './server/clinical-summary';
 import { PacketStore } from './server/store';
+import { reconcileImagingNotice } from './server/imaging-notice';
 import { buildEvidenceMap } from './patient-map';
 
 const [admin, avery, riley, morgan] = demoAccounts;
@@ -13,18 +14,17 @@ test('the same report keeps its original instruction as nursing, reassignment, s
 	try {
 		const flow = store.clinical;
 		function finding(id: string, account = admin) {
-			const record = flow.get();
+			const { record, imagingNotice } = flow.snapshot();
 			const view = store.patients.view(account, record, '', false, 'J-104');
-			return buildEvidenceMap(summarizePatientChart(view).items, view, record).find(row => row.id === id)!;
+			return buildEvidenceMap(summarizePatientChart(view).items, view, record, imagingNotice).find(row => row.id === id)!;
 		}
 		expect(finding('family-history').actions).toEqual([]);
 		expect(finding('medical-history').actions).toEqual([]);
+		expect(finding('comparison-images').actions).toMatchObject([{
+			title: 'Request the earlier X-ray', person: 'Requested by Intake Desk', status: 'Queued for Imaging Records'
+		}]);
 		const draft = flow.saveSummary(flow.version(), verifyChartSummary(chartDocuments, 'local'), 1, clinicalDocument.text, chartDocuments);
-		const requested = flow.requestPriorStudy(draft.version, admin);
-		expect(finding('comparison-images').actions[1]).toMatchObject({
-			title: 'Request the earlier study', person: 'Requested by ' + admin.name, status: 'Queued for Imaging Records'
-		});
-		const nursing = flow.approve(requested.version, admin, 'check-images');
+		const nursing = flow.approve(draft.version, admin, 'check-images');
 		expect(finding('comparison-images', riley).actions[0]).toMatchObject({person: riley.name, workspace: '/inbox/J-104'});
 		expect(finding('radiology', riley).actions[0].workspace).toBeFalsy();
 		const checked = flow.recordImageStatus(nursing.version, riley, 'still-pending');
@@ -71,4 +71,18 @@ test('Casey’s chart links recorded actions to actual signed visit passages and
 	} finally {
 		store.close();
 	}
+});
+
+test('the map distinguishes an already filed image from a queued request and never maps stale evidence', () => {
+	const store = new PacketStore(':memory:');
+	try {
+		const practice = { accession: 'MB-082-506', status: 'arrived' as const };
+		const view = store.patients.view(admin, null, '', false, 'J-104', practice);
+		const notice = reconcileImagingNotice(practiceDocuments(practice), null, null, new Date().toISOString());
+		const {items} = summarizePatientChart(view);
+		const actions = buildEvidenceMap(items, view, null, notice).find(row => row.id === 'comparison-images')?.actions;
+		expect(actions).toMatchObject([{title:'Link the earlier X-ray', person:'Imaging Records', status:'Image available', requestDetails:true}]);
+		const stale = {...notice, evidence: notice.evidence.map((ref, i) => i === 0 ? {...ref, quote:'Replaced passage'} : ref)};
+		expect(buildEvidenceMap(items, view, null, stale).find(row => row.id === 'comparison-images')?.actions).toEqual([]);
+	} finally { store.close(); }
 });

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance, type SubmitFunction } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { refreshAll } from '$app/navigation';
 	import type { PageProps } from './$types';
 	import ChartCitation from '#lib/ui/ChartCitation.svelte';
 	import HandoffBrief from '#lib/ui/HandoffBrief.svelte';
@@ -17,6 +18,9 @@
 	const plan = $derived(data.record?.carePlans?.findLast(entry => entry.visitId === 'ED-104'));
 	const impression = $derived(data.record?.summary.crossChecks?.flatMap(check => check.evidence).find(item => item.documentId === 'ED-104-radiology') ?? data.record?.summary.facts.find(fact => fact.kind === 'impression'));
 	const finished = $derived(data.record?.status === 'reviewed');
+	const imageReceived = $derived(data.imagingNotice?.status === 'received');
+	const requestManaged = $derived(imageReceived || data.imagingNotice?.status === 'requested');
+	const nurseAction = $derived(requestManaged ? 'Send the report for doctor review' : 'Check comparison image status');
 	const submit: SubmitFunction = ({cancel}) => {
 		if (busy) { cancel(); return; }
 		busy = true; message = '';
@@ -29,6 +33,7 @@
 	};
 </script>
 
+<svelte:window onfocus={() => { if (data.record && !busy) void refreshAll(); }} />
 <svelte:head><title>{data.role} inbox · Intake Desk</title></svelte:head>
 	<header class="pagehead flow-title"><div><a class="back-link" href={resolve('/inbox')}>← My inbox</a><h1>{data.patient.name}</h1><p class="lead">{data.patient.visitId} · {data.role} workspace</p>
 		<a class="chart-link" href={resolve(`/patients?patient=${data.patient.patientId}`)}>View patient chart</a></div></header>
@@ -47,13 +52,17 @@
 			{:else if finished && current.reviewed}<h2>Report review signed</h2><p>Recorded by {current.reviewed.reviewedBy}.</p>
 				{#if data.record.imageFollowup && !data.record.imageFollowup.resolvedAt}
 					<p>Image follow-up assigned to {data.record.imageFollowup.recipientName}.</p>
-				{:else if data.record.imageStatus?.status === 'arrived'}
+				{:else if imageReceived || data.record.imageStatus?.status === 'arrived'}
 					<p>Image check complete.</p>
 				{/if}
 			{:else}
-				<h2>{data.role === 'Nurse' ? 'Check comparison image status' : 'Review the final report'}</h2>
+				<h2>{data.role === 'Nurse' ? nurseAction : 'Review the final report'}</h2>
 			{/if}
-			{#if data.role === 'Doctor' && data.record.imageStatus}
+			{#if requestManaged && !finished}
+				<p class="request-receipt">{imageReceived ? 'The earlier X-ray is available in the shared chart.' : 'Imaging Records has the request for the earlier X-ray.'}
+					<a href={resolve('/patients?patient=J-104&tab=documents#imaging-request')}>View imaging status</a></p>
+			{/if}
+			{#if data.role === 'Doctor' && data.record.imageStatus && !imageReceived}
 				<p class="request-receipt">Nursing update · Comparison images {data.record.imageStatus.status.replaceAll('-',' ')}<br /><small>Last recorded by {data.record.imageStatus.recordedBy}.</small></p>
 				{#if data.practiceReply}
 					<ChartCitation doc={data.practiceReply.documentId} line={data.practiceReply.line} label="Read Imaging Records reply" />
@@ -72,27 +81,30 @@
 							<ChartCitation doc={data.practiceReply.documentId} line={data.practiceReply.line} label="Read Imaging Records reply" />
 						</p>
 					{/if}
-					{#if !data.record.imageStatus}
-						<label for="image-status">Observed status of the requested prior images</label>
-						<select id="image-status" name="imageStatus" required>
-							<option value="">Choose status</option>
-							<option value="arrived">Arrived</option>
-							<option value="still-pending">Still pending</option>
-							<option value="unable-to-confirm">Unable to confirm</option>
-						</select>
-						<button class="button" type="submit" formaction="?/recordImageStatus" disabled={busy}>Record image status</button>
-					{:else}
+					{#if !data.record.imageStatus && !imageReceived}
+						<details class="return-menu" open={!requestManaged}>
+							<summary>{requestManaged ? 'Add an image observation (optional)' : 'Record the image status'}</summary>
+							<label for="image-status">Observed status of the requested prior images</label>
+							<select id="image-status" name="imageStatus" required>
+								<option value="">Choose status</option>
+								<option value="arrived">Arrived</option>
+								<option value="still-pending">Still pending</option>
+								<option value="unable-to-confirm">Unable to confirm</option>
+							</select>
+							<button class="button secondary" type="submit" formaction="?/recordImageStatus" disabled={busy}>Record image status</button>
+						</details>
+					{:else if data.record.imageStatus && !imageReceived}
 						<p class="request-receipt">Image status recorded · {data.record.imageStatus.status.replaceAll('-',' ')}</p>
-						{#if next}
+					{/if}
+					{#if next && (requestManaged || data.record.imageStatus)}
 							<div class="route-next">
 								<p>{next.text} <ChartCitation line={next.line} label="Doctor assignment in transfer note" /></p>
 								<p>Receiving doctor · <strong>{data.nextDoctor}</strong></p>
-								<button type="submit" class="button" formaction="?/forward" name="taskId" value={next.id} disabled={busy}>Sign and send report to doctor</button>
+								<button type="submit" class="button" formaction="?/forward" formnovalidate name="taskId" value={next.id} disabled={busy}>Sign and send report to doctor</button>
 							</div>
-						{/if}
 					{/if}
 				{:else if ordered && data.role === 'Doctor'}
-					{#if data.record.imageStatus && data.record.imageStatus.status !== 'arrived'}<p class="small">Signing sends the outstanding image check back to {data.record.imageStatus.recordedBy}.</p>{/if}
+					{#if !imageReceived && data.record.imageStatus && data.record.imageStatus.status !== 'arrived'}<p class="small">Signing sends the outstanding image check back to {data.record.imageStatus.recordedBy}.</p>{/if}
 					<button class="button" type="submit" formaction="?/signReview" disabled={busy}>Sign report review</button>
 					<details class="return-menu"><summary>Return to administrative staff</summary><label for="return-reason">Reason for returning</label><textarea id="return-reason" name="reason" rows="2" maxlength="500"></textarea><button class="button secondary" type="submit" formaction="?/returnToAdmin" disabled={busy}>Return handoff to admin</button></details>
 				{:else}
