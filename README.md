@@ -13,6 +13,10 @@ npm run dev -- --host 127.0.0.1
 
 Open the local URL printed by Vite. For optional model extraction, install the Codex CLI and run `codex login` under your own account. The server uses that CLI login. This path was tested with Codex CLI 0.163.0. Use one server for the demo so all staff accounts see the same SQLite records.
 
+## Watch the walkthrough
+
+Open **Glossary → Watch the walkthrough** to rehearse Jordan’s case. Follow Maya’s sign-off, Riley’s image check, Avery’s return and Morgan’s signed review. Use **Reset and randomize sample** in Maya’s transfer workspace when you want another round. [Download the narrated video](docs/Intake-Desk-walkthrough.mp4)
+
 ## Show the benefit in 30 seconds
 
 Sign in as Maya, open **Patients → Jordan Vale**, and read the five bullets under **Chart summary**. Ask the audience, “Which X-rays does the doctor already have a report for, and which pictures still need checking?”

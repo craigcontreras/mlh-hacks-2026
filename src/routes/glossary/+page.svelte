@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import tutorialUrl from '../../../docs/Intake-Desk-walkthrough.mp4?url';
+	import captionsUrl from '../../../docs/Intake-Desk-walkthrough.vtt?url&no-inline';
 	import dictionaryUrl from '../../../docs/Intake-Desk-visual-dictionary.pdf?url';
 
 	const terms = [
@@ -31,6 +33,13 @@
 		<div><p class="kicker">Intake Desk</p><h1>Glossary</h1></div>
 		<a class="button secondary download" href={dictionaryUrl} rel="external" download="Intake-Desk-visual-dictionary.pdf">Download visual dictionary (PDF)</a>
 	</header>
+
+	<details class="tutorial">
+		<summary>Watch the walkthrough</summary>
+		<video controls preload="none" playsinline aria-label="Jordan’s chart and handoff walkthrough" src={tutorialUrl}>
+			<track kind="captions" srclang="en" label="English" src={captionsUrl} />
+		</video>
+	</details>
 
 	<section class="example" aria-labelledby="visual-title">
 		<h2 id="visual-title">How to read the map</h2>
@@ -69,6 +78,10 @@
 </article>
 
 <style>
+	.tutorial {margin:0 0 18px}
+	.tutorial summary {cursor:pointer;display:list-item;width:fit-content;font-weight:600}
+	.tutorial video {display:block;width:100%;max-width:1080px;aspect-ratio:16/9;margin-top:12px;background:#151515;border-radius:6px}
+
 	.dictionary { max-width: 1040px; margin-inline: auto; }
 	.dictionary .pagehead { align-items: center; }
 	.dictionary h2 { font-size: clamp(20px, 2vw, 26px); }
@@ -99,7 +112,7 @@
 	@media print {
 		@page { size: letter portrait; margin: 0.55in; }
 		:global(html), :global(body) { background: white; }
-		:global(.mast), :global(.app-footer), :global(.skip-link), .download, .open-map { display: none !important; }
+		:global(.mast), :global(.app-footer), :global(.skip-link), .download, .open-map, .tutorial { display: none !important; }
 		:global(main.shell) { width: auto; max-width: none; margin: 0; padding: 0; }
 		.dictionary { font-size: 11pt; }
 		.dictionary .pagehead { margin: 0 0 14pt; }
