@@ -1,7 +1,7 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { error, redirect, type Cookies } from '@sveltejs/kit';
 
-export type AccountId = 'admin' | 'doctor' | 'nurse';
+export type AccountId = 'admin' | 'doctor' | 'nurse' | 'doctor-morgan';
 export type AccountRole = 'Administrative staff' | 'Doctor' | 'Nurse';
 
 export interface DemoAccount {
@@ -14,13 +14,17 @@ export interface DemoAccount {
 export const demoAccounts: readonly DemoAccount[] = [
 	{ id: 'admin', name: 'Maya Chen', role: 'Administrative staff', label: 'Admin' },
 	{ id: 'doctor', name: 'Dr. Avery Shah', role: 'Doctor', label: 'Doctor' },
-	{ id: 'nurse', name: 'Riley Ortiz', role: 'Nurse', label: 'Nurse' }
+	{ id: 'nurse', name: 'Riley Ortiz', role: 'Nurse', label: 'Nurse' },
+	{ id: 'doctor-morgan', name: 'Dr. Morgan Lee', role: 'Doctor', label: 'Doctor' }
 ];
+
+export const doctorAccounts = demoAccounts.filter((account) => account.role === 'Doctor');
 
 const passcodes: Record<AccountId, string> = {
 	admin: 'maya-demo-104',
 	doctor: 'avery-demo-104',
-	nurse: 'riley-demo-104'
+	nurse: 'riley-demo-104',
+	'doctor-morgan': 'morgan-demo-104'
 };
 
 export const sessionCookie = 'intake_session';

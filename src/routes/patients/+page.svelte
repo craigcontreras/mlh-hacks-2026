@@ -32,7 +32,7 @@
 				<div><p class="kicker">Chart {data.patient.id}</p><h2 id="record-name">{data.patient.name}</h2></div>
 				{#if data.hasTransfer}<a class="button" href={resolve('/handoffs')}>Open transfer workspace</a>{:else}<span class="tag">Completed visits</span>{/if}
 			</div>
-			{#key data.patient.id}<HandoffDocument documents={data.documents} hasBrief={false} />{/key}
+			{#key data.patient.id}<HandoffDocument documents={data.documents} />{/key}
 		</section>
 	{/if}
 </div>

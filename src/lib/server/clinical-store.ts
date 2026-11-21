@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
-import type { AccountId, DemoAccount } from './accounts';
-import { chartDocuments, chartPatient, type ChartDocument, type ChartEvidence } from './chart';
+import { demoAccounts, doctorAccounts, type AccountId, type DemoAccount } from './accounts';
+import { chartDocuments, chartPatient, clinicalDocument, type ChartDocument, type ChartEvidence } from './chart';
 import type { ClinicalSummary } from './clinical-summary';
 import { packetStore, ReviewError } from './store';
 
@@ -11,12 +11,37 @@ export interface ClinicalHandoff {
 	id: string;
 	taskId: string;
 	recipient: ClinicalRecipientRole;
+	recipientAccountId?: AccountId;
+	recipientName?: string;
 	signedBy: string;
 	signedByAccountId?: AccountId;
 	sentAt: string;
 	acknowledgedAt: string | null;
 	acknowledgedBy?: string;
 	acknowledgedByAccountId?: AccountId;
+	returned?: { reason: string; returnedBy: string; returnedByAccountId: AccountId; returnedAt: string };
+	reviewed?: { reviewedBy: string; reviewedByAccountId: AccountId; reviewedAt: string };
+	reassignedFrom?: { accountId: AccountId; name: string; assignmentId: string };
+}
+
+export type ImageStatus = 'arrived' | 'still-pending' | 'unable-to-confirm';
+export type CarePriority = 'unspecified' | 'routine' | 'urgent' | 'critical';
+
+interface VisitEntry {
+	id: string;
+	visitId: string;
+	savedBy: string;
+	savedByAccountId: AccountId;
+	savedAt: string;
+}
+
+interface CarePlan extends VisitEntry {
+	doctorId: AccountId | null;
+	doctorName: string | null;
+	receivingFacility: string;
+	receivingDepartment: string;
+	priority: CarePriority;
+	impact: string;
 }
 
 interface PriorStudyRequest {
@@ -30,13 +55,17 @@ interface PriorStudyRequest {
 }
 
 interface StoredState {
-	status: 'draft' | 'sent' | 'acknowledged';
+	status: 'draft' | 'sent' | 'acknowledged' | 'returned' | 'reviewed';
+	flow?: 'admin-nurse-doctor';
 	summary: ClinicalSummary;
 	sourceText: string;
 	sources?: ChartDocument[];
 	elapsedMs: number;
 	history: ClinicalHandoff[];
 	priorStudyRequest?: PriorStudyRequest;
+	operationalNotes?: (VisitEntry & { text: string })[];
+	carePlans?: CarePlan[];
+	imageStatus?: { status: ImageStatus; recordedBy: string; recordedByAccountId: AccountId; recordedAt: string };
 }
 
 export interface ClinicalState extends StoredState {
@@ -47,26 +76,55 @@ function isRecipient(role: unknown): role is ClinicalRecipientRole {
 	return role === 'Doctor' || role === 'Nurse';
 }
 
-function requireOwner(state: StoredState | null, role: ClinicalRecipientRole) {
+function recipientId(event: ClinicalHandoff) {
+	return event.recipientAccountId ?? (event.recipient === 'Doctor' ? 'doctor' : 'nurse');
+}
+
+export function isAssignedTo(event: ClinicalHandoff | undefined, account: DemoAccount) {
+	return !!event && event.recipient === account.role && recipientId(event) === account.id;
+}
+
+function requireOwner(state: StoredState | null, account: DemoAccount) {
 	const active = state?.history.at(-1);
-	if (!state || !active || active.recipient !== role) {
+	if (!state || !active || !isAssignedTo(active, account) || active.returned || active.reviewed) {
 		throw new ReviewError('This inbox no longer owns the active handoff.');
 	}
 	return { state, active };
 }
 
-function send(state: StoredState, taskId: string, account: DemoAccount): StoredState {
+function send(state: StoredState, taskId: string, account: DemoAccount, doctorId?: AccountId): StoredState {
 	const task = state.summary.tasks.find((candidate) => candidate.id === taskId);
 	if (!task || !isRecipient(task.role)) throw new ReviewError('Choose a documented task.', 400);
-	if (state.history.some((event) => event.taskId === task.id)) {
+	if (state.status !== 'returned' && state.history.some((event) => event.taskId === task.id)) {
 		throw new ReviewError('This task was already sent.');
 	}
+	const receiver = demoAccounts.find((candidate) =>
+		candidate.id === (task.role === 'Doctor' ? doctorId ?? 'doctor' : 'nurse') && candidate.role === task.role
+	);
+	if (!receiver) throw new ReviewError('Choose an account that matches the documented assignment.', 400);
 	const event: ClinicalHandoff = {
 		id: randomUUID(), taskId: task.id, recipient: task.role,
+		recipientAccountId: receiver.id, recipientName: receiver.name,
 		signedBy: account.name, signedByAccountId: account.id,
 		sentAt: new Date().toISOString(), acknowledgedAt: null
 	};
 	return { ...state, status: 'sent', history: [...state.history, event] };
+}
+
+function visitEntry(state: StoredState, visitId: string, account: DemoAccount): VisitEntry {
+	if (!(state.sources ?? chartDocuments).some((source) => source.visitId === visitId)) {
+		throw new ReviewError('Choose a documented visit on this chart.', 400);
+	}
+	return { id: randomUUID(), visitId, savedBy: account.name, savedByAccountId: account.id, savedAt: new Date().toISOString() };
+}
+
+function requireAdministrator(account: DemoAccount) {
+	if (account.role !== 'Administrative staff') throw new ReviewError('This action requires an administrator.', 400);
+}
+
+function requireBrief(state: StoredState | null) {
+	if (!state) throw new ReviewError('Prepare the chart brief before adding an operational update.');
+	return state;
 }
 
 export class ClinicalStore {
@@ -132,11 +190,12 @@ export class ClinicalStore {
 	}
 
 	approve(version: string, account: DemoAccount, taskId: string): ClinicalState {
-		if (account.role !== 'Administrative staff') throw new ReviewError('Sending the initial handoff requires an administrator.', 400);
+		requireAdministrator(account);
 		return this.change(version, ['approve', account.id, taskId], (state) => {
 			if (!state || state.status !== 'draft') throw new ReviewError('A reviewed draft is required to send a handoff.');
 			if (state.summary.issues.length) throw new ReviewError('Resolve the extraction issues before signing off.', 400);
-			return send(state, taskId, account);
+			if (taskId !== 'check-images') throw new ReviewError('Send the documented image-status task to Nurse first.', 400);
+			return send({ ...state, flow: 'admin-nurse-doctor' }, taskId, account);
 		});
 	}
 
@@ -144,7 +203,7 @@ export class ClinicalStore {
 		const { role } = account;
 		if (!isRecipient(role)) throw new ReviewError('Choose a valid receiving role.', 400);
 		return this.change(version, ['acknowledge', account.id], (record) => {
-			const { state, active } = requireOwner(record, role);
+			const { state, active } = requireOwner(record, account);
 			if (active.acknowledgedAt !== null) throw new ReviewError('This handoff receipt has already been recorded.');
 			const acknowledged = {
 				...active, acknowledgedAt: new Date().toISOString(),
@@ -158,8 +217,117 @@ export class ClinicalStore {
 		const { role } = account;
 		if (!isRecipient(role)) throw new ReviewError('Choose a valid receiving role.', 400);
 		return this.change(version, ['forward', account.id, taskId], (record) => {
-			const { state } = requireOwner(record, role);
-			return send(state, taskId, account);
+			const { state } = requireOwner(record, account);
+			if (state.flow === 'admin-nurse-doctor') {
+				if (role !== 'Nurse' || taskId !== 'review-report') {
+					throw new ReviewError('Only Nurse can send the documented report-review task onward.', 400);
+				}
+				if (!state.imageStatus) throw new ReviewError('Record the comparison image status before forwarding.', 400);
+			}
+			const doctorId = state.carePlans?.findLast((plan) => plan.visitId === clinicalDocument.visitId)?.doctorId;
+			return send(state, taskId, account, doctorId ?? undefined);
+		});
+	}
+
+	recordImageStatus(version: string, account: DemoAccount, status: string): ClinicalState {
+		if (account.role !== 'Nurse') throw new ReviewError('This action requires the assigned nurse.', 400);
+		if (status !== 'arrived' && status !== 'still-pending' && status !== 'unable-to-confirm') {
+			throw new ReviewError('Choose a valid comparison image status.', 400);
+		}
+		return this.change(version, ['image-status', account.id, status], (record) => {
+			const { state, active } = requireOwner(record, account);
+			if (active.taskId !== 'check-images') throw new ReviewError('This assignment does not cover comparison images.', 400);
+			return { ...state, imageStatus: { status, recordedBy: account.name, recordedByAccountId: account.id, recordedAt: new Date().toISOString() } };
+		});
+	}
+
+	signReview(version: string, account: DemoAccount): ClinicalState {
+		if (account.role !== 'Doctor') throw new ReviewError('This action requires the assigned doctor.', 400);
+		return this.change(version, ['sign-review', account.id], (record) => {
+			const { state, active } = requireOwner(record, account);
+			if (active.taskId !== 'review-report') throw new ReviewError('This assignment is not for report review.', 400);
+			const reviewed = { reviewedBy: account.name, reviewedByAccountId: account.id, reviewedAt: new Date().toISOString() };
+			return { ...state, status: 'reviewed', history: [...state.history.slice(0, -1), { ...active, reviewed }] };
+		});
+	}
+
+	returnToAdmin(version: string, account: DemoAccount, reason: string): ClinicalState {
+		if (account.role !== 'Doctor') throw new ReviewError('This action requires the assigned doctor.', 400);
+		const text = reason.trim();
+		if (!text || text.length > 500) throw new ReviewError('Give a return reason of 1 to 500 characters.', 400);
+		return this.change(version, ['return-to-admin', account.id, text], (record) => {
+			const { state, active } = requireOwner(record, account);
+			if (active.taskId !== 'review-report') throw new ReviewError('This assignment is not for report review.', 400);
+			const returned = { reason: text, returnedBy: account.name, returnedByAccountId: account.id, returnedAt: new Date().toISOString() };
+			return { ...state, status: 'returned', history: [...state.history.slice(0, -1), { ...active, returned }] };
+		});
+	}
+
+	reassign(version: string, account: DemoAccount, doctorId: string): ClinicalState {
+		requireAdministrator(account);
+		const doctor = doctorAccounts.find((candidate) => candidate.id === doctorId);
+		if (!doctor) throw new ReviewError('Choose a doctor account.', 400);
+		return this.change(version, ['reassign', account.id, doctorId], (state) => {
+			const active = state?.history.at(-1);
+			if (!state || state.status !== 'returned' || !active?.returned || active.recipient !== 'Doctor') {
+				throw new ReviewError('A returned doctor assignment is required before reassigning.');
+			}
+			if (recipientId(active) === doctor.id) throw new ReviewError('Choose a different doctor.', 400);
+			const rerouted = send(state, active.taskId, account, doctor.id);
+			const accountId = recipientId(active);
+			rerouted.history.at(-1)!.reassignedFrom = {
+				accountId, assignmentId: active.id, name: active.recipientName ?? doctorAccounts.find((candidate) => candidate.id === accountId)!.name
+			};
+			const plans = state.carePlans ?? [];
+			const visitId = clinicalDocument.visitId;
+			const prior = plans.findLast((plan) => plan.visitId === visitId);
+			const revised: CarePlan = {
+				receivingFacility: '', receivingDepartment: '', priority: 'unspecified', impact: '',
+				...prior, ...visitEntry(state, visitId, account), doctorId: doctor.id, doctorName: doctor.name
+			};
+			return { ...rerouted, carePlans: [...plans, revised] };
+		});
+	}
+
+	saveNote(version: string, account: DemoAccount, visitId: string, noteText: string): ClinicalState {
+		requireAdministrator(account);
+		const text = noteText.trim();
+		if (!text || text.length > 1000) throw new ReviewError('Enter an operational note of 1 to 1,000 characters.', 400);
+		return this.change(version, ['save-note', account.id, visitId, text], (record) => {
+			const state = requireBrief(record);
+			const entry = { ...visitEntry(state, visitId, account), text };
+			return { ...state, operationalNotes: [...(state.operationalNotes ?? []), entry] };
+		});
+	}
+
+	saveCarePlan(
+		version: string, account: DemoAccount, visitId: string, doctorId: string, facility: string,
+		priority = 'unspecified', impactText = '', department = ''
+	): ClinicalState {
+		requireAdministrator(account);
+		const receivingFacility = facility.trim();
+		const receivingDepartment = department.trim();
+		const impact = impactText.trim();
+		if (receivingFacility.length > 120) throw new ReviewError('Use a facility name of no more than 120 characters.', 400);
+		if (receivingDepartment.length > 120 || impact.length > 200) {
+			throw new ReviewError('Use up to 120 characters for the department and 200 for the coordination impact.', 400);
+		}
+		if (priority !== 'unspecified' && priority !== 'routine' && priority !== 'urgent' && priority !== 'critical') {
+			throw new ReviewError('Choose a valid planning priority.', 400);
+		}
+		const doctor = doctorAccounts.find((candidate) => candidate.id === doctorId);
+		if (doctorId && !doctor) throw new ReviewError('Choose a doctor account.', 400);
+		return this.change(version, ['save-care-plan', account.id, visitId, doctorId, receivingFacility, priority, impact, receivingDepartment], (record) => {
+			const state = requireBrief(record);
+			const entry: CarePlan = {
+				...visitEntry(state, visitId, account), doctorId: doctor?.id ?? null,
+				doctorName: doctor?.name ?? null, receivingFacility, priority, impact, receivingDepartment
+			};
+			const plans = state.carePlans ?? [];
+			const prior = plans.findLast((plan) => plan.visitId === visitId);
+			if (prior?.doctorId === entry.doctorId && prior.receivingFacility === receivingFacility &&
+				prior.priority === priority && prior.impact === impact && prior.receivingDepartment === receivingDepartment) return state;
+			return { ...state, carePlans: [...plans, entry] };
 		});
 	}
 
@@ -192,4 +360,25 @@ export function chartSnapshot(record: ClinicalState | null) {
 		record && document.id === 'ED-104' ? { ...document, text: record.sourceText } : document
 	);
 	return { patient: chartPatient, documents };
+}
+
+export function documentedEncounters(documents: ChartDocument[]) {
+	const sources = [
+		{ id: 'ED-082-intake', match: /^Visit services: (.+)$/, description: '' },
+		{ id: 'ED-104', match: /^Prepared by: ([^|]+) \| Transfer packet closed at \d{2}:\d{2}$/, description: 'Prepared the transfer packet' },
+		{ id: 'ED-104-radiology', match: /^Signed by (.+?) \(fictional\)\.$/, description: 'Signed the final radiology report' }
+	];
+	return sources.flatMap(({ id, match, description }) => {
+		const document = documents.find((item) => item.id === id);
+		if (!document) return [];
+		const lines = document.text.split(/\r?\n/);
+		const index = lines.findIndex((line) => match.test(line));
+		if (index < 0) return [];
+		const quote = lines[index];
+		const recorded = match.exec(quote)![1].trim();
+		return [{
+			visitId: document.visitId, facility: chartPatient.hospital, clinician: description ? recorded : null,
+			description: description || recorded, evidence: { documentId: id, line: index + 1, quote }
+		}];
+	});
 }

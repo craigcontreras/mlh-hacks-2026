@@ -8,13 +8,14 @@
 
 | Acceptance example | Observable result |
 | --- | --- |
-| Maya signs in and opens the active transfer. | The administrative workspace shows Jordan Vale's two visits. Dr. Avery Shah and Riley Ortiz land in their own inboxes. Role permissions apply on the server and each signed action records the actual account. |
-| Generate a brief from Jordan’s chart. | Four facts and two documented assignments link to the original transfer note. Three comparisons cite evidence across five documents. Clinical wording and qualifiers come from the signed report. |
-| Inspect the current study and prior visit. | Codex reads the visit ID, side marker and training watermark on the current synthetic image. The earlier intake and archive identify the prior study. The current transfer checklist states its images are still outstanding. Offline mode labels the image data as coming from the manifest. |
-| Maya signs the proposed records request. | A single local Imaging Records queue entry stores accession MB-082-LA, the source references, signer and time. The older images remain pending. A missing, inconsistent or mismatched citation blocks release. |
-| Maya signs a report-review handoff for Avery. | Only the doctor can acknowledge or forward that assigned handoff. Avery can sign the documented image-status task onward to Riley. SQLite retains the source snapshots and history across refresh. |
-| Search the patient directory for Casey. | Both completed visits have their own two documents. Opening Casey’s chart shows only Casey’s visit paperwork. |
-| A participant tries the demo. | Capture which evidence they use to explain what is available, who should act and what sign-off did. Record task time, prompting and a retest after one observed issue is addressed. |
+| Maya signs in and opens the active transfer. | The administrative workspace shows Jordan Vale's next action and the documented visit path. Riley Ortiz and each doctor land in their own inboxes. The server enforces role and assigned-account permissions. |
+| Generate a brief from Jordan’s chart. | Four facts and the documented assignments link to the original text. Cross-checks cite evidence across five documents from two visits. The document list opens to a short summary. The source viewer highlights the specific cited passage. |
+| Inspect the current study and prior visit. | Codex reads the visit ID, side marker and training watermark on the current synthetic image. The earlier intake and archive identify the prior study. The current checklist says those images are outstanding. The offline parser labels the image data as coming from the manifest. |
+| Maya edits the planned path and saves a note. | A plan records the next doctor, destination, department, staff-entered priority and coordination impact. The graph distinguishes internal routing from a planned hospital transfer. Notes and plans carry author and time. |
+| Maya requests the study and sends the assignment to Riley. | A single local request stores accession MB-082-LA and its evidence. Riley records the comparison image status and signs the documented report-review task to the planned doctor. |
+| Avery opens the doctor case. | Avery can sign report review or return it to Maya with a reason. Maya can send the returned assignment to another doctor account. The chain records which account owned, acted on and completed the review. |
+| Search the patient directory for Casey. | Both completed visits have two documents each. Opening Casey’s chart shows Casey’s paperwork. |
+| A participant tries the demo. | Capture whether they identify the next owner, distinguish the report from the outstanding images, and locate the supporting passage. Record time, prompts and a retest after addressing an observed issue. |
 
 ## Registration packet workflow
 
@@ -123,8 +124,8 @@ Suggested split, adjustable between teammates. **Craig** owns the review and rec
 | --- | --- |
 | 0:00–0:25 | Sign in as Maya. Jordan's transfer has arrived and references an earlier X-ray. |
 | 0:25–1:10 | Generate the brief. Open the older archive entry and the current transfer checklist to show which images are still pending. |
-| 1:10–1:50 | Sign the Imaging Records request and send the report-review task to the doctor. |
-| 1:50–2:25 | Avery acknowledges the message, inspects the report and signs the outstanding image-status task onward. Show Riley’s inbox. |
+| 1:10–1:50 | Sign the Imaging Records request and route the status check to nursing. Riley records the status and sends the report review to the doctor. |
+| 1:50–2:25 | Avery opens the cited report and signs the review. Show the signed history or demonstrate the return and reassignment path. |
 | 2:25–3:00 | Show any observed usability finding and retest result. Identify the supported synthetic documents and the next question for staff. |
 
 **Rubric coverage.** The live handoff demonstrates working system (25). The clerk scenario, workflow discovery and observed task support problem/user understanding (20). Source-linked extraction, failure handling and durable approval demonstrate technical rigor (20). A local, bounded template supports feasibility (15). Synthetic data, human sign-off and accessible interaction support equity/privacy/trust (10). The rehearsed three-minute story supports presentation (10).

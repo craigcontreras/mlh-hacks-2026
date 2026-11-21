@@ -2,9 +2,9 @@
 	import { enhance } from '$app/forms';
 	import type { PageProps } from './$types';
 	let { data, form }: PageProps = $props();
-	let accountId = $state<'admin' | 'doctor' | 'nurse'>('admin');
+	const demoCodes = { admin: 'maya-demo-104', doctor: 'avery-demo-104', nurse: 'riley-demo-104', 'doctor-morgan': 'morgan-demo-104' };
+	let accountId = $state<keyof typeof demoCodes>('admin');
 	let passcode = $state('');
-	const demoCodes = { admin: 'maya-demo-104', doctor: 'avery-demo-104', nurse: 'riley-demo-104' };
 </script>
 
 <svelte:head><title>Sign in · Intake Desk</title></svelte:head>

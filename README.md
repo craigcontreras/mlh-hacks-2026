@@ -1,6 +1,6 @@
 # Intake Desk
 
-Intake Desk helps hospital staff answer a question during transfer: **Which information can I pass on, and where did it come from?** A clerk cross-checks current paperwork against earlier visits, signs a records request and routes a documented task. A doctor and nurse receive the task in their own workspaces. All people, facilities, records and images in this demo are fictional.
+Intake Desk helps hospital staff answer a question during transfer: **Which information can I pass on, and where did it come from?** A clerk cross-checks current paperwork against earlier visits and sends the documented follow-up to nursing. The assigned nurse records image status and sends the report to the doctor. The doctor signs the review or sends the assignment back to the clerk. All people, facilities, records and images in this demo are fictional.
 
 ## Run locally
 
@@ -16,20 +16,23 @@ Open the local URL printed by Vite. If you need to sign in, run `codex login`. T
 
 ## Three-minute walkthrough
 
-Open **/login** on the running app. Each account has its own passcode and server-side role. **Fill passcode** enters the displayed demo credential. For a live presentation, sign into three separate browser profiles on the same laptop, or sign out between staff members in one window.
+Open **/login** and select an account. **Fill passcode** enters its demo credential. Sign out to switch users in the same window. Separate browser profiles also work when they point to the same local server.
 
 | Account | Demo passcode | Workspace |
 | --- | --- | --- |
-| Maya Chen · administrative staff | `maya-demo-104` | Compare records, queue the imaging request, sign and send the initial handoff. |
-| Dr. Avery Shah · doctor | `avery-demo-104` | Receive the report-review task, inspect its sources and sign the documented nurse task onward. |
-| Riley Ortiz · nurse | `riley-demo-104` | Receive the image-status task, inspect its sources and acknowledge receipt. |
+| Maya Chen · administrative staff | `maya-demo-104` | Request records, maintain operational notes and planned destinations, and route or reassign the handoff. |
+| Riley Ortiz · nurse | `riley-demo-104` | Record comparison image status and sign the report-review task onward. |
+| Dr. Avery Shah · doctor | `avery-demo-104` | Open the source report and sign the review or return the task with a reason. |
+| Dr. Morgan Lee · doctor | `morgan-demo-104` | Open a reassigned review from an independent inbox. |
 
-1. **Maya receives Jordan Vale’s transfer.** Open **Summarize with Codex**. The parser reads five documents spanning two visits and the printed identifiers on a synthetic current-visit X-ray. Click a source in the brief to open its original document line. The impression comes from the signed radiology report.
-2. **Find the missing comparison.** The older visit’s archive lists study **MB-082-LA**. Today’s registration checklist says its images have yet to be attached. Inspect those two lines, then sign the request to Imaging Records. Its local queue receipt records Maya and the time. The image attachment status stays pending.
-3. **Pass an approved action to the next worker.** Maya signs the report-review task for the doctor. Open Avery’s inbox, acknowledge the message, then sign the remaining image-status task for Riley. In Riley’s inbox, inspect the cited instruction and acknowledge receipt. Refresh to see the saved chain.
-4. **Explore patient history.** Open **Patient records** and search by name, chart number or visit. Jordan has an active transfer. Casey Rowan has four documents across two completed visits, including a prior intake preference and a delivery receipt. Casey’s chart is available for lookup.
+1. **Maya opens Jordan Vale’s transfer** and selects **Summarize with Codex**. Compare the prior imaging archive with the current transfer checklist. The archive lists study **MB-082-LA**, and the checklist says its images are still outstanding and asks the clerk to request them. Click the named evidence to see the highlighted passage in the original document. It opens separately from the document summary.
+2. **Maya requests the prior study and sends to nursing.** The request enters the local Imaging Records queue. The nurse’s image-status task comes from the transfer note. The patient path shows documented visits and planned destinations. Maya can edit the plan and save an operational note alongside the source documents.
+3. **Riley opens Jordan from My inbox.** Record **Still pending** for the comparison images. Sign and send the documented report-review task to the doctor. The nursing update is visible on the doctor’s assignment.
+4. **Avery opens Jordan from My inbox.** Inspect the signed report and sign the review. To demonstrate reassignment, return the handoff instead and enter a reason. Maya opens the returned task and reassigns it to Morgan. Morgan then signs from their own inbox. The history shows the return, the new owner and the signed review.
 
-The [transfer PDF](samples/records/ED-104-transfer-note.pdf), [source text](samples/records/ED-104-transfer-note.txt), [synthetic X-ray](samples/records/ED-104-ankle.png) and [visit records](samples/records) are bundled with the repository. The local parser supports an offline rehearsal. It reads the labels from the image manifest and identifies that method in the brief.
+A plan can record the next doctor, facility, department, staff-entered priority and coordination impact. Same-hospital updates show an internal handoff. A different facility shows a planned external transfer. Original documents, saved plan revisions and the signed handoff each retain their own provenance.
+
+The [transfer PDF](samples/records/ED-104-transfer-note.pdf), [source text](samples/records/ED-104-transfer-note.txt), [synthetic X-ray](samples/records/ED-104-ankle.png) and [visit records](samples/records) are bundled. Select the local parser for an offline rehearsal. Its image labels come from the file manifest.
 
 ## Registration packet walkthrough
 
@@ -44,9 +47,9 @@ For the Design entry, run the five-minute volunteer task and record one observed
 
 **Codex** receives the selected synthetic chart in a temporary CLI session with a read-only sandbox. For Jordan’s handoff, the current image is passed as an image attachment alongside numbered text. The verifier checks patient and visit identity, the original quotes, signed report agreement, study identifiers, documented ownership, and the printed image markers. An inconsistent or incomplete draft blocks sign-off. The generated X-ray illustrates the current visit. Clinical findings are quoted from a fictional signed report. The supported fixtures have a known structure.
 
-**SQLite** stores signed tasks, acknowledgment times, the named records request and reviewed document snapshots at `.data/intake.sqlite` by default. The server derives the signer and recipient permissions from the signed-in account. Repeating a request or refreshing the app preserves the receipt. Demo sessions expire and require another sign-in after a server restart. Use the app on loopback with the bundled synthetic data. Imaging Records and the staff inboxes are local to this demo.
+**SQLite** stores signed tasks, nurse status, doctor review or return, the named records request, operational note and plan revisions, and reviewed document snapshots at `.data/intake.sqlite` by default. The server derives the signer and recipient permissions from the signed-in account. Repeating a request or refreshing the app preserves the receipt. Demo sessions expire and require another sign-in after a server restart. Use the app on loopback with the bundled synthetic data. Imaging Records and the staff inboxes are local to this demo.
 
-Optional server settings are `INTAKE_DB_PATH` for a different SQLite file and `INTAKE_CODEX_MODEL` to choose a model available to your CLI account. The event laptop uses `INTAKE_DB_PATH=.data/role-demo.sqlite` for this walkthrough. Set the same path when restarting to reopen the same handoffs. Maya can use **Demo controls → Reset handoff demo** to rehearse Jordan’s transfer from the beginning.
+Optional server settings are `INTAKE_DB_PATH` for a different SQLite file and `INTAKE_CODEX_MODEL` to choose a model available to your CLI account. The event laptop uses `INTAKE_DB_PATH=.data/workflow-demo.sqlite` for this walkthrough. Set the same path when restarting to reopen the same handoffs. Maya can use **Demo controls → Reset handoff demo** to rehearse Jordan’s transfer from the beginning.
 
 ## Checks
 

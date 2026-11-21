@@ -4,13 +4,14 @@ import {
 	authenticateDemoAccount, demoAccounts, endSession, requireAccountRole, sessionAccount, sessionCookie, startSession
 } from './accounts';
 
-const [admin, doctor, nurse] = demoAccounts;
+const [admin, doctor, nurse, morgan] = demoAccounts;
 
 describe('demo account authority', () => {
 	it('requires the individual account passcode and returns no passcode in the account', () => {
 		expect(authenticateDemoAccount('admin', 'maya-demo-104')).toEqual(admin);
 		expect(authenticateDemoAccount('doctor', 'avery-demo-104')).toEqual(doctor);
 		expect(authenticateDemoAccount('nurse', 'riley-demo-104')).toEqual(nurse);
+		expect(authenticateDemoAccount('doctor-morgan', 'morgan-demo-104')).toEqual(morgan);
 		expect(authenticateDemoAccount('doctor', 'riley-demo-104')).toBeNull();
 		expect(authenticateDemoAccount('admin', null)).toBeNull();
 		expect(admin).not.toHaveProperty('passcode');

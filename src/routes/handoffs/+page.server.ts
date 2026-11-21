@@ -1,8 +1,8 @@
 import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
-import { requireAccount, requireAccountRole } from '../../lib/server/accounts';
+import { doctorAccounts, requireAccount, requireAccountRole } from '../../lib/server/accounts';
 import { clinicalDocument, chartDocuments } from '../../lib/server/chart';
 import { summarizeDocument } from '../../lib/server/clinical-summary';
-import { chartSnapshot, clinicalStore } from '../../lib/server/clinical-store';
+import { chartSnapshot, clinicalStore, documentedEncounters } from '../../lib/server/clinical-store';
 import { ProviderError } from '../../lib/server/codex';
 import { ReviewError } from '../../lib/server/store';
 import type { Actions, PageServerLoad } from './$types';
@@ -11,13 +11,23 @@ export const load: PageServerLoad = ({ locals }) => {
 	requireAccount(locals);
 	const store = clinicalStore();
 	const record = store.get();
+	const chart = chartSnapshot(record);
 	return {
 		document: { ...clinicalDocument, text: record?.sourceText ?? clinicalDocument.text, sourceUrl: '/handoffs/source' },
-		record, chart: chartSnapshot(record), version: record?.version ?? store.version()
+		record, chart, doctors: doctorAccounts, recordedEncounters: documentedEncounters(chart.documents),
+		version: record?.version ?? store.version()
 	};
 };
 
-function action(command: 'summarize' | 'approve' | 'requestPriorStudy' | 'reset') {
+function textField(form: FormData, name: string, fallback = '') {
+	const value = form.get(name) ?? fallback;
+	if (typeof value !== 'string') throw new ReviewError('Use text for operational inputs.', 400);
+	return value;
+}
+
+type Command = 'summarize' | 'approve' | 'requestPriorStudy' | 'reassign' | 'saveNote' | 'saveCarePlan' | 'reset';
+
+function action(command: Command) {
 	return async ({ locals, request }: RequestEvent) => {
 		const account = command === 'summarize' ? requireAccount(locals) : requireAccountRole(locals, 'Administrative staff');
 		const form = await request.formData();
@@ -40,6 +50,14 @@ function action(command: 'summarize' | 'approve' | 'requestPriorStudy' | 'reset'
 				store.approve(version, account, task);
 			} else if (command === 'requestPriorStudy') {
 				store.requestPriorStudy(version, account);
+			} else if (command === 'reassign') {
+				store.reassign(version, account, textField(form, 'doctorId'));
+			} else if (command === 'saveNote') {
+				store.saveNote(version, account, textField(form, 'visitId'), textField(form, 'noteText'));
+			} else if (command === 'saveCarePlan') {
+				store.saveCarePlan(version, account, textField(form, 'visitId'), textField(form, 'doctorId'),
+					textField(form, 'receivingFacility'), textField(form, 'priority', 'unspecified'),
+					textField(form, 'impact'), textField(form, 'receivingDepartment'));
 			} else {
 				store.reset(version);
 			}
@@ -54,5 +72,6 @@ function action(command: 'summarize' | 'approve' | 'requestPriorStudy' | 'reset'
 
 export const actions: Actions = {
 	summarize: action('summarize'), approve: action('approve'),
-	requestPriorStudy: action('requestPriorStudy'), reset: action('reset')
+	requestPriorStudy: action('requestPriorStudy'), reassign: action('reassign'),
+	saveNote: action('saveNote'), saveCarePlan: action('saveCarePlan'), reset: action('reset')
 };
