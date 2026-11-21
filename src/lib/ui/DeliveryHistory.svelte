@@ -8,7 +8,7 @@
 	<h3>Handoff history</h3>
 	<ol>{#each record.history as event (event.id)}
 		<li><strong>{event.signedBy} → {event.recipient}</strong><time datetime={event.sentAt}>{formatter.format(new Date(event.sentAt))}</time>
-			{#if event.acknowledgedAt}<small>Receipt acknowledged <time datetime={event.acknowledgedAt}>{formatter.format(new Date(event.acknowledgedAt))}</time></small>{/if}
+			{#if event.acknowledgedAt}<small>Receipt acknowledged{event.acknowledgedBy ? ' by ' + event.acknowledgedBy : ''} <time datetime={event.acknowledgedAt}>{formatter.format(new Date(event.acknowledgedAt))}</time></small>{/if}
 		</li>
 	{/each}</ol>
 </section>

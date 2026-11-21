@@ -4,7 +4,8 @@
 	import type { LayoutProps } from './$types';
 	import '#lib/ui/intake.css';
 
-	let { children }: LayoutProps = $props();
+	let { children, data }: LayoutProps = $props();
+	const admin = $derived(data.account?.role === 'Administrative staff');
 </script>
 
 <svelte:head>
@@ -15,22 +16,26 @@
 <a class="skip-link" href="#content">Skip to content</a>
 <header class="mast">
 	<div class="shell topbar">
-		<a class="brand" href={resolve('/handoffs')} aria-label="Intake Desk home"><span class="brandmark" aria-hidden="true"></span>Intake Desk</a>
-		<nav class="workspace-nav" aria-label="Workspaces">
-			<a href={resolve('/handoffs')} aria-current={page.url.pathname === resolve('/handoffs') ? 'page' : undefined}>Handoff review</a>
-			<a href={resolve('/inbox')} aria-current={page.url.pathname === resolve('/inbox') ? 'page' : undefined}>Worker inbox</a>
-		</nav>
-		<span class="demo-flag"><i aria-hidden="true"></i>Synthetic data</span>
+		<a class="brand" href={resolve(!data.account ? '/login' : admin ? '/handoffs' : '/inbox')} aria-label="Intake Desk home"><span class="brandmark" aria-hidden="true"></span>Intake Desk</a>
+		{#if data.account}
+			<nav class="workspace-nav" aria-label="Workspaces">
+				{#if !admin}<a href={resolve('/inbox')} aria-current={page.url.pathname === resolve('/inbox') ? 'page' : undefined}>My inbox</a>{/if}
+				<a href={resolve('/handoffs')} aria-current={page.url.pathname === resolve('/handoffs') ? 'page' : undefined}>{admin ? 'Transfer workspace' : 'Patient chart'}</a>
+				<a href={resolve('/patients')} aria-current={page.url.pathname === resolve('/patients') ? 'page' : undefined}>Patient records</a>
+			</nav>
+			<div class="account-nav"><span>{data.account.name}<small>{data.account.label} · Demo</small></span>
+				<form method="POST" action={resolve('/logout')}><button type="submit">Sign out</button></form></div>
+		{:else}<span class="demo-flag"><i aria-hidden="true"></i>Synthetic demo</span>{/if}
 	</div>
 </header>
 <main id="content" class="shell main" tabindex="-1">
 	{@render children()}
 </main>
 
-<footer class="shell app-footer">
+{#if admin}<footer class="shell app-footer">
 	<nav aria-label="Registration workflow">
 		<span>Registration workflow</span>
 		<a href={resolve('/?sample=corrected')} aria-current={page.url.pathname === resolve('/') ? 'page' : undefined}>Transfer packets</a>
 		<a href={resolve('/desk')} aria-current={page.url.pathname === resolve('/desk') ? 'page' : undefined}>Registration desk</a>
 	</nav>
-</footer>
+</footer>{/if}

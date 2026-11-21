@@ -104,7 +104,7 @@
 				</div>
 				<div class="sign-area">
 					<p class="kicker">Clerk sign-off</p>
-					<p id="sign-help">{ready ? 'Approve as Demo clerk to send these reviewed values to the registration desk.' : draft.issues.length || !hasAllFields ? 'Resolve the listed issues before this packet can be approved.' : 'Select the documented correction to enable approval.'}</p>
+					<p id="sign-help">{ready ? 'Approve as ' + (data.account?.name ?? 'the reviewing clerk') + ' to send these reviewed values to the registration desk.' : draft.issues.length || !hasAllFields ? 'Resolve the listed issues before this packet can be approved.' : 'Select the documented correction to enable approval.'}</p>
 					<div class="buttons">
 						<button class="button" type="submit" formaction={'?/approve&sample=' + data.sampleId} aria-describedby="sign-help" disabled={!ready || Boolean(pending)}>Approve for registration desk</button>
 						<button class="button secondary" type="submit" formaction={'?/hold&sample=' + data.sampleId} disabled={Boolean(pending)}>Hold for clarification</button>

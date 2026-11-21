@@ -4,6 +4,7 @@ import PacketWorkspace from './PacketWorkspace.svelte';
 
 it('keeps the selected packet in both extraction form targets when a server action fails', async () => {
 	const model = await render(PacketWorkspace, { data: {
+		account: { id: 'admin', name: 'Maya Chen', label: 'Admin', role: 'Administrative staff' },
 		sampleId: 'consistent', samples: [], record: null,
 		packet: { id: 'ER-020', title: 'Consistent transfer', documents: [] }
 	} });

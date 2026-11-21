@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import type { AccountId, DemoAccount } from './accounts';
 import { ClinicalStore } from './clinical-store';
 import { resolveDraft, type Draft, type Evidence, type Field } from './extraction';
 import { fixtures, type FixtureId } from './fixtures';
@@ -10,6 +11,7 @@ export interface Receipt {
 	packetId: string;
 	values: Record<Field, Evidence & { documentTitle?: string }>;
 	reviewer: string;
+	reviewerAccountId?: AccountId;
 	destination: string;
 	approvedAt: string;
 	method: Draft['method'];
@@ -71,7 +73,8 @@ export class PacketStore {
 		if (!result.changes) throw stale();
 	}
 
-	change(id: FixtureId, version: string, action: 'hold' | 'resume' | 'approve' | 'reset', selectedRef: string | null = null) {
+	change(id: FixtureId, version: string, action: 'hold' | 'resume' | 'approve' | 'reset', account: DemoAccount, selectedRef: string | null = null) {
+		if (account.role !== 'Administrative staff') throw new ReviewError('Registration requires an administrator.', 400);
 		const record = this.get(id);
 		if (!record) throw stale();
 		// Retries of a completed sign-off read the existing receipt without changing its time.
@@ -94,7 +97,7 @@ export class PacketStore {
 			receipt = {
 				packetId: record.draft.packetId,
 				values: { patient: cited(values.patient), facility: cited(values.facility), callback: cited(values.callback) },
-				reviewer: 'Demo clerk', destination: 'Registration desk',
+				reviewer: account.name, reviewerAccountId: account.id, destination: 'Registration desk',
 				approvedAt: new Date().toISOString(), method: record.draft.method
 			};
 		}

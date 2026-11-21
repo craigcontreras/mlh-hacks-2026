@@ -3,8 +3,20 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { resolve } from 'node:path';
+
+const intakeDatabase = resolve(process.env.INTAKE_DB_PATH || '.data/intake.sqlite').replaceAll('\\', '/');
 
 export default defineConfig({
+	server: {
+		fs: {
+			deny: [
+				'.env', '.env.*', '*.{crt,pem,key,p12,pfx,cer,der}', '.npmrc', '.yarnrc.yml', '**/.git/**',
+				'**/samples/records/**', '**/src/lib/server/**', '**/.svelte-kit/output/server/**',
+				'**/.data/**', intakeDatabase, intakeDatabase + '-*'
+			]
+		}
+	},
 	plugins: [
 		svelteDevtools(),
 		sveltekit({

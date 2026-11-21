@@ -1,12 +1,14 @@
 import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
+import { accountHome, requireAccount, requireAccountRole } from '../lib/server/accounts';
 import { fixtures, isFixtureId, type FixtureId } from '../lib/server/fixtures';
 import { parsePacket } from '../lib/server/extraction';
 import { parseWithCodex, ProviderError } from '../lib/server/codex';
 import { packetStore, ReviewError } from '../lib/server/store';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ url }) => {
-	if (!url.search) redirect(307, '/handoffs');
+export const load: PageServerLoad = ({ locals, url }) => {
+	if (!url.search) redirect(307, accountHome(requireAccount(locals)));
+	requireAccountRole(locals, 'Administrative staff');
 	const sample = url.searchParams.get('sample');
 	const sampleId = isFixtureId(sample) ? sample : 'corrected';
 	return {
@@ -20,7 +22,8 @@ export const load: PageServerLoad = ({ url }) => {
 type Command = 'extract' | 'hold' | 'resume' | 'approve' | 'reset';
 
 function action(command: Command) {
-	return async ({ request }: RequestEvent) => {
+	return async ({ locals, request }: RequestEvent) => {
+		const account = requireAccountRole(locals, 'Administrative staff');
 		const form = await request.formData();
 		const id = form.get('sampleId');
 		const version = form.get('version');
@@ -38,7 +41,7 @@ function action(command: Command) {
 				store.saveDraft(id, version, draft);
 			} else {
 				const selected = form.get('selectedRef');
-				store.change(id, version, command, typeof selected === 'string' && selected ? selected : null);
+				store.change(id, version, command, account, typeof selected === 'string' && selected ? selected : null);
 			}
 		} catch (error) {
 			if (error instanceof ReviewError) return fail(error.status, { message: error.message });

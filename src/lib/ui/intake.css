@@ -215,3 +215,60 @@ a, .text-button { color: var(--forest); text-underline-offset: .18em; }
 
 .back-to-brief { display: none; width: fit-content; margin-top: 5px; font: 600 13px/1.5 Inter, Arial, sans-serif; }
 .numbered-note li:target .back-to-brief, .numbered-note li:focus-within .back-to-brief { display: block; }
+.account-nav { display:flex; align-items:center; gap:16px; margin-left:auto; font-size:14px; }
+.account-nav span { line-height:1.25; font-weight:650; }
+.account-nav small { display:block; font-size:11px; font-weight:450; color:#d0e0cf; }
+.account-nav button { background:transparent; border:1px solid #78998b; color:white; padding:5px 10px; border-radius:5px; font-size:12px; }
+.login-layout { display:grid; grid-template-columns:minmax(0,.95fr) minmax(330px,425px); align-items:center; justify-content:center; gap:clamp(24px,8vw,110px); min-height: min(560px,70vh); }
+.welcome h1 { margin:9px 0; font-size:clamp(46px,7vw,90px); line-height:.98; }
+.welcome .lead { max-width:30ch; font-size:21px; line-height:1.38; }
+.welcome-line { display:flex; align-items:center; gap:9px; font-size:12px; color:var(--muted); margin-top:27px; }
+.welcome-line .brandmark { background:#d9e8d2; }
+.login-card { padding:25px; }
+.login-card h2 { margin-bottom:20px; }
+.login-card label { display:block; margin:15px 0 5px; font-size:14px; font-weight:600; }
+.login-card select, .login-card input { background:#fff; color:var(--ink); border:1px solid #aabba8; border-radius:6px; width:100%; min-height:43px; padding:8px 10px; font:inherit; }
+.demo-code { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:5px; color:var(--muted); font-size:12px; }
+.sign-in { margin-top:23px; width:100%; }
+@media(max-width:740px){.login-layout { grid-template-columns:1fr; align-items:start; gap:24px; }.welcome .lead{font-size:17px}.welcome-line{margin-top:11px}}
+@media(max-width:620px){.account-nav{gap:7px;font-size:12px}.account-nav small{font-size:10px}.topbar:has(.demo-flag){padding-block:9px;}}
+.chart-files { overflow:hidden; }
+.visit-group { padding:15px 18px; border-bottom:1px solid var(--line); }
+.visit-group:last-child { border-bottom:0; }
+.visit-head { padding:2px 0 10px; }
+.visit-head h3 { margin-top:3px; font-size:17px; }
+.chart-file { border-top:1px solid #e0e6da; }
+.chart-file summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:11px; padding:11px 1px; }
+.chart-file summary::-webkit-details-marker{display:none}
+.chart-file summary strong { font-size:14px; font-weight:570; }
+.chart-file .case-icon { display:block; width:14px; height:17px; color:#6a826c; }
+.chart-file .case-icon::after { width:6px;height:1px;top:4px;left:3px; }
+.chart-file .caret { margin-left:auto; margin-right:3px; font:20px/1 Georgia,serif; color:#517058; }
+.chart-file[open] .caret { transform:rotate(90deg); }
+.chart-docbody { padding:0 7px 9px; }
+.chart-docbody .numbered-note { max-height:310px; overflow:auto; scrollbar-color:#a9b9a6 #f6f8f1; overscroll-behavior:contain; padding:3px 6px; }
+.chart-docbody .source-downloads { font-size:13px; }
+.chart-image { margin:0 0 11px; }
+.chart-image img { display:block; width:100%; max-height:330px; object-fit:contain; background:#171b1e; border-radius:5px; }
+.chart-image figcaption { font-size:12px; color:var(--muted); margin-top:4px; }
+.image-icon { color:#536e58; font:22px/1 ui-monospace,monospace; }
+.image-review { color:var(--muted); margin-top:12px; padding:7px 0; font-size:13px; }
+.image-review summary { color:var(--forest); cursor:pointer; }
+.image-review p { margin:6px 0; }
+.reconcile { border-top:1px solid var(--line); margin-top:11px; padding-top:12px; }
+.reconcile h3 { font-size:18px; }
+.finding { margin-top:11px; }
+.finding h4 { font-size:14px; margin:0 0 2px; }
+.finding p, .records-action > p:not(.kicker) { font-size:14px; }
+.citations { display:flex; align-items:baseline; flex-wrap:wrap; gap:2px 10px; margin-top:3px; }
+.citations .line-ref { white-space:normal; font:600 11px/1.6 Inter,Arial,sans-serif; }
+.records-action { padding:15px 22px;background:#edf4e5;border-block:1px solid #c9d7c2; }
+.records-action h3 { margin:3px 0; }
+.records-action .button { margin-top:11px; }
+@media(max-width:620px){.records-action,.visit-group{padding:14px}.workspace-nav{column-gap:16px}.workspace-nav a{font-size:13px}.account-nav{margin-left:auto;}}
+.archived-delivery { border-top:1px solid var(--line); padding:11px 0; }
+.archived-delivery .tag { margin:4px 0; }
+
+.clinical-details { margin-top:8px; font-size:14px; }
+.clinical-details summary,.reconcile summary { cursor:pointer; color:var(--forest); }
+.reconcile summary {font-size:17px;font-weight:650;letter-spacing:-.03em;}

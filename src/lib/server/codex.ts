@@ -1,14 +1,14 @@
 import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve as resolvePath } from 'node:path';
 import { candidateSchema, validateModelOutput } from './extraction';
 import { fixtures, type FixtureId } from './fixtures';
 
 export class ProviderError extends Error {}
 let running = false;
 
-export async function runStructuredCodex(schema: object, prompt: string): Promise<unknown> {
+export async function runStructuredCodex(schema: object, prompt: string, includeChartImage = false): Promise<unknown> {
 	if (running) throw new ProviderError('Codex is reading another sample. Retry when it finishes or use the local parser.');
 	running = true;
 	let directory: string | undefined;
@@ -25,6 +25,9 @@ export async function runStructuredCodex(schema: object, prompt: string): Promis
 			'-c', 'web_search="disabled"', '-c', 'model_reasoning_effort="low"',
 			'--output-schema', schemaFile, '--output-last-message', outputFile, '--color', 'never'];
 		if (model) args.push('--model', model);
+		if (includeChartImage) args.push('--image', resolvePath('samples/records/ED-104-ankle.png'));
+		// End option parsing so the variadic --image flag cannot consume the stdin prompt argument.
+		args.push('--');
 		args.push('-');
 		await new Promise<void>((resolve, reject) => {
 			const child = execFile('codex', args, { cwd: directory, timeout: 90_000, killSignal: 'SIGKILL', maxBuffer: 2 * 1024 * 1024 },

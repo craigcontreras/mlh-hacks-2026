@@ -1,0 +1,10 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY REGISTRATION
+Fictional training record · Synthetic patient and facility
+Document: Prior visit intake
+Chart identity: C-116 | visit ED-071 | Mossbridge Community Hospital
+Patient: Casey Rowan
+Date: 2026-08-18
+
+09:04 · Registration interview
+Casey requested large-type print for written visit instructions. Registration added a print request to the visit packet.
+Recorded by Morgan Finch, registration clerk (fictional).

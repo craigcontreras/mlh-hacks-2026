@@ -1,11 +1,14 @@
-import { clinicalDocument } from '../../../lib/server/clinical-summary';
+import { requireAccount } from '../../../lib/server/accounts';
+import { clinicalDocument } from '../../../lib/server/chart';
 import { clinicalStore } from '../../../lib/server/clinical-store';
+import { sampleResponse, textResponse } from '../../../lib/server/sample-assets';
+import type { RequestHandler } from './$types';
 
-export function GET() {
+export const GET: RequestHandler = ({ locals, url }) => {
+	requireAccount(locals);
+	const format = url.searchParams.get('format');
+	if (format === 'pdf') return sampleResponse('ED-104-transfer-note.pdf', true);
+	if (format === 'image') return sampleResponse('ED-104-ankle.png', true);
 	const text = clinicalStore().get()?.sourceText ?? clinicalDocument.text;
-	return new Response(text, { headers: {
-		'Content-Type': 'text/plain; charset=utf-8',
-		'Content-Disposition': 'attachment; filename="ED-104-transfer-note.txt"',
-		'Cache-Control': 'no-store'
-	} });
-}
+	return textResponse(text, 'ED-104-transfer-note.txt');
+};
