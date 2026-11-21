@@ -93,7 +93,7 @@ On the event laptop, five Chromium trials per case measured the time from **Pars
 
 **SQLite** stores the automatic assignment, signed tasks, nurse observations, doctor review or return, the named records request, operational note and plan revisions, and reviewed document snapshots at `.data/intake.sqlite` by default. The server derives the signer and recipient permissions from the signed-in account. Repeating a request or refreshing the app preserves the receipt. Demo sessions expire and require another sign-in after a server restart. Use the app on loopback with the bundled synthetic data. Imaging Records and the staff inboxes are local to this demo.
 
-Optional server settings are `INTAKE_DB_PATH` for a different SQLite file and `INTAKE_CODEX_MODEL` to choose a model available to your CLI account. Set `GEMINI_API_KEY` on the server to enable **Order findings with Gemini** for synthetic records. The rehearsal on port 5174 uses `INTAKE_DB_PATH=.data/nurse-first-demo.sqlite`. Set the same path when restarting to reopen the same handoffs. Maya can use **Demo controls → Reset handoff demo** to rehearse Jordan’s transfer from the beginning.
+Optional server settings are `INTAKE_DB_PATH` for a different SQLite file and `INTAKE_CODEX_MODEL` to choose a model available to your CLI account. Set `GEMINI_API_KEY` on the server to enable **Order findings with Gemini** for synthetic records. The fresh video rehearsal on port 5174 uses `INTAKE_DB_PATH=.data/jordan-video-rehearsal.sqlite`. The previously signed run is preserved in `.data/nurse-first-demo.sqlite`. Set the same path when restarting to reopen the same handoffs. Maya can use **Demo controls → Reset handoff demo** to rehearse Jordan’s transfer from the beginning.
 
 ## Checks
 
