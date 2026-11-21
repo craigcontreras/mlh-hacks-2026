@@ -40,7 +40,7 @@
 			<summary>Compare current and prior records</summary>
 			{#each record.summary.crossChecks as check (check.label)}
 				<div class="finding">
-					<h4>{check.label}</h4>
+					<h4>{check.label === 'Comparison images pending' ? 'Comparison images at transfer' : check.label}</h4>
 					<p>{check.result}</p>
 					<div class="citations">
 						{#each check.evidence as evidence (evidence.documentId + ':' + evidence.line)}
@@ -56,7 +56,7 @@
 			<summary>Transfer note findings</summary>
 			<dl class="brief-facts">
 				{#each record.summary.facts as fact (fact.kind)}
-					<div><dt>{fact.label}</dt><dd>{fact.text}<br /><ChartCitation line={fact.line} label={factSources[fact.kind]} /></dd></div>
+					<div><dt>{fact.kind === 'pending' ? 'Pending at transfer' : fact.label}</dt><dd>{fact.text}<br /><ChartCitation line={fact.line} label={factSources[fact.kind]} /></dd></div>
 				{/each}
 			</dl>
 		</details>

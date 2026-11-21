@@ -94,7 +94,7 @@ describe('longitudinal source reconciliation', () => {
 	it('links prior and current visits without treating an archived study as an attachment', () => {
 		const local = verifyChartSummary(chartDocuments, 'local');
 		expect(local.issues).toEqual([]);
-		expect(local.crossChecks?.map((check) => check.label)).toEqual(['Current report corroborated', 'Prior study on file', 'Comparison images pending']);
+		expect(local.crossChecks?.map((check) => check.label)).toEqual(['Current report corroborated', 'Prior study on file', 'Comparison images at transfer']);
 		expect(local.adminAction?.accession).toBe('MB-082-LA');
 		expect(local.imageReview?.method).toBe('manifest');
 		for (const source of [...local.crossChecks!.flatMap((check) => check.evidence), ...local.adminAction!.evidence]) {

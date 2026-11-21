@@ -13,7 +13,8 @@ export const prepareBrief = (async ({ locals, request, url }) => {
 	}
 	try {
 		const store = packetStore();
-		const view = store.patients.view(account, store.clinical.get(), '', false, patientId);
+		const { record, practice } = store.clinical.snapshot();
+		const view = store.patients.view(account, record, '', false, patientId, practice);
 		if (!view.patient) return fail(404, { patientId, briefError: 'This patient chart is unavailable.' });
 		return { patientId, chartBrief: await prepareChartBrief(view, mode) };
 	} catch (error) {

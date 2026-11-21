@@ -1,7 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { clinicalActivity, type PatientEvent } from '../clinical-activity';
 import { demoAccounts, type DemoAccount } from './accounts';
-import { chartDocuments, chartPatient, clinicalDocument, type ChartDocument } from './chart';
+import { chartDocuments, chartPatient, clinicalDocument, practiceReplyEvidence, type ChartDocument, type PracticeRound } from './chart';
 import { chartSnapshot, isAssignedTo, type ClinicalState } from './clinical-store';
 import { ReviewError } from './store';
 import registration from '../../../samples/records/ED-116-registration.txt?raw';
@@ -144,7 +144,7 @@ export class PatientRegistry {
 		}
 	}
 
-	view(account: DemoAccount, state: ClinicalState | null, query: string, mine: boolean, selectedId: string | null) {
+	view(account: DemoAccount, state: ClinicalState | null, query: string, mine: boolean, selectedId: string | null, practice: PracticeRound | null = null) {
 		const patients = this.db.prepare('SELECT id,name,hospital FROM hospital_patients').all() as unknown as (typeof chartPatient)[];
 		const matches: PatientRow[] = [];
 		let patient: PatientRow | null = null;
@@ -158,9 +158,16 @@ export class PatientRegistry {
 			const stored = selectDocs.all(person.id) as unknown as StoredDocument[];
 			if (!stored.length) continue;
 			const transfer = person.id === chartPatient.id;
-			const savedDocs = transfer && state ? chartSnapshot(state).documents : [];
+			const savedDocs = transfer && (state || practice) ? chartSnapshot(state, practice).documents : [];
 			const records = stored.map(doc => savedDocs.find(saved => saved.id === doc.id) ?? doc);
 			const entries = records.map((doc, index) => entry(doc, stored[index]));
+			const reply = transfer && practiceReplyEvidence(records);
+			if (reply) entries.push({
+				id: reply.documentId + '-reply', visitId: clinicalDocument.visitId,
+				at: new Date(clinicalDocument.date + 'T13:42:00-05:00').toISOString(),
+				title: 'Imaging Records reply', source: 'Registration and transfer checklist',
+				documentId: reply.documentId, line: reply.line, text: reply.quote
+			});
 			entries.push(...selectLogs.all(person.id) as unknown as PatientEvent[]);
 			if (transfer && state) entries.push(...clinicalActivity(state, clinicalDocument.visitId));
 			entries.sort((a, b) => b.at.localeCompare(a.at));

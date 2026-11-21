@@ -15,24 +15,36 @@ Open the local URL printed by Vite. For optional model extraction, install the C
 
 ## Three-minute walkthrough
 
-Open **/login** and select an account. **Fill passcode** enters its demo credential. Sign out to switch users in the same window. Separate browser profiles also work when they point to the same local server.
+**Open with Jordan’s problem.** “Jordan’s ankle was X-rayed today. The doctor’s written report is here. Pictures from an earlier visit were requested separately. How does the next person know which item is ready, where that information came from, and who is chasing the rest?”
 
-Start in **Patient overview**. Open **Casey Rowan** for a visit within Mossbridge. In **Patient log**, open the nursing reassessment, physician progress note, and paperwork receipt to see what each person documented. Maya can use **Add coordination update** to record a new entry against a visit. Reopen Casey as a nurse or doctor to see the same dated entry and author. **All patients** shows both charts. **My assignments** filters to work currently assigned to the signed-in account or its administrative queue.
+For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the second run. At **/login**, select a name, click **Fill passcode → Sign in**. To switch people, sign out and repeat. You can also sign into each account in a separate browser profile on the same laptop. The steps below follow the original Jordan sample.
 
-| Account | Demo passcode | Workspace |
-| --- | --- | --- |
-| Maya Chen · administrative staff | `maya-demo-104` | Request records, maintain operational notes and planned destinations, and route or reassign the handoff. |
-| Riley Ortiz · nurse | `riley-demo-104` | Record comparison image status and sign the report-review task onward. |
-| Dr. Avery Shah · doctor | `avery-demo-104` | Open the source report and sign the review or return the task with a reason. |
-| Dr. Morgan Lee · doctor | `morgan-demo-104` | Open a reassigned review from an independent inbox. |
+<details>
+<summary>Demo account passcodes for manual sign-in</summary>
 
-1. **Maya opens Jordan Vale → Open transfer workspace → Prepare transfer brief** to use the local parser. For model extraction, choose **Parser options → Summarize with Codex**. Expand **Compare current and prior records**. The prior imaging archive lists study **MB-082-LA**, and the current transfer checklist says its images are still outstanding. Click either source to see the highlighted passage in the original document.
-2. **Maya sends the documented image check to Riley.** To show the archive request first, expand **Request the prior study (optional)**. The request enters the local Imaging Records queue. **Sign and send to nurse** assigns the check. Open **Visit history and plan editor** to see earlier visits or change a destination.
-3. **Riley opens My inbox → Jordan Vale.** Casey’s completed paperwork check has its own page. For Jordan, choose **Still pending → Record image status → Sign and send report to doctor**. Riley’s observation goes to Dr. Avery Shah by default. The source link shows where the sending team requested the review.
-4. **Avery opens My inbox → Jordan Vale → Read signed radiology impression.** For the reassignment demo, select **Return to administrative staff**, enter “Called to another patient,” and click **Return handoff to admin**. Maya opens Jordan’s transfer workspace, selects **Dr. Morgan Lee**, and clicks **Sign and reassign**. Morgan opens Jordan in **My inbox**, checks the report and clicks **Sign report review**.
-5. **Riley closes the outstanding image check.** Morgan’s signature creates a follow-up for Riley because the prior images were still pending. Back in Jordan’s inbox page, choose **Arrived → Save follow-up status**. The patient log retains both the signature and the later image update. If Riley had recorded **Arrived** before the doctor signed, the workflow would already be complete.
+| Maya Chen | Riley Ortiz | Dr. Avery Shah | Dr. Morgan Lee |
+| --- | --- | --- | --- |
+| `maya-demo-104` | `riley-demo-104` | `avery-demo-104` | `morgan-demo-104` |
 
-Use the [illustrated doctor walkthrough](docs/Jordan-doctor-walkthrough.pdf) to rehearse. When demonstrating the sign-off, say “Morgan can review today’s report now. Riley still owns the missing images, and both decisions are recorded in Jordan’s chart.”
+</details>
+
+| On screen | What the narrator can say |
+| --- | --- |
+| **Maya Chen · administrator.** In **Patient overview**, open **Jordan Vale → Open transfer workspace → Prepare transfer brief**. Expand **Compare current and prior records → Current transfer checklist**. Point to the highlighted sentence about the missing images. Close it and click **Sign and send to nurse**. | “Here’s exactly where the paper says the older pictures are missing. Maya can give Riley one specific thing to check.” |
+| **Riley Ortiz · nurse.** Open **My inbox → Jordan Vale**. For this rehearsal, choose **Still pending → Record image status → Sign and send report to doctor**. Point to the receiving doctor’s name before sending. | “The paperwork told us what was missing at departure. Riley records what’s available now. That update travels with the report.” |
+| **Dr. Avery Shah · first doctor.** Open **My inbox → Jordan Vale → Read signed radiology impression**. Close the source. Expand **Return to administrative staff**, enter “Called to another patient,” and click **Return handoff to admin**. | “This is the original report author’s conclusion. Avery can read it, but another patient needs Avery’s attention. The return records why someone else must take this review.” |
+| **Maya, then Dr. Morgan Lee.** As Maya, reopen Jordan’s transfer workspace. Choose **Dr. Morgan Lee → Sign and reassign**. As Morgan, open **My inbox → Jordan Vale → Read signed radiology impression**, close the source, and click **Sign report review**. Pause on the confirmation. | “Morgan just signed that they reviewed today’s report. The screen still names Riley as responsible for the missing pictures. Those are two separate pieces of work.” |
+| **Riley.** Open Jordan in **My inbox** again. To demonstrate that the older images have now arrived, choose **Arrived → Save follow-up status**. In Jordan’s chart, scroll to **Patient log**. | “The next shift can see who read the report and who confirmed the images arrived, even though those things happened at different times.” |
+
+**Check you can explain it.** Pause right after Morgan signs. Ask your teammate to show, without your help, who reviewed today’s report, where its conclusion was written, and who still owns the older images. The answers are **Morgan’s signed review**, **the highlighted passage in the radiology report**, and **Riley’s open follow-up**. If you have only a minute, have Avery click **Sign report review** directly and show the same open follow-up with Avery as the signer.
+
+**Rehearse a different answer.** As Maya, open Jordan’s transfer workspace and click **Reset and randomize sample**, then **Prepare transfer brief**. This starts a fresh Jordan handoff. Find the new lookup number for the older X-ray in the prior imaging archive and the current transfer checklist. As Riley, click **Read Imaging Records reply** and record the status that office actually reports. If the images have arrived, the doctor’s signature finishes the work. If they are still pending or their arrival is unconfirmed, show who owns the follow-up. Ask your teammate to predict which outcome you’ll see before the doctor signs.
+
+**What you can claim.** You demonstrated a source lookup, a named handoff and a follow-up that survives sign-off. The timed result below measures how quickly the sample brief appears. Time saved by hospital staff or patients would require observation in a real workflow. [Timing and method](#extraction-and-storage) · [Illustrated doctor walkthrough](docs/Jordan-doctor-walkthrough.pdf)
+
+**If a judge asks whether this is only for transfers**, open **Patient overview → Casey Rowan** and scroll to **Patient log**. Show the nursing reassessment and physician progress note from the same hospital visit. Maya can add a dated entry with **Add coordination update**. Open Casey under another account to see the same update and author.
+
+**Other controls for Jordan.** In the original sample, **Request the prior study (optional)** lets Maya request the archived images by their lookup number, **MB-082-LA**. **Visit history and plan editor** shows the earlier visits and lets Maya edit a planned destination. **Parser options → Summarize with Codex** runs optional model extraction.
 
 A plan can record the next doctor, facility, department, staff-entered priority and coordination impact. Same-hospital updates show an internal handoff. A different facility shows a planned external transfer. Original documents, saved plan revisions and the signed handoff each retain their own provenance.
 

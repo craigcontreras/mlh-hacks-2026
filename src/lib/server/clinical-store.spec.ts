@@ -4,8 +4,8 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { demoAccounts } from './accounts';
-import { chartDocuments, clinicalDocument } from './chart';
-import { verifyChartSummary } from './clinical-summary';
+import { chartDocuments, clinicalDocument, practiceDocuments, practiceReplyEvidence } from './chart';
+import { prepareClinicalChart, verifyChartSummary } from './clinical-summary';
 import { documentedEncounters, isAssignedTo } from './clinical-store';
 import { parsePacket } from './extraction';
 import { fixtures } from './fixtures';
@@ -245,5 +245,78 @@ describe('SQLite clinical handoffs', () => {
 		expect(() => clinical.saveSummary(initial, summary, 4, sourceText)).toThrow(/changed/);
 		expect(() => clinical.acknowledge(sent.version, doctor)).toThrow(/changed/);
 		expect(clinical.saveSummary(resetVersion, summary, 4, sourceText).history).toEqual([]);
+	});
+
+	it('persists a new unsent practice packet, rejects stale writes and cites the same study throughout the workflow', async () => {
+		const initial = store.clinical.version();
+		expect(() => store.clinical.randomize(initial, nurse)).toThrow(/administrator/);
+		store.clinical.randomize(initial, admin);
+		const first = store.clinical.snapshot();
+		expect(first.record).toBeNull();
+		expect(first.practice).toBeTruthy();
+		store.close();
+		store = new PacketStore(path);
+		const workflow = store.clinical;
+		workflow.randomize(initial, admin);
+		expect(workflow.snapshot()).toEqual(first);
+		expect(() => workflow.reset(initial)).toThrow(/changed/);
+
+		const reply = practiceReplyEvidence(first.chart.documents)!;
+		const jordan = store.patients.view(nurse, null, '', false, 'J-104', first.practice);
+		expect(jordan.timeline).toContainEqual(expect.objectContaining({
+			title: 'Imaging Records reply', documentId: reply.documentId, line: reply.line, text: reply.quote, at: '2026-11-21T18:42:00.000Z'
+		}));
+		const casey = store.patients.view(nurse, null, '', false, 'C-116', first.practice);
+		expect(casey.timeline.some(event => event.title === 'Imaging Records reply')).toBe(false);
+		expect(casey.documents.every(doc => doc.patientId === 'C-116')).toBe(true);
+		const { documents, summary: extracted } = await prepareClinicalChart('local', first.chart.documents);
+		expect(extracted.issues).toEqual([]);
+		expect(reply.quote).toContain(first.practice!.accession);
+		expect(documents.find(doc => doc.id === 'ED-082-study')?.text).toContain(first.practice!.accession);
+		expect(() => workflow.saveSummary(first.version, summary, 5, sourceText, chartDocuments)).toThrow(/current practice packet/);
+		const draft = workflow.saveSummary(first.version, extracted, 5, sourceText, documents);
+		const assigned = workflow.approve(draft.version, admin, 'check-images');
+		const observed = workflow.recordImageStatus(assigned.version, nurse, first.practice!.status);
+		const sent = workflow.forward(observed.version, nurse, 'review-report');
+		const signed = workflow.signReview(sent.version, doctor);
+		expect(!!signed.imageFollowup).toBe(first.practice!.status !== 'arrived');
+		workflow.randomize(signed.version, admin);
+		const next = workflow.snapshot();
+		expect(next.record).toBeNull();
+		expect(next.practice!.accession).not.toBe(first.practice!.accession);
+		expect(next.practice!.status).not.toBe(first.practice!.status);
+		expect(() => workflow.saveSummary(first.version, extracted, 5, sourceText, documents)).toThrow(/changed/);
+		workflow.reset(next.version);
+		expect(workflow.snapshot()).toMatchObject({ record: null, practice: null, chart: { documents: chartDocuments } });
+	});
+
+	it.each(['arrived', 'unable-to-confirm', 'still-pending'] as const)('uses the 13:42 %s reply to determine whether a new image request is available', status => {
+		const docs = practiceDocuments({ accession: 'MB-082-508', status });
+		const extracted = verifyChartSummary(docs, 'local');
+		expect(extracted.issues).toEqual([]);
+		expect(extracted.crossChecks).toContainEqual(expect.objectContaining({
+			label: 'Imaging Records reply at 13:42', evidence: [practiceReplyEvidence(docs)]
+		}));
+		const workflow = store.clinical;
+		const draft = workflow.saveSummary(workflow.version(), extracted, 5, sourceText, docs);
+		if (status === 'arrived') {
+			expect(extracted.adminAction).toBeUndefined();
+			expect(() => workflow.requestPriorStudy(draft.version, admin)).toThrow(/verified request/);
+		} else {
+			expect(extracted.adminAction?.accession).toBe('MB-082-508');
+			expect(workflow.requestPriorStudy(draft.version, admin).priorStudyRequest?.accession).toBe('MB-082-508');
+		}
+	});
+
+	it('adds practice support to an older database without disturbing the active signed assignment', () => {
+		const draft = store.clinical.saveSummary(store.clinical.version(), summary, 4, sourceText, chartDocuments);
+		const sent = store.clinical.approve(draft.version, admin, 'check-images');
+		store.close();
+		const legacy = new DatabaseSync(path);
+		try { legacy.exec('ALTER TABLE clinical_handoff DROP COLUMN practice'); } finally { legacy.close(); }
+		store = new PacketStore(path);
+		expect(store.clinical.snapshot()).toMatchObject({ record: sent, practice: null, version: sent.version });
+		store.clinical.randomize(sent.version, admin);
+		expect(store.clinical.snapshot().practice).toBeTruthy();
 	});
 });

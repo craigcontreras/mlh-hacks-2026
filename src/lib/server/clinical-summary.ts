@@ -151,8 +151,8 @@ async function summarizeSources(documents: ChartDocument[], mode: 'codex' | 'loc
 }
 
 
-export async function prepareClinicalChart(mode: 'codex' | 'local') {
-	const { documents, pdfInput } = await ingestJordanPdfs();
+export async function prepareClinicalChart(mode: 'codex' | 'local', sources = chartDocuments) {
+	const { documents, pdfInput } = await ingestJordanPdfs(sources);
 	const summary = await summarizeSources(documents, mode);
 	return { documents, summary: { ...summary, pdfInput } };
 }

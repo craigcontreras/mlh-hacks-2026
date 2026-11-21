@@ -1,6 +1,6 @@
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { requireAccountRole } from '../../../lib/server/accounts';
-import { chartPatient, clinicalDocument } from '../../../lib/server/chart';
+import { chartPatient, clinicalDocument, practiceReplyEvidence } from '../../../lib/server/chart';
 import { chartSnapshot, clinicalStore, plannedReportDoctor } from '../../../lib/server/clinical-store';
 import { inboxFor } from '../../../lib/server/patient-inbox';
 import { ReviewError } from '../../../lib/server/store';
@@ -14,12 +14,13 @@ export const load: PageServerLoad = ({ locals, params }) => {
 	const archived = inbox.completed.filter(item => item.patientId === patient.patientId);
 	const livePatient = patient.patientId === chartPatient.id;
 	const record = livePatient ? inbox.record : null;
+	const documents = record ? chartSnapshot(record).documents : archived.map(item => item.document);
 	return {
 		role: account.role, patient, record, deliveries: livePatient ? inbox.deliveries : [],
 		nextDoctor: record && account.role === 'Nurse' && !inbox.followup ? plannedReportDoctor(record).name : null,
 		followup: livePatient && inbox.followup, closedFollowup: livePatient ? inbox.closedFollowup : null,
 		completions: archived.map(item => item.completion),
-		documents: livePatient && record ? chartSnapshot(record).documents : archived.map(item => item.document)
+		documents, practiceReply: practiceReplyEvidence(documents)
 	};
 };
 

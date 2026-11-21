@@ -10,14 +10,12 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals }) => {
 	const account = requireAccount(locals);
-	const store = clinicalStore();
-	const record = store.get();
-	const chart = chartSnapshot(record);
+	const { record, chart, version, practice } = clinicalStore().snapshot();
 	return {
 		document: { ...clinicalDocument, text: record?.sourceText ?? clinicalDocument.text, sourceUrl: '/handoffs/source' },
 		record, chart, doctors: doctorAccounts, recordedEncounters: documentedEncounters(chart.documents),
 		ownsDelivery: isAssignedTo(record?.history.at(-1), account),
-		version: record?.version ?? store.version()
+		version, practiceAccession: practice?.accession ?? null
 	};
 };
 
@@ -27,7 +25,7 @@ function textField(form: FormData, name: string, fallback = '') {
 	return value;
 }
 
-type Command = 'summarize' | 'approve' | 'requestPriorStudy' | 'reassign' | 'saveNote' | 'saveCarePlan' | 'reset';
+type Command = 'summarize' | 'approve' | 'requestPriorStudy' | 'reassign' | 'saveNote' | 'saveCarePlan' | 'reset' | 'randomize';
 
 function action(command: Command) {
 	return async ({ locals, request }: RequestEvent) => {
@@ -38,13 +36,13 @@ function action(command: Command) {
 		try {
 			const store = clinicalStore();
 			if (command === 'summarize') {
-				if (store.version() !== version) throw new ReviewError('This document changed. Reload it before summarizing.');
-				const record = store.get();
+				const { record, chart, version: currentVersion } = store.snapshot();
+				if (currentVersion !== version) throw new ReviewError('This document changed. Reload it before summarizing.');
 				if (record && record.status !== 'draft') throw new ReviewError('This handoff has already been sent.');
 				const mode = form.get('mode');
 				if (mode !== 'codex' && mode !== 'local') throw new ReviewError('Choose an available summary method.', 400);
 				const start = performance.now();
-				const { summary, documents } = await prepareClinicalChart(mode);
+				const { summary, documents } = await prepareClinicalChart(mode, chart.documents);
 				const transfer = documents.find(doc => doc.id === clinicalDocument.id)!;
 				store.saveSummary(version, summary, Math.round(performance.now() - start), transfer.text, documents);
 			} else if (command === 'approve') {
@@ -63,6 +61,8 @@ function action(command: Command) {
 				store.saveCarePlan(version, account, textField(form, 'visitId'), textField(form, 'doctorId'),
 					textField(form, 'receivingFacility'), textField(form, 'priority', 'unspecified'),
 					textField(form, 'impact'), textField(form, 'receivingDepartment'));
+			} else if (command === 'randomize') {
+				store.randomize(version, account);
 			} else {
 				store.reset(version);
 			}
@@ -78,5 +78,5 @@ function action(command: Command) {
 export const actions: Actions = {
 	summarize: action('summarize'), approve: action('approve'),
 	requestPriorStudy: action('requestPriorStudy'), reassign: action('reassign'),
-	saveNote: action('saveNote'), saveCarePlan: action('saveCarePlan'), reset: action('reset')
+	saveNote: action('saveNote'), saveCarePlan: action('saveCarePlan'), reset: action('reset'), randomize: action('randomize')
 };

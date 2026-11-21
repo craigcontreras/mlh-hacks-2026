@@ -29,6 +29,35 @@ export const chartDocuments: ChartDocument[] = [
 export const clinicalDocument = { ...chartDocuments[0], patient: chartPatient.name };
 export const chartImage = { sourceUrl: '/samples/ED-104-ankle.png', visit: 'ED-104', side: 'L', marker: 'SYNTHETIC DEMO' };
 
+export type ImageStatus = 'arrived' | 'still-pending' | 'unable-to-confirm';
+export interface PracticeRound { accession: string; status: ImageStatus }
+const replyPrefix = '13:42 · Imaging Records reply: ';
+const replies: Record<ImageStatus, string> = {
+	arrived: 'The receiving viewer now shows the comparison images for study',
+	'still-pending': 'The comparison images are still pending for study',
+	'unable-to-confirm': 'Imaging Records could not confirm delivery of the comparison images for study'
+};
+
+export function practiceDocuments(practice: PracticeRound | null): ChartDocument[] {
+	if (!practice) return chartDocuments;
+	return chartDocuments.map(doc => {
+		if (doc.id !== 'ED-104-registration' && doc.id !== 'ED-082-study') return doc;
+		let text = doc.text.replaceAll('MB-082-LA', practice.accession);
+		if (doc.id === 'ED-104-registration') {
+			text = text.trimEnd() + '\n\n' + replyPrefix + replies[practice.status] + ' ' + practice.accession + '.\n';
+		}
+		return { ...doc, text };
+	});
+}
+
+export function practiceReplyEvidence(documents: ChartDocument[]): ChartEvidence | undefined {
+	const checklist = documents.find(doc => doc.id === 'ED-104-registration');
+	const lines = checklist?.text.split(/\r?\n/);
+	if (!checklist || !lines) return;
+	const index = lines.findIndex(line => line.startsWith(replyPrefix));
+	if (index >= 0) return { documentId: checklist.id, line: index + 1, quote: lines[index] };
+}
+
 export interface ChartEvidence { documentId: string; line: number; quote: string }
 export interface ChartFindings {
 	crossChecks?: { label: string; result: string; evidence: ChartEvidence[] }[];
@@ -96,6 +125,17 @@ export function reconcileChart(docs: ChartDocument[], mode: 'codex' | 'local', r
 	const intake = read('prior-intake'), archive = read('prior-archive');
 	const pending = read('pending-handoff'), status = read('attachment-status'), action = read('clerk-instruction');
 	const checks = result.crossChecks!;
+	const reply = practiceReplyEvidence(docs);
+	let imagesArrived = false;
+	if (reply && archive) {
+		const delivery = (Object.entries(replies) as [ImageStatus, string][]).find(([, message]) =>
+			reply.quote === replyPrefix + message + ' ' + archive.capture[2] + '.');
+		if (!delivery) appendIssue('The later imaging reply does not confirm a status for the prior accession.');
+		else {
+			imagesArrived = delivery[0] === 'arrived';
+			checks.push({ label: 'Imaging Records reply at 13:42', result: reply.quote.slice(replyPrefix.length), evidence: [reply] });
+		}
+	}
 	if (transfer && independent) {
 		const reportLines = byId.get('ED-104-radiology')!.text.split(/\r?\n/);
 		const studies = reportLines.filter((line) => line.startsWith('Study: '));
@@ -112,7 +152,7 @@ export function reconcileChart(docs: ChartDocument[], mode: 'codex' | 'local', r
 	}
 	if (pending && status && archive) {
 		if (status.capture[1] !== archive.capture[2]) appendIssue('The current transfer references a different prior accession than the archive.');
-		else checks.push({ label: 'Comparison images pending', result: `Study ${archive.capture[2]} is on file. Its images have not been attached to this transfer.`, evidence: [pending.evidence, status.evidence, archive.evidence] });
+		else checks.push({ label: 'Comparison images at transfer', result: `Study ${archive.capture[2]} was on file. At departure, the transfer packet did not include its images.`, evidence: [pending.evidence, status.evidence, archive.evidence] });
 	}
 	const { visit, side, marker, sourceUrl } = chartImage;
 	if (mode === 'local') result.imageReview = { method: 'manifest', sourceUrl, labels: [visit, side, marker], text: 'Local file manifest lists the visit, side and synthetic marker. The local parser does not read image pixels.' };
@@ -121,7 +161,7 @@ export function reconcileChart(docs: ChartDocument[], mode: 'codex' | 'local', r
 	} else appendIssue('The printed image labels were missing or disagreed with the file manifest.');
 	if (!result.issues.length && action && archive && status) {
 		if (action.capture[3] !== archive.capture[2] || action.capture[4] !== byId.get('ED-104')!.visitId || !archive.capture[1].toLowerCase().startsWith(action.capture[2].toLowerCase() + ' ')) appendIssue('The clerk instruction does not match the documented prior study and destination visit.');
-		else result.adminAction = { text: action.capture[1], accession: archive.capture[2], evidence: [action.evidence, archive.evidence, status.evidence] };
+		else if (!imagesArrived) result.adminAction = { text: action.capture[1], accession: archive.capture[2], evidence: [action.evidence, archive.evidence, status.evidence] };
 	}
 	return result;
 }

@@ -1,7 +1,7 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomInt, randomUUID } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import { demoAccounts, doctorAccounts, type AccountId, type DemoAccount } from './accounts';
-import { chartDocuments, chartPatient, clinicalDocument, type ChartDocument, type ChartEvidence } from './chart';
+import { chartDocuments, chartPatient, clinicalDocument, practiceDocuments, type ChartDocument, type ChartEvidence, type ImageStatus, type PracticeRound } from './chart';
 import type { ClinicalSummary } from './clinical-summary';
 import { packetStore, ReviewError } from './store';
 
@@ -24,7 +24,7 @@ export interface ClinicalHandoff {
 	reassignedFrom?: { accountId: AccountId; name: string; assignmentId: string };
 }
 
-export type ImageStatus = 'arrived' | 'still-pending' | 'unable-to-confirm';
+export type { ImageStatus } from './chart';
 type ImageObservation = { status: ImageStatus; recordedBy: string; recordedByAccountId: AccountId; recordedAt: string };
 export type CarePriority = 'unspecified' | 'routine' | 'urgent' | 'critical';
 
@@ -147,23 +147,32 @@ function checkedStatus(status: string): ImageStatus {
 
 export class ClinicalStore {
 	constructor(private readonly db: DatabaseSync) {
-		this.db.exec(`
+		this.db.exec('BEGIN IMMEDIATE');
+		try {
+			this.db.exec(`
 			CREATE TABLE IF NOT EXISTS clinical_handoff (
 				singleton INTEGER PRIMARY KEY CHECK(singleton=1),
 				version TEXT NOT NULL,
 				data TEXT,
-				last_request TEXT
+				last_request TEXT,
+				practice TEXT
 			);
 			INSERT INTO clinical_handoff(singleton, version) VALUES (1, '')
 			ON CONFLICT(singleton) DO NOTHING;
 		`);
+			if (!db.prepare("SELECT 1 FROM pragma_table_info('clinical_handoff') WHERE name='practice'").get()) {
+				db.exec('ALTER TABLE clinical_handoff ADD COLUMN practice TEXT');
+			}
+			db.exec('COMMIT');
+		} catch (error) { db.exec('ROLLBACK'); throw error; }
 	}
 
 	private read() {
-		const row = this.db.prepare('SELECT version, data, last_request FROM clinical_handoff WHERE singleton=1').get()!;
+		const row = this.db.prepare('SELECT version, data, last_request, practice FROM clinical_handoff WHERE singleton=1').get()!;
 		const version = row.version as string;
 		const data = row.data === null ? null : JSON.parse(row.data as string) as StoredState;
-		return { version, data, lastRequest: row.last_request as string | null };
+		const practice = row.practice === null ? null : JSON.parse(row.practice as string) as PracticeRound;
+		return { version, data, practice, lastRequest: row.last_request as string | null };
 	}
 
 	get(): ClinicalState | null {
@@ -173,19 +182,26 @@ export class ClinicalStore {
 
 	version(): string { return this.read().version; }
 
-	private change(version: string, request: unknown[], update: (state: StoredState | null) => StoredState): ClinicalState;
-	private change(version: string, request: unknown[], update: (state: StoredState | null) => null): null;
-	private change(version: string, request: unknown[], update: (state: StoredState | null) => StoredState | null) {
+	snapshot() {
+		const { data, version, practice } = this.read();
+		const record = data && { ...data, version };
+		return { record, version, practice, chart: chartSnapshot(record, practice) };
+	}
+
+	private change(version: string, request: unknown[], update: (state: StoredState | null, practice: PracticeRound | null) => StoredState): ClinicalState;
+	private change(version: string, request: unknown[], update: () => null, newPractice: (previous: PracticeRound | null) => PracticeRound | null): null;
+	private change(version: string, request: unknown[], update: (state: StoredState | null, practice: PracticeRound | null) => StoredState | null, newPractice?: (previous: PracticeRound | null) => PracticeRound | null) {
 		const key = createHash('sha256').update(JSON.stringify([version, ...request])).digest('hex');
 		const before = this.read();
 		if (before.lastRequest === key) return before.data && { ...before.data, version: before.version };
 		if (before.version !== version) throw new ReviewError('This handoff changed. Review the latest version.');
 
-		const data = update(before.data);
-		if (data === before.data) return data && { ...data, version: before.version };
+		const data = update(before.data, before.practice);
+		const practice = newPractice ? newPractice(before.practice) : before.practice;
+		if (data === before.data && practice === before.practice) return data && { ...data, version: before.version };
 		const newVersion = randomUUID();
-		const saved = this.db.prepare('UPDATE clinical_handoff SET version=?, data=?, last_request=? WHERE singleton=1 AND version=?')
-			.run(newVersion, data && JSON.stringify(data), key, version);
+		const saved = this.db.prepare('UPDATE clinical_handoff SET version=?, data=?, last_request=?, practice=? WHERE singleton=1 AND version=?')
+			.run(newVersion, data && JSON.stringify(data), key, practice && JSON.stringify(practice), version);
 		if (!saved.changes) {
 			const after = this.read();
 			if (after.lastRequest === key) return after.data && { ...after.data, version: after.version };
@@ -198,8 +214,11 @@ export class ClinicalStore {
 		if (!Number.isSafeInteger(elapsedMs) || elapsedMs < 0 || typeof sourceText !== 'string' || !sourceText.trim()) {
 			throw new ReviewError('The extraction needs its source text and elapsed time.', 400);
 		}
-		return this.change(version, ['save', summary, elapsedMs, sourceText, sources], (state) => {
+		return this.change(version, ['save', summary, elapsedMs, sourceText, sources], (state, practice) => {
 			if (state && state.status !== 'draft') throw new ReviewError('The signed summary is read-only.');
+			if (practice && JSON.stringify(sources) !== JSON.stringify(practiceDocuments(practice))) {
+				throw new ReviewError('Prepare the brief from the current practice packet.');
+			}
 			if (state?.priorStudyRequest && (state.sourceText !== sourceText || JSON.stringify(state.sources) !== JSON.stringify(sources))) {
 				throw new ReviewError('The queued request already cites this version of the chart.');
 			}
@@ -387,14 +406,25 @@ export class ClinicalStore {
 	}
 
 	reset(version: string): void {
-		this.change(version, ['reset'], () => null);
+		this.change(version, ['reset'], () => null, () => null);
+	}
+
+	randomize(version: string, account: DemoAccount): void {
+		requireAdministrator(account);
+		this.change(version, ['randomize', account.id], () => null, previous => {
+			const accessions = ['MB-082-174', 'MB-082-326', 'MB-082-508', 'MB-082-632', 'MB-082-751', 'MB-082-893'];
+			const statuses: ImageStatus[] = ['arrived', 'still-pending', 'unable-to-confirm'];
+			const studies = accessions.filter(id => id !== previous?.accession);
+			const replies = statuses.filter(status => status !== previous?.status);
+			return { accession: studies[randomInt(studies.length)], status: replies[randomInt(replies.length)] };
+		});
 	}
 }
 
 export function clinicalStore() { return packetStore().clinical; }
 
-export function chartSnapshot(record: ClinicalState | null) {
-	const documents = record?.sources ?? chartDocuments.map((document) =>
+export function chartSnapshot(record: ClinicalState | null, practice: PracticeRound | null = null) {
+	const documents = record?.sources ?? practiceDocuments(practice).map((document) =>
 		record && document.id === 'ED-104' ? { ...document, text: record.sourceText } : document
 	);
 	return { patient: chartPatient, documents };

@@ -44,22 +44,42 @@
 				<select name="imageStatus" id="followup-status" required><option value="">Choose status</option><option value="arrived">Arrived</option><option value="still-pending">Still pending</option><option value="unable-to-confirm">Unable to confirm</option></select>
 				<button class="button" type="submit" formaction="?/followup" disabled={busy}>Save follow-up status</button>
 			{:else if finished && current.reviewed}<h2>Report review signed</h2><p>Recorded by {current.reviewed.reviewedBy}.</p>
-				{#if data.record.imageFollowup && !data.record.imageFollowup.resolvedAt}<p>Image follow-up assigned to {data.record.imageFollowup.recipientName}.</p>{/if}
+				{#if data.record.imageFollowup && !data.record.imageFollowup.resolvedAt}
+					<p>Image follow-up assigned to {data.record.imageFollowup.recipientName}.</p>
+				{:else if data.record.imageStatus?.status === 'arrived'}
+					<p>Image check complete.</p>
+				{/if}
 			{:else}
 				<h2>{data.role === 'Nurse' ? 'Check comparison image status' : 'Review the final report'}</h2>
 			{/if}
 			{#if data.role === 'Doctor' && data.record.imageStatus}
 				<p class="request-receipt">Nursing update · Comparison images {data.record.imageStatus.status.replaceAll('-',' ')}<br /><small>Last recorded by {data.record.imageStatus.recordedBy}.</small></p>
+				{#if data.practiceReply}
+					<ChartCitation doc={data.practiceReply.documentId} line={data.practiceReply.line} label="Read Imaging Records reply" />
+				{/if}
 			{/if}
+			{#if data.role === 'Doctor' && impression}<ChartCitation doc={'documentId' in impression ? impression.documentId : 'ED-104'} line={impression.line} label="Read signed radiology impression" />{/if}
 			{#if !finished || !current.reviewed}
-				{#if data.role === 'Doctor' && impression}<ChartCitation doc={'documentId' in impression ? impression.documentId : 'ED-104'} line={impression.line} label="Read signed radiology impression" />{/if}
 				<p class="small">Handoff from {current.signedBy}.</p>
 				{#if task}<ChartCitation line={task.line} label={data.role + ' assignment in transfer note'}/>{/if}
 				{#if plan}<div class="routing-context"><p class="kicker">Routing plan · {plan.savedBy}</p><p><strong>Priority</strong> <span class:raised-priority={plan.priority === 'urgent' || plan.priority === 'critical'}>{plan.priority ?? 'unspecified'}</span> · <strong>Impact</strong> {plan.impact || 'Unspecified'}</p>
 					{#if plan.receivingFacility || plan.receivingDepartment}<p><strong>Planned destination</strong> {[plan.receivingFacility,plan.receivingDepartment].filter(Boolean).join(' · ')}</p>{/if}
 				</div>{/if}
 				{#if ordered && data.role === 'Nurse'}
-					{#if !data.record.imageStatus}<label for="image-status">Observed status of the requested prior images</label><select id="image-status" name="imageStatus" required><option value="">Choose status</option><option value="arrived">Arrived</option><option value="still-pending">Still pending</option><option value="unable-to-confirm">Unable to confirm</option></select><button class="button" type="submit" formaction="?/recordImageStatus" disabled={busy}>Record image status</button>
+					{#if data.practiceReply}
+						<p>The older X-rays were missing at transfer. Imaging Records sent an update at 13:42.
+							<ChartCitation doc={data.practiceReply.documentId} line={data.practiceReply.line} label="Read Imaging Records reply" />
+						</p>
+					{/if}
+					{#if !data.record.imageStatus}
+						<label for="image-status">Observed status of the requested prior images</label>
+						<select id="image-status" name="imageStatus" required>
+							<option value="">Choose status</option>
+							<option value="arrived">Arrived</option>
+							<option value="still-pending">Still pending</option>
+							<option value="unable-to-confirm">Unable to confirm</option>
+						</select>
+						<button class="button" type="submit" formaction="?/recordImageStatus" disabled={busy}>Record image status</button>
 					{:else}
 						<p class="request-receipt">Image status recorded · {data.record.imageStatus.status.replaceAll('-',' ')}</p>
 						{#if next}

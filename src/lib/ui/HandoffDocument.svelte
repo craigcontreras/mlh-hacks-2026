@@ -12,7 +12,7 @@
 	const formatDate = new Intl.DateTimeFormat('en-US', {month:'short', day:'numeric', year:'numeric', timeZone:'UTC'});
 	const overviewFields: Record<string, RegExp> = {
 		'ED-104': /^(Jordan came |Transport has |The sending clerk spoke )/,
-		'ED-104-registration': /^(Prior study link: |Clerk instruction: )/,
+		'ED-104-registration': /^(Prior study link: |Clerk instruction: |13:42 · Imaging Records reply: )/,
 		'ED-104-radiology': /^(Study: |Impression: )/,
 		'ED-082-intake': /^Visit services: /,
 		'ED-082-study': /^Archive entry: /,
