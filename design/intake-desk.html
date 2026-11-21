@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#173d37">
+<title>Intake Desk · Transfer packet review</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css" media="print" onload="this.media='all'">
+<script async src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+<style>
+*{box-sizing:border-box}
+:root{color-scheme:light;--ink:#18332c;--muted:#4e635a;--line:#d6dfd5;--forest:#133e34;--paper:#fffefa;--bg:#f2f5ee;--mint:#deedcc;--ochre:#71430b;--sand:#fbebc9;font:16px/1.5 "Inter","Helvetica Neue",Arial,sans-serif}
+body{margin:0;background:var(--bg);color:var(--ink);font:inherit}
+[hidden]{display:none!important}
+:where(main,header,section,article,aside,form,fieldset,div,li){min-width:0}
+h1,h2,h3,p,dl,dd,fieldset,blockquote{margin:0}
+h1,h2,h3{line-height:1.17}
+.top{background:var(--forest);border-bottom:4px solid #b7d493;color:#fffefa}
+.wrap{width:min(1100px,calc(100% - 56px));margin:auto}
+.bar,.heading,.action,.paper-head,.matched-line,.result-line,.foot,.step-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.bar{min-height:68px}
+.brand{display:flex;align-items:center;gap:12px;font-size:23px;font-weight:680;letter-spacing:-.055em}
+.logo{position:relative;display:inline-block;width:32px;height:32px;background:var(--mint);border-radius:8px}
+.logo:before,.logo:after{content:"";position:absolute;border:2px solid var(--forest);border-radius:2px;width:12px;height:16px;left:9px;top:6px}
+.logo:after{left:12px;top:9px;background:var(--mint);box-shadow:inset 0 -4px var(--forest)}
+.top-note{font-size:13px;color:#e4f0e6;display:flex;align-items:center;gap:8px}
+.top-note:before{content:"";width:7px;height:7px;background:#c4dfa5;border-radius:50%}
+main{padding:32px 0 0}
+.eyebrow,.caption{font:600 11px/1.4 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.heading{margin:3px 0 25px;align-items:end;flex-wrap:wrap}
+h1{font-size:clamp(35px,4vw,53px);font-weight:610;letter-spacing:-.065em}
+.subtitle{color:var(--muted);margin-top:6px}
+.badge.packet-status{display:inline-flex;align-items:center;flex:none;width:auto;max-width:100%;height:auto;min-height:30px;border:1px solid #d9bc83;background:var(--sand);color:var(--ochre);border-radius:99px;padding:5px 12px;white-space:normal;line-height:1.3;font-weight:600;font-size:13px}
+.badge.packet-status[data-tone=green]{background:#e0eddf;color:#254934;border-color:#b0c7aa}
+.badge.packet-status[data-tone=hold]{background:#e7ebe7;color:#35463c;border-color:#b9c9be}
+.layout{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:20px;align-items:start}
+.surface{border:1px solid var(--line);background:var(--paper);border-radius:14px;overflow:hidden}
+.pane{padding:22px 26px}
+.section-title{font-size:23px;letter-spacing:-.045em;font-weight:640}
+.identity{border-bottom:1px solid var(--line);background:#f9faf6}
+.identity dl{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:15px}
+dt,.small{font-size:13px;color:var(--muted)}
+dd{font-weight:600;margin-top:2px}
+fieldset{border:0;padding:0}
+.review-title{font-size:22px;font-weight:650;letter-spacing:-.04em;margin:0 0 4px}
+.help{font-size:14px;color:var(--muted)}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:15px 0 13px}
+.choice{display:flex;flex-direction:column;align-items:flex-start;position:relative;border:1px solid #b9c7b9;border-radius:8px;text-align:left;padding:10px 13px;cursor:pointer;background:#fff}
+.choice:has(input:checked){border-color:var(--forest);background:#edf4e9;box-shadow:inset 0 0 0 1px var(--forest)}
+.choice input{position:absolute;right:12px;top:15px;width:16px;height:16px;accent-color:var(--forest)}
+.ext{font-size:27px;font-variant-numeric:tabular-nums;line-height:1.15;font-weight:630;letter-spacing:-.055em}
+.label-copy{font-size:13px;margin-top:5px;color:var(--muted)}
+:focus-visible,.choice:has(input:focus-visible){outline:3px solid #276599;outline-offset:3px}
+.btn.control{display:inline-flex;justify-content:center;align-items:center;min-height:42px;height:auto;max-width:100%;white-space:normal;text-align:center;padding:8px 14px;border-radius:7px;border:1px solid var(--forest);background:var(--forest);color:#fff;font:600 14px/1.4 "Inter",Arial,sans-serif;text-transform:none;box-shadow:none;cursor:pointer}
+.btn.control:hover:not(:disabled){filter:brightness(1.15)}
+.btn.control:disabled{color:#536258;background:#e0e5dd;border-color:#d3dbd2;cursor:default}
+.btn.control.secondary{background:transparent;color:var(--forest);border-color:#a8b7a9}
+.action{align-items:center;flex-wrap:wrap;margin-top:14px;justify-content:flex-start}
+.note{margin:14px 0 0;padding:9px 12px;border-left:3px solid #b97b29;background:var(--sand);color:#603d12;font-size:14px}
+.actions-area{background:#f6f8f1;border-top:1px solid var(--line)}
+.step-head{justify-content:flex-start;margin-bottom:4px}
+.step-title{font-weight:620;font-size:16px}
+.docs>.caption{margin:2px 0 12px}
+.document{padding:17px 22px 19px;border:1px solid #cbd5c8;border-radius:8px;background:var(--paper);box-shadow:3px 3px 0 #e0e6db;position:relative}
+.document+.document{margin-top:14px}
+.paper-head{padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line);align-items:baseline;flex-wrap:wrap;gap:4px}
+.paper-head h3{font-size:16px;letter-spacing:-.025em;font-weight:650}
+.paper-head time{font:12px/1.5 ui-monospace,monospace;color:var(--muted)}
+.document p{font-family:Georgia,"Times New Roman",serif;line-height:1.6;font-size:17px}
+.document .signed{font:italic 14px/1.4 Georgia,serif;color:var(--muted);margin-top:9px}
+mark{background:#f6e9c3;color:#453711;border-radius:2px;padding:0 3px}
+.single{max-width:720px}
+.receipt{margin:16px 0 12px}
+.result-line{align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)}
+.result-line dd{text-align:right}
+.stamp{margin:13px 0 0;padding:12px;border-left:3px solid #6b8f65;background:#eff4eb}
+.foot{border-top:1px solid var(--line);align-items:baseline;margin-top:24px;padding:15px 0 25px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.foot summary,.link-button{cursor:pointer;color:var(--forest);font:inherit}
+.foot details{max-width:630px}
+.foot details p{margin-top:6px}
+.link-button{border:0;background:transparent;text-decoration:underline;text-underline-offset:2px}
+.jump{display:none;color:var(--forest);text-decoration:underline;text-underline-offset:3px;font-size:14px}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-width:740px){.jump{display:inline-block;margin-top:8px}.layout{grid-template-columns:1fr}.wrap{width:min(600px,calc(100% - 32px))}.heading{margin-bottom:18px}.pane{padding:18px}.bar{min-height:60px}.docs{order:0}.top-note{font-size:12px}main{padding-top:20px}}
+@media(max-width:400px){.choices{grid-template-columns:1fr}.identity dl{grid-template-columns:1fr;gap:6px}.top-note{max-width:100px}.heading{gap:8px}.ext{font-size:22px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap bar"><div class="brand"><span class="logo" aria-hidden="true"></span>Intake Desk</div><span class="top-note">Synthetic demo</span></div></header>
+<main class="wrap">
+<p class="eyebrow">ER registration &nbsp;/&nbsp; Packet ER-018</p>
+<div class="heading"><div><h1 id="page-title" tabindex="-1">Transfer packet review</h1><p class="subtitle" id="subtitle">Verify the facility callback before sending the handoff to the registration desk.</p></div><span id="status" class="badge packet-status">1 conflict to review</span></div>
+<div id="review" class="layout">
+<section class="card surface" id="packet-form" tabindex="-1" aria-label="Registration draft">
+<div class="pane identity"><p class="caption">Matched in both documents</p><dl><div><dt>Patient display name</dt><dd>Avery Example</dd></div><div><dt>Sending facility</dt><dd>Cedar House</dd></div></dl></div>
+<div class="pane">
+<div id="decision" tabindex="-1"><fieldset><legend class="review-title">Facility callback extension</legend><p class="help">The two documents list different extensions. Compare the sources and choose the value to use.</p><a class="jump" href="#sources">Read source documents</a>
+<div class="choices">
+<label class="choice"><input type="radio" name="extension" value="214"><span class="ext">214</span><span class="label-copy">Transfer form</span></label>
+<label class="choice"><input type="radio" name="extension" value="241"><span class="ext">241</span><span class="label-copy">Signed amendment</span></label>
+</div></fieldset>
+<p class="note" id="warning" hidden>The signed amendment replaces extension 214. Review the correction or hold the packet for clarification.</p>
+<div class="action"><button type="button" class="btn control secondary" id="hold">Hold for clarification</button><button type="button" class="link-button" id="clear" hidden>Clear selection</button></div></div>
+</div>
+<div class="pane actions-area"><div class="step-head"><h2 class="step-title">Clerk sign-off</h2></div><p class="help" id="sign-help">Resolve the extension to enable approval. Approval creates a local handoff for the registration desk.</p><div class="action"><button type="button" class="btn control" id="approve" aria-describedby="sign-help" disabled>Approve for registration desk</button></div></div>
+</section>
+<aside class="docs" id="sources" tabindex="-1" aria-label="Packet evidence"><h2 class="caption">Source documents · 2</h2>
+<article class="document"><div class="paper-head"><h3>Transfer form</h3><time>09:10</time></div><p>Avery Example · Cedar House</p><p>Facility callback extension <mark>214</mark>.</p></article>
+<article class="document"><div class="paper-head"><h3>Signed amendment</h3><time>09:24</time></div><p>Avery Example · Cedar House</p><p>Replace the facility callback extension on the transfer form with <mark>241</mark>.</p><p class="signed">Signed by M. Ellis, transfer coordinator</p></article>
+<a class="jump" href="#packet-form">Return to draft</a></aside></div>
+<section id="held" class="card surface single" hidden><div class="pane"><h2 class="section-title">Awaiting clarification</h2><p class="subtitle">The facility callback extension needs verification. The registration desk will receive the handoff only after an intake clerk resumes review and signs off.</p><div class="action"><button type="button" class="btn control" id="resume">Resume review</button></div></div></section>
+<section id="receipt" class="card surface single" hidden aria-label="Read-only approved handoff"><div class="pane"><p class="caption">Approved handoff · ER-018</p><h2 class="section-title">Registration desk</h2><dl class="receipt"><div class="result-line"><dt>Patient display name</dt><dd>Avery Example</dd></div><div class="result-line"><dt>Sending facility</dt><dd>Cedar House</dd></div><div class="result-line"><dt>Facility callback extension</dt><dd>241</dd></div><div class="result-line"><dt>Correction source</dt><dd>Signed amendment, 09:24</dd></div></dl><p class="stamp">Approved by <strong>Demo clerk</strong><br><time id="approved-at"></time></p></div></section>
+<p id="announce" class="sr" role="status" aria-live="polite"></p>
+<footer class="foot"><details><summary>About this prototype</summary><p>One fictional transfer packet illustrates source review, a clarification hold, clerk approval, and a local handoff. Source fields are prefilled. Refreshing the page starts the example again.</p></details><button class="link-button" type="button" id="reset">Reset demo</button></footer>
+</main>
+<script>
+const get = (id) => document.getElementById(id);
+const choices = Array.from(document.querySelectorAll('input[name="extension"]'));
+let phase = 'review';
+function showPhase(next) {
+  phase = next;
+  const reviewing = next === 'review' || next === 'ready';
+  get('review').hidden = !reviewing;
+  get('held').hidden = next !== 'held';
+  get('receipt').hidden = next !== 'approved';
+  get('approve').disabled = next !== 'ready';
+  const content = {
+    review:['Transfer packet review','Verify the facility callback before sending the handoff to the registration desk.','1 conflict to review','amber'],
+    ready:['Transfer packet review','Review the corrected draft, then approve the local handoff.','Ready for sign-off','green'],
+    held:['Packet on hold','Intake is holding packet ER-018 pending clarification.','On hold','hold'],
+    approved:['Handoff approved','Registration desk can now read the signed-off transfer details.','Read-only','green']
+  }[next];
+  get('page-title').textContent = content[0];
+  get('subtitle').textContent = content[1];
+  get('status').textContent = content[2];
+  get('status').dataset.tone = content[3];
+  get('sign-help').textContent = next === 'ready' ? 'Approve as Demo clerk to create a read-only handoff for the registration desk.' : 'Resolve the extension to enable approval. Approval creates a local handoff for the registration desk.';
+  if (next === 'review') {
+    choices.forEach((choice) => { choice.checked = false; });
+    get('clear').hidden = true;
+    get('warning').hidden = true;
+  }
+  get('announce').textContent = content[2];
+}
+choices.forEach((choice) => choice.addEventListener('change', () => {
+  const corrected = choice.value === '241';
+  showPhase(corrected ? 'ready' : 'review');
+  choice.checked = true;
+  get('clear').hidden = false;
+  get('warning').hidden = corrected;
+  if (!corrected) get('announce').textContent = get('warning').textContent;
+}));
+get('clear').onclick = () => { showPhase('review'); choices[0].focus(); };
+get('hold').onclick = () => { showPhase('held'); get('resume').focus(); };
+get('resume').onclick = () => { showPhase('review'); get('page-title').focus(); };
+get('approve').onclick = () => {
+  if (phase !== 'ready') return;
+  const now = new Date();
+  get('approved-at').dateTime = now.toISOString();
+  get('approved-at').textContent = new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(now);
+  showPhase('approved');
+  get('page-title').focus();
+};
+get('reset').onclick = () => {
+  get('approved-at').textContent = '';
+  get('approved-at').removeAttribute('datetime');
+  showPhase('review');
+  get('page-title').focus();
+};
+</script>
+</body>
+</html>
