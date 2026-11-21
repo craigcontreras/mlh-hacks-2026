@@ -1,8 +1,11 @@
 <script lang="ts">
 	import type { PageData } from '../../routes/handoffs/$types';
+	import ChartFindings from './ChartFindings.svelte';
+	import type { ChartPoint } from '../server/chart-brief';
 	import ChartCitation from './ChartCitation.svelte';
 
-	let { record, documents }: {
+	let { record, documents, items }: {
+		items: ChartPoint[];
 		record: NonNullable<PageData['record']>;
 		documents: PageData['chart']['documents'];
 	} = $props();
@@ -26,7 +29,7 @@
 
 <section class="brief" id="verified-brief" aria-label="Chart summary">
 	<div class="brief-head">
-		<h2>Chart summary</h2>
+		<h2>Transfer packet summary</h2>
 		<span class="method-chip">{record.summary.method === 'codex' ? 'Codex' : 'Local parser'} · {record.elapsedMs < 1000 ? record.elapsedMs + ' ms' : (record.elapsedMs / 1000).toFixed(1) + ' s'}</span>
 	</div>
 	{#if record.summary.pdfInput}<p class="small">{record.summary.pdfInput === 'pdf-text' ? 'Read and verified the transfer note and radiology PDFs.' : 'Used verified transcripts of the transfer note and radiology PDFs.'}</p>{/if}
@@ -35,6 +38,7 @@
 			<ul>{#each record.summary.issues as issue (issue)}<li>{issue}</li>{/each}</ul>
 		</div>
 	{/if}
+	{#if !record.summary.issues.length}<ChartFindings {items}/>{/if}
 	{#if record.summary.crossChecks?.length}
 		<details class="reconcile">
 			<summary>Compare current and prior records</summary>

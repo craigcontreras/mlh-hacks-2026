@@ -7,43 +7,15 @@
 	import radiologyText from '../../../samples/records/ED-104-radiology.txt?raw';
 	import physicianText from '../../../samples/records/ED-116-physician.txt?raw';
 
-	let { documents }: { documents: ChartDocument[] } = $props();
+	let { documents, overviews, viewerOnly = false }: { documents: ChartDocument[]; overviews: Record<string, { id: string; text: string; lines: number[] }[]>; viewerOnly?: boolean } = $props();
 	const visits = $derived([...new Map(documents.map(doc => [doc.visitId, doc.date])).entries()].sort((a,b) => b[1].localeCompare(a[1])));
 	const formatDate = new Intl.DateTimeFormat('en-US', {month:'short', day:'numeric', year:'numeric', timeZone:'UTC'});
-	const overviewFields: Record<string, RegExp> = {
-		'ED-104': /^(Jordan came |Transport has |The sending clerk spoke )/,
-		'ED-104-registration': /^(Prior study link: |Clerk instruction: |13:42 · Imaging Records reply: )/,
-		'ED-104-radiology': /^(Study: |Impression: )/,
-		'ED-082-intake': /^Visit services: /,
-		'ED-082-study': /^Archive entry: /,
-		'ED-116-registration': /^Casey requested /,
-		'ED-116-nursing': /^Casey reported /,
-		'ED-116-receipt-check': /^Riley Ortiz verified /,
-		'ED-116-physician': /^Casey and /,
-		'ED-116-visit-receipt': /^A large-type printed copy /,
-		'ED-071-intake': /^Casey requested /,
-		'ED-071-access': /^Large-type printed instructions /
-	};
-
 	const dialogId = $props.id();
 	let selected = $state<ChartDocument | 'image'>();
 	let activeLine = $state<number>();
 	let returnFocus: HTMLElement | undefined;
 	const title = $derived(selected === 'image' ? 'Left ankle X-ray' : selected?.title);
 	const pdfSources: Record<string, string> = { 'ED-104-radiology': radiologyText, 'ED-116-physician': physicianText };
-
-	function documentSummary(doc: ChartDocument) {
-		const selector = overviewFields[doc.id];
-		return selector ? doc.text.split(/\r?\n/).flatMap((text, index) => {
-			if (!selector.test(text)) return [];
-			const summary = text
-				.replace(/^Transport has the transfer form and dictated ED note\. /, '')
-				.replace(/^The sending clerk spoke with Mossbridge Outpatient Imaging at 12:45\. /, '')
-				.replace(/ An older ankle study was mentioned during registration, but its images were not in the local viewer\.$/, '')
-				.replace(/^Clerk instruction: /, '');
-			return [{ summary, line: index + 1 }];
-		}) : [];
-	}
 
 	async function openSource(source: ChartDocument | 'image', line?: number, trigger?: HTMLElement) {
 		selected = source;
@@ -80,6 +52,7 @@
 	});
 </script>
 
+{#if !viewerOnly}
 <aside class="chart-files paper-card" aria-label="Visit history and documents">
 	<div class="workhead"><h2>Visits &amp; documents</h2><span class="source-count">{visits.length} visits</span></div>
 	{#each visits as [visitId, day], visitIndex (visitId)}
@@ -91,10 +64,14 @@
 					<div class="overview">
 						<p class="overview-label">Document summary</p>
 						<ul aria-label="Summary findings">
-							{#each documentSummary(doc) as finding (finding.line)}
-								<li>{finding.summary}
-									<button type="button" class="text-button" aria-label={`View source for ${finding.summary}`} onclick={event => openSource(doc, finding.line, event.currentTarget)}>See passage</button>
+							{#each overviews[doc.id] ?? [] as finding (finding.id)}
+								<li>{finding.text}
+									{#each finding.lines as line (line)}
+										<button type="button" class="text-button" aria-label={`View line ${line} for ${finding.text}`} onclick={event => openSource(doc, line, event.currentTarget)}>See {finding.lines.length > 1 ? 'line ' + line : 'passage'}</button>
+									{/each}
 								</li>
+							{:else}
+								<li>Open the source document to read this record.</li>
 							{/each}
 						</ul>
 						<button type="button" class="text-button" onclick={event => openSource(doc, undefined, event.currentTarget)}>View source document</button>
@@ -112,6 +89,7 @@
 		</section>
 	{/each}
 </aside>
+{/if}
 
 <dialog id={dialogId} onclose={onClose} aria-labelledby="source-view-title" class="source-dialog">
 	<header class="source-toolbar">

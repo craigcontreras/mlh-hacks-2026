@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { enhance, type SubmitFunction } from '$app/forms';
 	import type { PageProps } from './$types';
 	import HandoffPanel from '#lib/ui/HandoffPanel.svelte';
@@ -20,7 +21,8 @@
 </script>
 <svelte:head><title>{data.chart.patient.name} · {admin ? 'Transfer workspace' : 'Patient chart'}</title></svelte:head>
 <header class="pagehead flow-title">
-	<div><p class="kicker">{data.chart.patient.id} · {data.document.id} · {data.chart.patient.hospital}</p><h1>{data.chart.patient.name}</h1></div>
+	<div><p class="kicker">{data.chart.patient.id} · {data.document.id} · {data.chart.patient.hospital}</p><h1>{data.chart.patient.name}</h1>
+		<a class="chart-link" href={resolve(`/patients?patient=${data.chart.patient.id}`)}>View patient chart</a></div>
 	{#if admin}
 		<form class="practice-control" method="POST" action="?/randomize" use:enhance={startPractice} aria-busy={resetting}>
 			<input type="hidden" name="version" value={data.version}/>
@@ -49,11 +51,11 @@
 <div class="case-layout">
 	<div class="case-column">
 		{#key data.version}<HandoffPanel {data} message={form?.message} />{/key}
-		{#if data.record}<div class="paper-card"><HandoffBrief record={data.record} documents={data.chart.documents} /></div>{/if}
+		{#if data.record}<div class="paper-card"><HandoffBrief items={data.packetPoints} record={data.record} documents={data.chart.documents} /></div>{/if}
 	</div>
 	<div class="case-column">
 		{#key data.version}<PatientPath {data} />{/key}
-		<HandoffDocument documents={data.chart.documents} />
+		<HandoffDocument overviews={data.overviews} documents={data.chart.documents} />
 		{#if data.record}<DeliveryHistory record={data.record}/>{/if}
 	</div>
 </div>

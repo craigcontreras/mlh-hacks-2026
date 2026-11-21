@@ -22,6 +22,7 @@
 				<a href={resolve('/patients')} aria-current={page.url.pathname === resolve('/patients') ? 'page' : undefined}>Patients</a>
 				{#if !admin}<a href={resolve('/inbox')} aria-current={page.url.pathname === resolve('/inbox') ? 'page' : undefined}>My inbox</a>{/if}
 				{#if admin}<a href={resolve('/handoffs')} aria-current={page.url.pathname === resolve('/handoffs') ? 'page' : undefined}>Transfer workspace</a>{/if}
+				<a href={resolve('/glossary')} aria-current={page.url.pathname === resolve('/glossary') ? 'page' : undefined}>Glossary</a>
 			</nav>
 			<div class="account-nav"><span>{data.account.name}<small>{data.account.label} · Demo</small></span>
 				<form method="POST" action={resolve('/logout')}><button type="submit">Sign out</button></form></div>

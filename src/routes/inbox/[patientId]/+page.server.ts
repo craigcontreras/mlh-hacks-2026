@@ -1,3 +1,4 @@
+import { documentOverviews, summarizeChartDocuments } from '../../../lib/server/chart-brief';
 import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { requireAccountRole } from '../../../lib/server/accounts';
 import { chartPatient, clinicalDocument, practiceReplyEvidence } from '../../../lib/server/chart';
@@ -20,6 +21,8 @@ export const load: PageServerLoad = ({ locals, params }) => {
 		nextDoctor: record && account.role === 'Nurse' && !inbox.followup ? plannedReportDoctor(record).name : null,
 		followup: livePatient && inbox.followup, closedFollowup: livePatient ? inbox.closedFollowup : null,
 		completions: archived.map(item => item.completion),
+		overviews: documentOverviews({ id: patient.patientId, name: patient.name }, documents),
+		packetPoints: record ? summarizeChartDocuments(chartPatient, documents).items : [],
 		documents, practiceReply: practiceReplyEvidence(documents)
 	};
 };

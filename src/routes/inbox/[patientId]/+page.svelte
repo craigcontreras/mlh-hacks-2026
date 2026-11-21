@@ -30,7 +30,8 @@
 </script>
 
 <svelte:head><title>{data.role} inbox · Intake Desk</title></svelte:head>
-	<header class="pagehead flow-title"><div><a class="back-link" href={resolve('/inbox')}>← My inbox</a><h1>{data.patient.name}</h1><p class="lead">{data.patient.visitId} · {data.role} workspace</p></div></header>
+	<header class="pagehead flow-title"><div><a class="back-link" href={resolve('/inbox')}>← My inbox</a><h1>{data.patient.name}</h1><p class="lead">{data.patient.visitId} · {data.role} workspace</p>
+		<a class="chart-link" href={resolve(`/patients?patient=${data.patient.patientId}`)}>View patient chart</a></div></header>
 	{#if form?.message || message}<p role="alert" class="notice error">{message || form?.message}</p>{/if}
 	{#if data.record && current}
 		<div class="case-layout"><div class="case-column">
@@ -100,9 +101,9 @@
 				{/if}
 			{/if}
 		</form>
-		<div class="paper-card"><HandoffBrief record={data.record} documents={data.documents}/></div>
+		<div class="paper-card"><HandoffBrief items={data.packetPoints} record={data.record} documents={data.documents}/></div>
 		</div><div class="case-column">
-			<HandoffDocument documents={data.documents}/>
+			<HandoffDocument overviews={data.overviews} documents={data.documents}/>
 			<DeliveryHistory record={data.record}/>
 		</div></div>
 	{:else if data.completions.length}
@@ -111,7 +112,7 @@
 				{#if event.documentId && event.line}<ChartCitation doc={event.documentId} line={event.line} label="Read signed receipt" />{/if}
 			{/each}
 			<p><a href={resolve(`/patients?patient=${encodeURIComponent(data.patient.patientId)}`)}>Open patient record</a></p>
-		</section><HandoffDocument documents={data.documents}/></div>
+		</section><HandoffDocument overviews={data.overviews} documents={data.documents}/></div>
 	{:else if data.deliveries.length}
 		<section class="paper-card empty"><h2>Past handoffs</h2>
 			{#if data.closedFollowup}<p class="request-receipt">Comparison images arrived · Follow-up closed by {data.closedFollowup.by}.</p>{/if}

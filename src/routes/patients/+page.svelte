@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import EvidenceMap from '#lib/ui/EvidenceMap.svelte';
 	import { resolve } from '$app/paths';
 	import HandoffDocument from '#lib/ui/HandoffDocument.svelte';
 	import ChartCitation from '#lib/ui/ChartCitation.svelte';
@@ -7,8 +9,8 @@
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
-	const documentationCase = $derived(data.matches.find(patient => patient.id === 'C-116'));
-	const reviewCase = $derived(data.matches.find(patient => patient.id === 'J-104'));
+	const tabs = [['summary', 'Summary'], ['ontology', 'Ontology'], ['log', 'Patient log'], ['documents', 'Documents']];
+	const section = $derived(tabs.find(([id]) => id === page.url.searchParams.get('tab'))?.[0] ?? (page.url.hash === '#patient-log' ? 'log' : 'summary'));
 	const visitDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 	const timestamp = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short' });
 
@@ -16,9 +18,10 @@
 		return value.length === 10 ? visitDate.format(new Date(value + 'T12:00:00Z')) : timestamp.format(new Date(value));
 	}
 
-	function portalUrl(patient = '', mine = data.mine, query = data.query) {
+	function portalUrl(patient = '', mine = data.mine, query = data.query, tab = 'summary') {
 		const params = new URLSearchParams({
 			...(patient && { patient }),
+			...(tab !== 'summary' && { tab }),
 			...(mine && { scope: 'mine' }),
 			...(query && { q: query })
 		});
@@ -45,25 +48,16 @@
 				<p class="lead">{data.patient.visitCount} {data.patient.visitCount === 1 ? 'visit' : 'visits'} · Last visit {recordedAt(data.patient.lastVisit)}</p>
 			</div>
 		</header>
-		<section class="paper-card current" id="current-work" aria-label="Current work">
-			<div><p class="kicker">Current work</p><h2>{data.patient.status}</h2>
-				{#if data.patient.owner}<p class="muted">Owner · {data.patient.owner}</p>{/if}
-			</div>
-			{#if data.patient.workspace}
-				<a class="button" href={data.patient.workspace === '/handoffs' ? resolve('/handoffs') : resolve('/inbox/[patientId]', {patientId: data.patient.id})}>{data.patient.workspace.startsWith('/inbox') ? 'Open my assignment' : 'Open transfer workspace'}</a>
-			{/if}
-		</section>
-		{#if data.patient.clinicalUpdate}
-			{@const clinical = data.patient.clinicalUpdate}
-			<section class="paper-card observation" aria-label="Documented finding">
-				<p class="kicker">Documented finding</p>
-				<p>{clinical.text}</p>
-				<footer><time datetime={clinical.at}>{recordedAt(clinical.at)}</time>
-					{#if clinical.documentId && clinical.line}<ChartCitation doc={clinical.documentId} line={clinical.line} label={clinical.source}/>{/if}
-				</footer>
-			</section>
-		{/if}
-		<div class="record-layout">
+		<nav class="chart-tabs" aria-label="Patient chart">
+			{#each tabs as [id,label] (id)}
+				<a href={portalUrl(data.patient.id, data.mine, data.query, id)} aria-current={section === id ? 'page' : undefined}>{label}</a>
+			{/each}
+		</nav>
+		{#if section === 'ontology'}
+			{#key page.url.searchParams.get('finding')}
+				<EvidenceMap rows={data.evidenceMap} initialId={page.url.searchParams.get('finding') ?? ''} />
+			{/key}
+		{:else if section === 'log'}
 			<section class="paper-card timeline" id="patient-log" aria-labelledby="log-heading">
 				<header class="workhead"><h2 id="log-heading">Patient log</h2></header>
 				{#if data.account?.role === 'Administrative staff' && data.updateRequestId}
@@ -78,29 +72,21 @@
 					{/if}
 				{:else}<p class="empty">No entries recorded.</p>{/if}
 			</section>
-			<div class="source-column">
-				<ChartBrief patientId={data.patient.id} result={form} />
-				<HandoffDocument documents={data.documents} />
-			</div>
-		</div>
+		{:else if section !== 'documents' && data.chartBrief}
+			<ChartBrief patientId={data.patient.id} initial={data.chartBrief} result={form} />
+			<section class="paper-card current" id="current-work" aria-label="Current work">
+				<div><p class="kicker">Current work</p><h2>{data.patient.status}</h2>
+					{#if data.patient.owner}<p class="muted">Owner · {data.patient.owner}</p>{/if}
+				</div>
+				{#if data.patient.workspace}
+					<a class="button" href={data.patient.workspace === '/handoffs' ? resolve('/handoffs') : resolve('/inbox/[patientId]', {patientId: data.patient.id})}>{data.patient.workspace.startsWith('/inbox') ? 'Open my assignment' : 'Open transfer workspace'}</a>
+				{/if}
+			</section>
+		{/if}
+		<HandoffDocument overviews={data.overviews} documents={data.documents} viewerOnly={section !== 'documents'} />
 	{/key}
 {:else}
-	<header class="pagehead"><div><p class="kicker">Mossbridge Community Hospital</p><h1>Patient overview</h1></div></header>
-	{#if !data.query && !data.mine && documentationCase && reviewCase}
-		<section class="workflows" aria-labelledby="workflows-heading">
-			<h2 id="workflows-heading">Hospital workflows</h2>
-			<nav aria-label="Hospital workflows">
-				<ul>
-					<li><a href="#chart-search"><span class="node-title"><i aria-hidden="true"></i>Patient records</span>
-						<small>{data.matches.length} patients in the directory</small><span class="node-action">Find a chart <b aria-hidden="true">→</b></span></a></li>
-					<li><a href={resolve(`/patients?patient=${documentationCase.id}#patient-log`)}><span class="node-title"><i aria-hidden="true"></i>Care documentation</span>
-						<small>{documentationCase.name} · Nursing and physician notes</small><span class="node-action">Read patient log <b aria-hidden="true">→</b></span></a></li>
-					<li><a href={resolve(`/patients?patient=${reviewCase.id}#current-work`)}><span class="node-title"><i aria-hidden="true"></i>Review routing</span>
-						<small>{reviewCase.name} · {reviewCase.status}</small><span class="node-action">View current work <b aria-hidden="true">→</b></span></a></li>
-				</ul>
-			</nav>
-		</section>
-	{/if}
+	<header class="pagehead"><div><p class="kicker">Mossbridge Community Hospital</p><h1>Patient overview</h1><p class="lead">Open a chart to see the main findings, their sources and who has the next action.</p></div></header>
 	<section class="paper-card roster" aria-label="Hospital patient list">
 		<div class="tools">
 			<nav aria-label="Patient list filter">
@@ -140,24 +126,9 @@
 {/if}
 
 <style>
-	.workflows {--connector:clamp(20px,3vw,42px);margin:0 0 28px}
-	.workflows h2 {margin-bottom:12px;font-size:19px}
-	.workflows ul {list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--connector)}
-	.workflows li {position:relative}
-	.workflows li:not(:last-child)::after {content:'';position:absolute;top:50%;left:100%;width:var(--connector);border-top:2px dotted #85868a}
-	.workflows a {display:flex;flex-direction:column;gap:8px;position:relative;height:100%;min-height:128px;padding:18px 18px 12px;border:1px solid #96989b;border-radius:2px;text-decoration:none;background:var(--paper);color:var(--ink)}
-	.workflows a:hover {border-color:var(--ink);background:#f1f1f2}
-	.node-title {display:flex;align-items:center;gap:9px;font-size:19px;font-weight:650;letter-spacing:-.035em;line-height:1.25}
-	.node-title i {width:8px;height:8px;flex:none;border-radius:50%;background:#18191b}
-	.workflows li:nth-child(2) i {background:#65676a}
-	.workflows li:nth-child(3) i {background:#a2a3a6}
-	.workflows small {font-size:13px;color:var(--muted)}
-	.node-action {display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:7px;margin-top:auto;font-size:12px;font-weight:650}
-	.node-action b {font-size:17px;line-height:1}
-	.observation {padding:16px 20px;margin-bottom:18px}
-	.observation > p:nth-child(2) {font-size:17px;margin-block:4px 8px}
-	.observation footer {display:flex;flex-wrap:wrap;gap:6px 15px;align-items:center}
-	.observation time {font-size:12px;color:var(--muted)}
+	.chart-tabs {display:flex;gap:clamp(12px,3vw,32px);border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
+	.chart-tabs a {text-decoration:none;color:var(--muted);padding:7px 0 10px;border-bottom:3px solid transparent;font-size:15px;font-weight:600}
+	.chart-tabs a[aria-current] {color:var(--ink);border-color:var(--ink)}
 	.activity {font-size:11px}
 	.back-link {display:inline-block;margin-bottom:15px;font-size:14px}
 	.roster {overflow:hidden}
@@ -185,8 +156,6 @@
 	.current {margin-bottom:18px;border-left:4px solid #66686c}
 	.current h2 {font-size:22px;margin-block:3px}
 	.current .muted {font-size:14px}
-	.source-column {display:grid;gap:16px}
-	.record-layout {display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
 	.events {padding:1px 20px}
 	.events li {border-left:2px solid #cccdce;padding:0 0 0 14px;margin:18px 0;overflow-wrap:anywhere}
 	.log-meta {display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
@@ -197,15 +166,6 @@
 	.empty {padding:24px}
 	.empty h2 {font-size:20px;margin-bottom:8px}
 	@media(max-width:760px) {
-		.workflows {--connector:12px}
-		.workflows ul {grid-template-columns:1fr}
-		.workflows li:not(:last-child)::after {top:100%;left:22px;height:var(--connector);width:0;border-top:0;border-left:2px dotted #85868a}
-		.workflows a {min-height:0;gap:2px;padding:9px 13px}
-		.workflows small {padding-right:19px}
-		.node-action {border:0;font-size:0;padding:0}
-		.node-action b {position:absolute;right:12px;top:11px}
-		.node-title {font-size:16px}
-		.record-layout {grid-template-columns:1fr}
 		.columns {display:none}
 		.rows {border-top:1px solid var(--line)}
 		.row {grid-template-columns:1fr 16px;gap:8px;padding:16px}

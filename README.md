@@ -13,6 +13,16 @@ npm run dev -- --host 127.0.0.1
 
 Open the local URL printed by Vite. For optional model extraction, install the Codex CLI and run `codex login` under your own account. The server uses that CLI login. This path was tested with Codex CLI 0.163.0. Use one server for the demo so all staff accounts see the same SQLite records.
 
+## Show the benefit in 30 seconds
+
+Sign in as Maya, open **Patients → Jordan Vale**, and read the five bullets under **Chart summary**. Ask the audience, “Which X-rays does the doctor already have a report for, and which pictures still need checking?”
+
+1. Click **Imaging result**. The **Ontology** tab follows that finding from the signed radiology report to the doctor’s review. Click a source to highlight the original sentence.
+2. Click **Earlier images**. The checklist and the earlier imaging archive explain why the comparison pictures need a separate receipt check. The action shows who owns it or who recorded the result. **See supporting passage** opens the original staff instruction.
+3. Click **Family history**. Jordan’s older intake says their mother has osteoporosis. No genetic test report accompanied that history. The map keeps this as background information.
+
+For the judges: “Riley and Morgan can start with the same five findings. Either can check the original sentence, and each can see whether their part is still open.” Open **Glossary** for the illustrated key and the terms used in the demo. [Download the one-page visual dictionary](docs/Intake-Desk-visual-dictionary.pdf)
+
 ## Three-minute walkthrough
 
 **Open with Jordan’s problem.** “Jordan’s ankle was X-rayed today. The doctor’s written report is here. Pictures from an earlier visit were requested separately. How does the next person know which item is ready, where that information came from, and who is chasing the rest?”
@@ -34,7 +44,7 @@ For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the se
 | **Riley Ortiz · nurse.** Open **My inbox → Jordan Vale**. For this rehearsal, choose **Still pending → Record image status → Sign and send report to doctor**. Point to the receiving doctor’s name before sending. | “The paperwork told us what was missing at departure. Riley records what’s available now. That update travels with the report.” |
 | **Dr. Avery Shah · first doctor.** Open **My inbox → Jordan Vale → Read signed radiology impression**. Close the source. Expand **Return to administrative staff**, enter “Called to another patient,” and click **Return handoff to admin**. | “This is the original report author’s conclusion. Avery can read it, but another patient needs Avery’s attention. The return records why someone else must take this review.” |
 | **Maya, then Dr. Morgan Lee.** As Maya, reopen Jordan’s transfer workspace. Choose **Dr. Morgan Lee → Sign and reassign**. As Morgan, open **My inbox → Jordan Vale → Read signed radiology impression**, close the source, and click **Sign report review**. Pause on the confirmation. | “Morgan just signed that they reviewed today’s report. The screen still names Riley as responsible for the missing pictures. Those are two separate pieces of work.” |
-| **Riley.** Open Jordan in **My inbox** again. To demonstrate that the older images have now arrived, choose **Arrived → Save follow-up status**. In Jordan’s chart, scroll to **Patient log**. | “The next shift can see who read the report and who confirmed the images arrived, even though those things happened at different times.” |
+| **Riley.** Open Jordan in **My inbox** again. To demonstrate that the older images have now arrived, choose **Arrived → Save follow-up status**. In Jordan’s chart, click **Patient log**. | “The next shift can see who read the report and who confirmed the images arrived, even though those things happened at different times.” |
 
 **Check you can explain it.** Pause right after Morgan signs. Ask your teammate to show, without your help, who reviewed today’s report, where its conclusion was written, and who still owns the older images. The answers are **Morgan’s signed review**, **the highlighted passage in the radiology report**, and **Riley’s open follow-up**. If you have only a minute, have Avery click **Sign report review** directly and show the same open follow-up with Avery as the signer.
 
@@ -42,7 +52,7 @@ For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the se
 
 **What you can claim.** You demonstrated a source lookup, a named handoff and a follow-up that survives sign-off. The timed result below measures how quickly the sample brief appears. Time saved by hospital staff or patients would require observation in a real workflow. [Timing and method](#extraction-and-storage) · [Illustrated doctor walkthrough](docs/Jordan-doctor-walkthrough.pdf)
 
-**If a judge asks whether this is only for transfers**, open **Patient overview → Casey Rowan** and scroll to **Patient log**. Show the nursing reassessment and physician progress note from the same hospital visit. Maya can add a dated entry with **Add coordination update**. Open Casey under another account to see the same update and author.
+**If a judge asks whether this is only for transfers**, open **Patient overview → Casey Rowan** and click **Patient log**. Show the nursing reassessment and physician progress note from the same hospital visit. Maya can add a dated entry with **Add coordination update**. Open Casey under another account to see the same update and author.
 
 **Other controls for Jordan.** In the original sample, **Request the prior study (optional)** lets Maya request the archived images by their lookup number, **MB-082-LA**. **Visit history and plan editor** shows the earlier visits and lets Maya edit a planned destination. **Parser options → Summarize with Codex** runs optional model extraction.
 

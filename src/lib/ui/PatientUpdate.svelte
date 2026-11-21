@@ -15,7 +15,7 @@
 	const action = $derived.by(() => {
 		const search = page.url.searchParams.get('q');
 		const query = new URLSearchParams({
-			patient: patientId,
+			patient: patientId, tab: 'log',
 			...(search && { q: search }),
 			...(page.url.searchParams.get('scope') === 'mine' && { scope: 'mine' })
 		});

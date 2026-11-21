@@ -1,0 +1,12 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY DEPARTMENT
+Fictional training record · Synthetic patient and family history
+Document: Medical and family history
+Chart identity: J-104 | visit ED-082 | Mossbridge Community Hospital
+Patient: Jordan Vale
+Date: 2026-09-04
+
+09:35 · History obtained during the intake interview
+Personal history: Jordan reported a left ankle sprain in 2024 that improved with physical therapy.
+Family history: Jordan reported that their mother has osteoporosis.
+Genetic testing: No genetic test report was supplied at this visit.
+Recorded by Devon Park, RN (fictional).

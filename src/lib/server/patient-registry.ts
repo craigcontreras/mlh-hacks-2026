@@ -11,7 +11,12 @@ import nursing from '../../../samples/records/ED-116-nursing.txt?raw';
 import physician from '../../../samples/records/ED-116-physician.txt?raw';
 import intake from '../../../samples/records/ED-071-intake.txt?raw';
 import delivery from '../../../samples/records/ED-071-access.txt?raw';
+import history from '../../../samples/records/ED-082-history.txt?raw';
 
+const jordanHistory: ChartDocument = {
+	id: 'ED-082-history', patientId: chartPatient.id, visitId: 'ED-082', date: '2026-09-04',
+	title: 'Medical and family history', text: history, sourceUrl: '/samples/ED-082-history.txt'
+};
 const casey = { id: 'C-116', name: 'Casey Rowan', hospital: chartPatient.hospital };
 function caseyDocument(id: string, title: string, text: string, visitId: string, date: string): ChartDocument {
 	return { id, title, text, patientId: casey.id, visitId, date, sourceUrl: '/samples/' + id + '.txt' };
@@ -32,6 +37,7 @@ const chartEntries: Record<string, [string, string]> = {
 	'ED-104-registration': ['13:18:00-05:00', 'Prior study link:'],
 	'ED-082-intake': ['09:21:00-04:00', 'Jordan reported'],
 	'ED-082-study': ['10:36:00-04:00', 'Archive entry:'],
+	'ED-082-history': ['09:35:00-04:00', 'Personal history:'],
 	'ED-116-receipt-check': ['16:46:00-05:00', 'Riley Ortiz verified'],
 	'ED-116-registration': ['15:12:00-05:00', 'Casey requested'],
 	'ED-116-visit-receipt': ['16:40:00-05:00', 'A large-type printed copy'],
@@ -105,7 +111,7 @@ export class PatientRegistry {
 			for (const patient of [chartPatient, casey]) addPatient.run(patient.id, patient.name, patient.hospital);
 			const addDoc = db.prepare(`INSERT INTO hospital_documents
 				(id,patientId,visitId,date,title,text,sourceUrl,recordedAt,passage) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING`);
-			for (const doc of [...chartDocuments, ...caseyDocuments]) {
+			for (const doc of [...chartDocuments, jordanHistory, ...caseyDocuments]) {
 				const [time, passage] = chartEntries[doc.id];
 				const at = new Date(doc.date + 'T' + time).toISOString();
 				addDoc.run(doc.id, doc.patientId, doc.visitId, doc.date, doc.title, doc.text, doc.sourceUrl, at, passage);

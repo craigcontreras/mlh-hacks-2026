@@ -1,3 +1,4 @@
+import { documentOverviews, summarizeChartDocuments } from '../../lib/server/chart-brief';
 import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { doctorAccounts, requireAccount, requireAccountRole } from '../../lib/server/accounts';
 import { clinicalDocument } from '../../lib/server/chart';
@@ -13,6 +14,8 @@ export const load: PageServerLoad = ({ locals }) => {
 	const { record, chart, version, practice } = clinicalStore().snapshot();
 	return {
 		document: { ...clinicalDocument, text: record?.sourceText ?? clinicalDocument.text, sourceUrl: '/handoffs/source' },
+		overviews: documentOverviews(chart.patient, chart.documents),
+		packetPoints: record ? summarizeChartDocuments(chart.patient, chart.documents).items : [],
 		record, chart, doctors: doctorAccounts, recordedEncounters: documentedEncounters(chart.documents),
 		ownsDelivery: isAssignedTo(record?.history.at(-1), account),
 		version, practiceAccession: practice?.accession ?? null

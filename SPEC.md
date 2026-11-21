@@ -4,7 +4,7 @@
 
 ## Hospital patient overview
 
-All three staff roles start at a black-and-gray patient overview for Mossbridge. Patient records, care documentation and review routing each open a distinct workflow. A patient has multiple visits. Each visit collects dated records and staff updates. The list shows a dated finding and who owns the current work. Each clinician’s inbox lists patients. Opening a row navigates to that patient’s own assignment page.
+All three staff roles start at a black-and-gray patient overview for Mossbridge. Opening a patient displays a source-linked chart summary. Ontology, Patient log and Documents each have a direct link. A patient has multiple visits. Each visit collects dated records and staff updates. The list shows a dated finding and who owns the current work. Each clinician’s inbox lists patients. Opening a row navigates to that patient’s own assignment page.
 
 Casey’s chart follows a nursing reassessment, a physician discussion, and delivery of written instructions during a visit within the hospital. Maya can append a coordination update to any recorded visit. The chart stores her name and the time, and the next worker can read it. Jordan’s chart connects the same patient view to an active report-review workflow.
 
@@ -15,7 +15,9 @@ During Jordan’s ER transfer, staff need to distinguish a current signed report
 | Acceptance example | Observable result |
 | --- | --- |
 | Sign in as Maya, Riley, or either doctor. | Each account lands in Patient overview. Open Jordan for the documented visit path. The assigned clinician can open their task, and the server enforces signing permissions. |
-| Generate a brief from Jordan’s chart. | Four facts and the documented assignments link to the original text. Cross-checks cite evidence across five documents from two visits. The document list opens to a short summary. The source viewer highlights the specific cited passage. |
+| Open Jordan or Casey. | The chart opens with three to five findings when supported by the records. Selecting a finding opens its evidence map. Each cited passage opens in the original document. History remains available without creating an assignment. |
+| Read the glossary. | A visual dictionary illustrates source, finding, action and responsibility using an example from the chart. |
+| Prepare Jordan’s transfer packet. | Four facts and the documented assignments link to the original text. Cross-checks cite evidence across five documents from two visits. The document list opens to a short summary. The source viewer highlights the specific cited passage. |
 | Inspect the current study and prior visit. | Codex reads the visit ID, side marker and training watermark on the current synthetic image. The earlier intake and archive identify the prior study. The current checklist says those images are outstanding. The offline parser labels the image data as coming from the manifest. |
 | Maya edits the planned path and saves a note. | A plan records the next doctor, destination, department, staff-entered priority and coordination impact. The graph distinguishes internal routing from a planned hospital transfer. Notes and plans carry author and time. |
 | Maya requests the study and sends the assignment to Riley. | A single local request stores accession MB-082-LA and its evidence. Riley records the comparison image status and signs the documented report-review task to the planned doctor. |
