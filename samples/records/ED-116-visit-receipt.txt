@@ -1,0 +1,11 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY DEPARTMENT
+Fictional training record · Synthetic patient and facility
+Document: Visit paperwork receipt
+Chart identity: C-116 | visit ED-116 | Mossbridge Community Hospital
+Patient: Casey Rowan
+Date: 2026-11-20
+
+16:40 · Paperwork handoff
+A large-type printed copy of the visit instructions was handed to Casey before departure.
+Casey confirmed receipt. No outstanding paperwork request was recorded at visit closure.
+Recorded by Devon Park, RN (fictional).

@@ -1,0 +1,118 @@
+{
+  "comparison": "Two local browser runs of the original synthetic Jordan Vale case, each with a fresh SQLite database. Counts exclude login and navigation. No hospital or vendor benchmark.",
+  "earlierPrototype": {
+    "revision": "d42aa51",
+    "record": "Original Jordan Vale sample",
+    "observed_in_browser": [
+      {
+        "action": "Riley opens My inbox",
+        "jordan_assignments": 0
+      },
+      {
+        "action": "Maya clicks Prepare transfer brief",
+        "jordan_assignments": 0
+      },
+      {
+        "action": "Maya clicks Sign and send to nurse",
+        "jordan_assignments": 1
+      }
+    ],
+    "admin_workflow_actions_to_assign_riley": 2
+  },
+  "nurseFirstPrototype": {
+    "revision": "9f77233",
+    "executionDateUtc": "2026-11-21T22:21:19.494Z",
+    "testType": "Local synthetic Jordan case, isolated SQLite DB and headless Chromium",
+    "adminInteractionsBeforeRiley": 0,
+    "localChartTextSource": "verified-transcripts",
+    "autoAssignment": {
+      "recipient": "Riley Ortiz",
+      "task": "check-images",
+      "id": "d98ed474-71d2-45f5-a754-b7dcef9c4078",
+      "sentAt": "2026-11-21T22:21:17.653Z"
+    },
+    "persistedRequest": {
+      "recipient": "Imaging Records",
+      "accession": "MB-082-LA",
+      "requestedBy": "Intake Desk",
+      "requestedAt": "2026-11-21T22:21:17.652Z",
+      "evidence": [
+        {
+          "document": "ED-104-registration",
+          "line": 11,
+          "quote": "Clerk instruction: Send Imaging Records a request to link prior left ankle study MB-082-LA to transfer ED-104."
+        },
+        {
+          "document": "ED-082-study",
+          "line": 8,
+          "quote": "Archive entry: Left ankle X-ray | accession MB-082-LA | images on file at Mossbridge Community Hospital."
+        },
+        {
+          "document": "ED-104-registration",
+          "line": 10,
+          "quote": "Prior study link: MB-082-LA | Current transfer: comparison images not attached."
+        }
+      ]
+    },
+    "idempotence": {
+      "browserReloads": 3,
+      "assignmentCountAfter": 1,
+      "sameRequestReceipt": true,
+      "sameStoreVersion": true
+    },
+    "nursingStatusChangesBeforeRileyForward": 0,
+    "manualActions": [
+      {
+        "actor": "nurse",
+        "url": "/inbox/J-104?/forward"
+      },
+      {
+        "actor": "doctor",
+        "url": "/inbox/J-104?/returnToAdmin"
+      },
+      {
+        "actor": "admin",
+        "url": "/handoffs?/reassign"
+      },
+      {
+        "actor": "doctor-morgan",
+        "url": "/inbox/J-104?/signReview"
+      },
+      {
+        "actor": "admin",
+        "url": "/patients?/receiveImagingDelivery&patient=J-104&tab=documents"
+      }
+    ],
+    "assignedRecipients": [
+      "Riley Ortiz",
+      "Dr. Avery Shah",
+      "Dr. Morgan Lee"
+    ],
+    "returnReason": "Covering a higher-priority case; need another receiving doctor.",
+    "reassignmentSignedBy": "Maya Chen",
+    "originalImpression": "Impression: Lateral soft tissue swelling. No acute fracture identified on these views.",
+    "finalReviewer": {
+      "reviewedBy": "Dr. Morgan Lee",
+      "reviewedByAccountId": "doctor-morgan",
+      "reviewedAt": "2026-11-21T22:21:19.217Z"
+    },
+    "imagingRequestAtDoctorSignOff": "requested",
+    "files": {
+      "expected": 8,
+      "availableBeforeSimulatedArrivalByAccount": [
+        7,
+        7,
+        7,
+        7
+      ],
+      "availableAfterSimulatedArrivalByAccount": [
+        8,
+        8,
+        8,
+        8
+      ],
+      "verifiedImageOpenedInAllFourAccounts": true
+    },
+    "browserErrors": []
+  }
+}

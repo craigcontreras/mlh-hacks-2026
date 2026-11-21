@@ -26,7 +26,7 @@
 		{/each}
 	</dl>
 	<div class="receipt-foot">
-		<div><p class="kicker">Clerk sign-off</p><strong>{receipt.reviewer}</strong><br/><time datetime={receipt.approvedAt}>{dateFormat.format(new Date(receipt.approvedAt))}</time></div>
+		<div><p class="kicker">Triage agent sign-off</p><strong>{receipt.reviewer}</strong><br/><time datetime={receipt.approvedAt}>{dateFormat.format(new Date(receipt.approvedAt))}</time></div>
 		<div><p class="kicker">Destination</p><strong>{receipt.destination}</strong><br/>{receipt.method === 'codex' ? 'Codex extraction' : 'Local parser'}</div>
 	</div>
 </article>

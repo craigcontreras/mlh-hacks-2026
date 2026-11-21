@@ -1,0 +1,11 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | RADIOLOGY
+Synthetic chart · Fictional patient and facilities
+Document: Final radiology report
+Chart identity: J-104 | visit ED-104 | Mossbridge Community Hospital
+Patient: Jordan Vale
+Date: 2026-11-21
+
+Accession: MB-104-LA | Status: FINAL | Report signed: 12:32
+Study: Left ankle X-ray, three views.
+Impression: Lateral soft tissue swelling. No acute fracture identified on these views.
+Signed by Quinn Moss, MD (fictional).

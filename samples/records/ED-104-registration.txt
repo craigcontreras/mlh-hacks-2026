@@ -1,0 +1,12 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY REGISTRATION
+Synthetic chart · Fictional patient and facilities
+Document: Current registration and transfer checklist
+Chart identity: J-104 | visit ED-104 | Mossbridge Community Hospital
+Patient: Jordan Vale
+Date: 2026-11-21
+
+13:18 · Packet index checked by L. Finch, registration clerk
+Current transfer note ED-104 and final left ankle radiology report filed under this visit.
+Prior study link: MB-082-LA | Current transfer: comparison images not attached.
+Clerk instruction: Send Imaging Records a request to link prior left ankle study MB-082-LA to transfer ED-104.
+Queue at packet closure: request awaits clerk sign-off.

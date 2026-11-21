@@ -1,0 +1,10 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY REGISTRATION
+Synthetic chart · Fictional patient and facilities
+Document: Prior visit intake
+Chart identity: J-104 | visit ED-082 | Mossbridge Community Hospital
+Patient: Jordan Vale
+Date: 2026-09-04
+
+09:21 · Registration note
+Jordan reported left ankle discomfort after a misstep. The registrar confirmed the chart identifier against the visit registration.
+Visit services: Left ankle X-ray recorded for this encounter.

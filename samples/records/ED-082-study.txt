@@ -1,0 +1,9 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | IMAGING RECORDS
+Synthetic chart · Fictional patient and facilities
+Document: Prior encounter imaging archive entry
+Chart identity: J-104 | visit ED-082 | Mossbridge Community Hospital
+Patient: Jordan Vale
+Date: 2026-09-04
+
+Archive entry: Left ankle X-ray | accession MB-082-LA | images on file at Mossbridge Community Hospital.
+Study archived at 10:36 under this encounter. Transfers receive copies through Imaging Records.

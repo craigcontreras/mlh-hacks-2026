@@ -1,0 +1,186 @@
+WEBVTT
+
+1
+00:00:00.135 --> 00:00:06.702
+Yousif (to judges) — Jordan’s written report is ready.
+The pictures from September are missing. Here’s what
+used to slow the handoff.
+
+2
+00:00:06.843 --> 00:00:11.136
+Craig (click cue) — In the earlier prototype, Maya
+first clicked Prepare transfer brief.
+
+3
+00:00:11.277 --> 00:00:16.121
+Craig (click cue) — Then she clicked Sign and send to
+nurse. Only then did Jordan appear in Riley’s inbox.
+
+4
+00:00:16.427 --> 00:00:20.160
+Craig (click cue) — Craig, open the numbered guide.
+Click one to sign in as Riley.
+
+5
+00:00:20.300 --> 00:00:22.113
+Craig (click cue) — Click two to open Jordan Vale.
+
+6
+00:00:22.254 --> 00:00:28.169
+Yousif (to judges) — Today the nurse already owns the
+check. Nobody had to mark the image pending or forward
+a task to Riley.
+
+7
+00:00:28.310 --> 00:00:31.360
+Craig (click cue) — Open View imaging status, then
+View request.
+
+8
+00:00:31.501 --> 00:00:38.770
+Yousif (to judges) — The checklist and the archive
+agree on which earlier study is missing. A local rule
+has already requested it from Imaging Records.
+
+9
+00:00:39.052 --> 00:00:42.579
+Craig (click cue) — Open Jordan’s Summary and point to
+a source link under a finding.
+
+10
+00:00:42.719 --> 00:00:48.630
+Yousif (to judges) — The local parser turns this
+packet into a short summary. You can trace each
+finding back to the chart.
+
+11
+00:00:48.770 --> 00:00:51.750
+Yousif (to judges) — Optional AI can rank these
+verified findings.
+
+12
+00:00:51.890 --> 00:00:56.752
+Craig (click cue) — Open Ontology. Select the earlier
+X-ray finding to trace it to the request.
+
+13
+00:00:56.892 --> 00:01:04.765
+Yousif (to judges) — Follow the connection from the
+source, to the missing image, to the request. Local
+rules create the request and assign Riley’s check.
+
+14
+00:01:05.052 --> 00:01:10.195
+Craig (click cue) — Return to Jordan in Riley’s inbox.
+Click three, Sign and send report to doctor.
+
+15
+00:01:10.335 --> 00:01:15.636
+Yousif (to judges) — Riley sends today’s written
+report to Avery while Imaging Records tracks down the
+older picture.
+
+16
+00:01:15.927 --> 00:01:17.775
+Craig (click cue) — Click four to sign in as Avery.
+
+17
+00:01:17.915 --> 00:01:19.646
+Craig (click cue) — At five, open Jordan.
+
+18
+00:01:19.786 --> 00:01:22.480
+Craig (click cue) — At six, open Return for
+reassignment.
+
+19
+00:01:22.621 --> 00:01:26.789
+Craig (click cue) — At seven, enter the reason: I’m
+covering a higher-priority patient.
+
+20
+00:01:26.930 --> 00:01:29.300
+Craig (click cue) — Click eight, Return to triage
+agent.
+
+21
+00:01:29.441 --> 00:01:35.241
+Yousif (to judges) — Avery made the decision to return
+this review. The next person sees why Jordan needs
+coverage.
+
+22
+00:01:35.552 --> 00:01:37.713
+Craig (click cue) — Click nine to sign in as Maya
+Chen.
+
+23
+00:01:37.854 --> 00:01:41.488
+Craig (click cue) — At ten, choose Doctor Morgan Lee
+as the new receiving doctor.
+
+24
+00:01:41.629 --> 00:01:43.906
+Craig (click cue) — Click eleven, Sign and reassign.
+
+25
+00:01:44.047 --> 00:01:52.737
+Yousif (to judges) — Maya is our triage agent, the
+person coordinating the handoff. She chooses Morgan.
+The original report and the open request stay with
+Jordan.
+
+26
+00:01:53.052 --> 00:01:54.912
+Craig (click cue) — Click twelve to sign in as Morgan.
+
+27
+00:01:55.052 --> 00:01:57.711
+Craig (click cue) — At thirteen, open Jordan in the
+inbox.
+
+28
+00:01:57.852 --> 00:02:01.080
+Craig (click cue) — At fourteen, read the signed
+radiology impression.
+
+29
+00:02:01.220 --> 00:02:06.783
+Yousif (to judges) — These are the radiologist’s
+original words. Morgan can check exactly what the
+report says.
+
+30
+00:02:06.923 --> 00:02:09.083
+Craig (click cue) — At fifteen, close the source.
+
+31
+00:02:09.224 --> 00:02:11.745
+Craig (click cue) — Click sixteen, Sign report review.
+
+32
+00:02:11.886 --> 00:02:17.964
+Yousif (to judges) — Morgan’s signature records who
+reviewed today’s report. The request for September’s
+picture stays open.
+
+33
+00:02:18.260 --> 00:02:23.782
+Craig (click cue) — Switch back to Maya. Open Jordan’s
+Documents. There are seven of eight expected files.
+
+34
+00:02:23.922 --> 00:02:27.324
+Craig (click cue) — Under Demo controls, click
+Simulate file arrival.
+
+35
+00:02:27.464 --> 00:02:30.508
+Craig (click cue) — Point to eight of eight, then open
+the earlier X-ray.
+
+36
+00:02:30.648 --> 00:02:38.353
+Yousif (to judges) — Now all four demo accounts can
+open the same picture. We removed two required admin
+clicks on this case and kept the doctor’s signature.

@@ -1,0 +1,99 @@
+<script lang="ts">
+	import { enhance, type SubmitFunction } from '$app/forms';
+	import { resolve } from '$app/paths';
+	import type { PageData } from '../../routes/handoffs/$types';
+	import ChartCitation from './ChartCitation.svelte';
+	import DemoStep from './DemoStep.svelte';
+
+	let { data, message }: { data: PageData; message?: string } = $props();
+	let busy = $state('');
+	let error = $state('');
+	const record = $derived(data.record);
+	const admin = $derived(data.account?.role === 'Administrative staff');
+	const delivery = $derived(record?.history.at(-1));
+	const nurseTask = $derived(record?.summary.tasks.find(task => task.id === 'check-images'));
+	const doctorTask = $derived(record?.summary.tasks.find(task => task.id === 'review-report'));
+	const plan = $derived(record?.carePlans?.findLast(item => item.visitId === 'ED-104'));
+	const returned = $derived(record?.status === 'returned');
+	const reviewed = $derived(record?.status === 'reviewed');
+	const nurseAction = $derived(delivery?.assignmentOrigin === 'automatic' && data.imagingNotice.status === 'requested'
+		? 'Check the pending X-ray' : data.imagingNotice.status === 'needs-review' ? 'Check comparison image status' : 'Send the report for doctor review');
+	const owner = $derived(!delivery || returned ? 'Triage agent' : delivery.recipientName ?? delivery.recipient);
+	const submit: SubmitFunction = ({submitter,cancel}) => {
+		if (busy) { cancel(); return; }
+		busy = submitter?.getAttribute('value') || 'saving';
+		error = '';
+		return async ({result,update}) => {
+			try {
+				if (result.type === 'error') error = 'The request could not finish. Reload the transfer and retry.';
+				else await update({reset:false});
+			} finally { busy = ''; }
+		};
+	};
+</script>
+
+{#if message || error}<p class="notice error" role="alert">{error || message}</p>{/if}
+<form method="POST" use:enhance={submit} aria-busy={Boolean(busy)} class="paper-card action-card">
+	<input type="hidden" name="version" value={data.version} />
+	<div class="action-bar"><p class="kicker">{reviewed ? 'Review complete' : 'Next action'}</p><span class="owner-chip">{reviewed ? 'Signed' : 'Owner · ' + owner}</span></div>
+	{#if !record && !admin}
+		<h2>Awaiting triage agent review</h2><p>The triage agent prepares the transfer. The original records are available in the patient chart.</p>
+		<a class="button secondary" href={resolve('/patients?patient=J-104')}>Open patient record</a>
+	{:else if !record}
+		<h2>Prepare the transfer brief</h2><p>Summarize the current transfer and prior visit.</p>
+		<button class="button" type="submit" formaction="?/summarize" name="mode" value="local" disabled={Boolean(busy)}>{busy === 'local' ? 'Parsing…' : 'Parse'}</button>
+	{:else if returned && delivery?.returned}
+		<h2>Reassign the report review</h2><p>{delivery.returned.returnedBy} returned this handoff to the triage agent.</p>
+		<blockquote>{delivery.returned.reason}</blockquote>
+		{#if plan && (plan.priority !== 'unspecified' || plan.impact)}<div class="routing-context"><p class="kicker">Staff routing context · {plan.savedBy}</p>
+			{#if plan.priority !== 'unspecified'}<p><strong>Coordination priority</strong> <span class:raised-priority={plan.priority === 'urgent' || plan.priority === 'critical'}>{plan.priority}</span></p>{/if}
+			{#if plan.impact}<p><strong>Impact</strong> {plan.impact}</p>{/if}
+		</div>{/if}
+		{#if admin}<label for="replace-doctor"><DemoStep n={10} owner="admin"/>New receiving doctor</label>
+			<select id="replace-doctor" name="doctorId" required><option value="">Choose a doctor</option>{#each data.doctors.filter(doctor => doctor.id !== delivery?.recipientAccountId) as doctor (doctor.id)}<option value={doctor.id}>{doctor.name}</option>{/each}</select>
+			<button type="submit" class="button" formaction="?/reassign" disabled={Boolean(busy)}><DemoStep n={11} owner="admin"/>Sign and reassign</button>{/if}
+	{:else if reviewed && delivery?.reviewed}
+		<h2>Report review signed</h2><p>{delivery.reviewed.reviewedBy} signed the review for this transfer.</p>
+		{#if record.imageFollowup}
+			<p>{record.imageFollowup.resolvedAt ? 'Comparison images arrived. Follow-up complete.' : 'Next action · ' + record.imageFollowup.recipientName + ' will recheck the outstanding images.'}</p>
+			{#if !record.imageFollowup.resolvedAt && record.imageFollowup.recipientAccountId === data.account?.id}
+				<a class="button" href={resolve('/inbox/[patientId]', {patientId: data.chart.patient.id})}>Open my assignment</a>
+			{/if}
+		{/if}
+	{:else if delivery}
+		<h2>{delivery.recipient === 'Nurse' ? nurseAction : 'Review the signed report'}</h2>
+		{#if record.flow === 'admin-nurse-doctor'}
+			{#if record.imageStatus && data.imagingNotice?.status !== 'received'}<p>{record.imageStatus.recordedBy} recorded the comparison images as <strong>{record.imageStatus.status.replaceAll('-', ' ')}</strong>.</p>{/if}
+			{#if delivery.assignmentOrigin === 'automatic'}<p>Intake Desk assigned the image check to {delivery.recipientName} when the records showed the earlier X-ray was missing.</p>
+			{:else if delivery.recipient === 'Nurse'}<p>Nursing sends today’s report to the receiving doctor for sign-off.</p>
+			{:else}<p>The assigned doctor can sign the report review or return the assignment to the triage agent.</p>{/if}
+		{:else}<p>Handoff signed by {delivery.signedBy}.</p>{/if}
+		{#if data.ownsDelivery}<a class="button" href={resolve('/inbox/[patientId]', {patientId: data.chart.patient.id})}>Open my assignment</a>{/if}
+	{:else if record.summary.issues.length}
+		<h2>Resolve source verification</h2><p>Review the flagged evidence before preparing the brief again.</p>
+		{#if admin}<button class="button secondary" type="submit" formaction="?/summarize" name="mode" value="local" disabled={Boolean(busy)}>{busy === 'local' ? 'Parsing…' : 'Parse'}</button>{/if}
+	{:else if admin}
+		<h2>Send the handoff to nursing</h2>
+		{#if nurseTask}
+			<p>{nurseTask.text} <ChartCitation line={nurseTask.line} label="Nurse instruction" /></p>
+			{#if doctorTask}<p class="small">The receiving doctor reviews today’s signed report. <ChartCitation line={doctorTask.line} label="Doctor instruction" /></p>{/if}
+			<button class="button" type="submit" formaction="?/approve" name="taskId" value={nurseTask.id} disabled={Boolean(busy)}>Sign and send to nurse</button>
+		{/if}
+	{:else}
+		<h2>Awaiting handoff from the triage agent</h2><p>The triage agent will send the documented follow-up to nursing.</p>
+	{/if}
+	{#if data.imagingNotice}
+		<aside class="imaging-note">
+			<p><strong>{data.imagingNotice.status === 'requested' ? 'Earlier X-ray requested from Imaging Records' : data.imagingNotice.status === 'received' ? 'Earlier X-ray received' : 'Image request needs review'}</strong></p>
+			<p>The doctor signs off on today’s report separately. <a href={resolve('/patients?patient=J-104&tab=documents#imaging-request')}>View imaging {data.imagingNotice.status === 'needs-review' ? 'status' : 'request'}</a></p>
+		</aside>
+	{:else if record?.priorStudyRequest}
+		<p class="small">Study {record.priorStudyRequest.accession} requested by {record.priorStudyRequest.requestedBy}.</p>
+	{/if}
+	{#if busy}<span class="sr" role="status">Processing request.</span>{/if}
+</form>
+
+<style>
+	.imaging-note {border-top:1px solid var(--line);padding-top:12px;margin-top:16px}
+	.imaging-note p {font-size:14px;margin:0 0 3px}
+</style>

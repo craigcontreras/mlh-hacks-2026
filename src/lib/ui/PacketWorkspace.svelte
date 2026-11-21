@@ -51,11 +51,7 @@
 					<span class="tray-mark" aria-hidden="true"></span>
 					<h3>Extract the intake fields</h3>
 					<p>Read the bundled documents for the patient name, sending facility, and callback extension. You’ll review the source lines before signing off.</p>
-					<div class="buttons">
-						<button type="submit" class="button" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="codex" disabled={Boolean(pending)}>{pending === 'codex' ? 'Parsing with Codex…' : 'Parse with Codex'}</button>
-						<button type="submit" class="button secondary" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="local" disabled={Boolean(pending)}>{pending === 'local' ? 'Parsing locally…' : 'Use local parser'}</button>
-					</div>
-					<p class="small">Codex reads only this synthetic packet. The local parser runs offline.</p>
+					<button type="submit" class="button" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="local" disabled={Boolean(pending)}>{pending === 'local' ? 'Parsing…' : 'Parse'}</button>
 				</div>
 			{:else if record.status === 'approved' && record.receipt}
 				<div class="section-block"><h3>Sent to the registration desk</h3><p class="muted">The receiving desk has the approved values and their source references.</p><a class="button" href={resolve('/desk')}>Open registration desk</a></div>
@@ -69,7 +65,6 @@
 				<div class="method-line"><span class="small">Extraction method</span><strong>{method}{draft.model ? ' · ' + draft.model : ''}</strong></div>
 				{#if draft.issues.length}
 					<div class="notice issues" role="status"><strong>This draft needs clarification</strong><ul>{#each draft.issues as issue (issue)}<li>{issue}</li>{/each}</ul>
-						{#if draft.method === 'codex'}<button type="submit" class="button secondary" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="local" disabled={Boolean(pending)}>{pending === 'local' ? 'Parsing locally…' : 'Retry with local parser'}</button>{/if}
 					</div>
 				{/if}
 				<div class="fields">
@@ -103,8 +98,8 @@
 					{/each}
 				</div>
 				<div class="sign-area">
-					<p class="kicker">Clerk sign-off</p>
-					<p id="sign-help">{ready ? 'Approve as Demo clerk to send these reviewed values to the registration desk.' : draft.issues.length || !hasAllFields ? 'Resolve the listed issues before this packet can be approved.' : 'Select the documented correction to enable approval.'}</p>
+					<p class="kicker">Triage agent sign-off</p>
+					<p id="sign-help">{ready ? 'Approve as ' + (data.account?.name ?? 'the reviewing triage agent') + ' to send these reviewed values to the registration desk.' : draft.issues.length || !hasAllFields ? 'Resolve the listed issues before this packet can be approved.' : 'Select the documented correction to enable approval.'}</p>
 					<div class="buttons">
 						<button class="button" type="submit" formaction={'?/approve&sample=' + data.sampleId} aria-describedby="sign-help" disabled={!ready || Boolean(pending)}>Approve for registration desk</button>
 						<button class="button secondary" type="submit" formaction={'?/hold&sample=' + data.sampleId} disabled={Boolean(pending)}>Hold for clarification</button>
@@ -127,11 +122,10 @@
 			<div class="buttons">
 				<button type="submit" class="button secondary" formaction={'?/reset&sample=' + data.sampleId} disabled={Boolean(pending)}>Reset this sample</button>
 				{#if record.status === 'review'}
-					<button type="submit" class="button secondary" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="local" disabled={Boolean(pending)}>{pending === 'local' ? 'Parsing locally…' : 'Reparse with local parser'}</button>
-					<button type="submit" class="button secondary" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="codex" disabled={Boolean(pending)}>{pending === 'codex' ? 'Parsing with Codex…' : 'Reparse with Codex'}</button>
+					<button type="submit" class="button secondary" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="local" disabled={Boolean(pending)}>{pending === 'local' ? 'Parsing…' : 'Parse'}</button>
 				{/if}
 			</div>
 		</details>
 	{/if}
-	<p class="sr" role="status">{pending === 'codex' ? 'Reading synthetic documents with Codex.' : pending === 'local' ? 'Reading synthetic documents with the local parser.' : ''}</p>
+	<p class="sr" role="status">{pending === 'local' ? 'Parsing packet documents.' : ''}</p>
 </form>
