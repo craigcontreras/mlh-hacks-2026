@@ -45,9 +45,14 @@
 			{#if finished && current.reviewed}<h2>Report review signed</h2><p>Recorded by {current.reviewed.reviewedBy}.</p>
 			{:else}
 				<h2>{data.role === 'Nurse' ? 'Check comparison image status' : 'Review the final report'}</h2>
+			{/if}
+			{#if data.role === 'Doctor' && data.record.imageStatus}
+				<p class="request-receipt">Nursing update · Comparison images {data.record.imageStatus.status.replaceAll('-',' ')}<br /><small>Last recorded by {data.record.imageStatus.recordedBy}.</small></p>
+			{/if}
+			{#if !finished || !current.reviewed}
 				{#if data.role === 'Doctor' && impression}<ChartCitation doc={'documentId' in impression ? impression.documentId : 'ED-104'} line={impression.line} label="Read signed radiology impression" />{/if}
-				{#if task}<p>{task.text} <ChartCitation line={task.line} label={data.role + ' assignment in transfer note'}/></p>{/if}
 				<p class="small">Handoff from {current.signedBy}.</p>
+				{#if task}<ChartCitation line={task.line} label={data.role + ' assignment in transfer note'}/>{/if}
 				{#if plan}<div class="routing-context"><p class="kicker">Routing plan · {plan.savedBy}</p><p><strong>Priority</strong> <span class:raised-priority={plan.priority === 'urgent' || plan.priority === 'critical'}>{plan.priority ?? 'unspecified'}</span> · <strong>Impact</strong> {plan.impact || 'Unspecified'}</p>
 					{#if plan.receivingFacility || plan.receivingDepartment}<p><strong>Planned destination</strong> {[plan.receivingFacility,plan.receivingDepartment].filter(Boolean).join(' · ')}</p>{/if}
 				</div>{/if}
@@ -55,7 +60,6 @@
 					{#if !data.record.imageStatus}<label for="image-status">Observed status of the requested prior images</label><select id="image-status" name="imageStatus" required><option value="">Choose status</option><option value="arrived">Arrived</option><option value="still-pending">Still pending</option><option value="unable-to-confirm">Unable to confirm</option></select><button class="button" type="submit" formaction="?/recordImageStatus" disabled={busy}>Record image status</button>
 					{:else}<p class="request-receipt">Image status recorded · {data.record.imageStatus.status.replaceAll('-',' ')}</p>{#if next}<div class="route-next"><p>{next.text} <ChartCitation line={next.line} label="Doctor assignment in transfer note" /></p><button type="submit" class="button" formaction="?/forward" name="taskId" value={next.id} disabled={busy}>Sign and send report to doctor</button></div>{/if}{/if}
 				{:else if ordered && data.role === 'Doctor'}
-					{#if data.record.imageStatus}<p class="request-receipt">Nursing update · Comparison images {data.record.imageStatus.status.replaceAll('-',' ')}</p>{/if}
 					<button class="button" type="submit" formaction="?/signReview" disabled={busy}>Sign report review</button>
 					<details class="return-menu"><summary>Return to administrative staff</summary><label for="return-reason">Reason for returning</label><textarea id="return-reason" name="reason" rows="2" maxlength="500"></textarea><button class="button secondary" type="submit" formaction="?/returnToAdmin" disabled={busy}>Return handoff to admin</button></details>
 				{:else}

@@ -11,11 +11,11 @@
 	const admin = $derived(data.account?.role === 'Administrative staff');
 </script>
 <svelte:head><title>{data.chart.patient.name} · {admin ? 'Transfer workspace' : 'Patient chart'}</title></svelte:head>
-<header class="pagehead flow-title"><div><p class="kicker">{admin ? 'Transfer workspace' : 'Patient chart'} · {data.document.id}</p><h1>{data.chart.patient.name}</h1><p class="lead">{data.chart.patient.hospital} · {data.chart.patient.id}</p></div></header>
+<header class="pagehead flow-title"><div><p class="kicker">{data.chart.patient.id} · {data.document.id} · {data.chart.patient.hospital}</p><h1>{data.chart.patient.name}</h1></div></header>
 <div class="case-layout">
 	<div class="case-column">
 		{#key data.version}<HandoffPanel {data} message={form?.message} />{/key}
-		{#if data.record}<div class="paper-card"><HandoffBrief record={data.record} documents={data.chart.documents} administrative={admin} /></div>{/if}
+		{#if data.record}<div class="paper-card"><HandoffBrief record={data.record} documents={data.chart.documents} /></div>{/if}
 	</div>
 	<div class="case-column">
 		{#key data.version}<PatientPath {data} />{/key}

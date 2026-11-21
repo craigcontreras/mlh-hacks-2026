@@ -11,6 +11,7 @@
 	const admin = $derived(data.account?.role === 'Administrative staff');
 	const delivery = $derived(record?.history.at(-1));
 	const nurseTask = $derived(record?.summary.tasks.find(task => task.id === 'check-images'));
+	const doctorTask = $derived(record?.summary.tasks.find(task => task.id === 'review-report'));
 	const plan = $derived(record?.carePlans?.findLast(item => item.visitId === 'ED-104'));
 	const returned = $derived(record?.status === 'returned');
 	const reviewed = $derived(record?.status === 'reviewed');
@@ -34,9 +35,11 @@
 	<input type="hidden" name="version" value={data.version} />
 	<div class="action-bar"><p class="kicker">{reviewed ? 'Review complete' : 'Next action'}</p><span class="owner-chip">{reviewed ? 'Signed' : 'Owner · ' + owner}</span></div>
 	{#if !record}
-		<h2>Prepare the transfer brief</h2><p>Read the current and prior visit together before routing the handoff.</p>
-		<div class="buttons"><button class="button" type="submit" formaction="?/summarize" name="mode" value="codex" disabled={Boolean(busy)}>{busy === 'codex' ? 'Summarizing…' : 'Summarize with Codex'}</button>
-		<button class="button secondary" type="submit" formaction="?/summarize" name="mode" value="local" disabled={Boolean(busy)}>Use local parser</button></div>
+		<h2>Prepare the transfer brief</h2><p>Summarize the current transfer and prior visit.</p>
+		<button class="button" type="submit" formaction="?/summarize" name="mode" value="local" disabled={Boolean(busy)}>{busy === 'local' ? 'Preparing…' : 'Prepare transfer brief'}</button>
+		<details class="return-menu"><summary>Parser options</summary>
+			<button class="button secondary" type="submit" formaction="?/summarize" name="mode" value="codex" disabled={Boolean(busy)}>{busy === 'codex' ? 'Summarizing…' : 'Summarize with Codex'}</button>
+		</details>
 	{:else if returned && delivery?.returned}
 		<h2>Reassign the report review</h2><p>{delivery.returned.returnedBy} returned this handoff to administrative staff.</p>
 		<blockquote>{delivery.returned.reason}</blockquote>
@@ -51,28 +54,31 @@
 		<h2>Report review signed</h2><p>{delivery.reviewed.reviewedBy} signed the review for this transfer.</p>
 	{:else if delivery}
 		<h2>{delivery.recipient === 'Nurse' ? 'Check comparison image status' : 'Review the signed report'}</h2>
-		<p>Sent by {delivery.signedBy} to {owner}. {record.imageStatus ? 'The nurse has recorded the comparison image status.' : ''}</p>
+		{#if record.flow === 'admin-nurse-doctor'}
+			{#if record.imageStatus}<p>{record.imageStatus.recordedBy} recorded the comparison images as <strong>{record.imageStatus.status.replaceAll('-', ' ')}</strong>.</p>{/if}
+			{#if delivery.recipient === 'Nurse'}<p>For this handoff, nursing records the image status, then sends the report to the doctor for sign-off.</p>
+			{:else}<p>The assigned doctor can sign the report review or return the assignment to administration.</p>{/if}
+		{:else}<p>Handoff signed by {delivery.signedBy}.</p>{/if}
 		{#if ownsDelivery}<a class="button" href={resolve('/inbox?case=ED-104')}>Open my assignment</a>{/if}
 	{:else if record.summary.issues.length}
 		<h2>Resolve source verification</h2><p>Review the flagged evidence or regenerate the brief with the local parser.</p>
 		<button class="button secondary" type="submit" formaction="?/summarize" name="mode" value="local" disabled={Boolean(busy)}>Retry with local parser</button>
 	{:else if admin}
-		<h2>{record.priorStudyRequest || !record.summary.adminAction ? 'Send the handoff to nursing' : 'Request the prior comparison study'}</h2>
-		{#if record.summary.adminAction && !record.priorStudyRequest}
-			<p>{record.summary.adminAction.text}</p>
-			{#each record.summary.adminAction.evidence.slice(0,1) as ev (ev.documentId + ev.line)}<ChartCitation line={ev.line} doc={ev.documentId} label="Clerk instruction" />{/each}
-			<div class="buttons"><button class="button" type="submit" formaction="?/requestPriorStudy" disabled={Boolean(busy)}>Request study from Imaging Records</button></div>
+		<h2>Send the handoff to nursing</h2>
+		{#if nurseTask}
+			<p>{nurseTask.text} <ChartCitation line={nurseTask.line} label="Nurse instruction" /></p>
+			{#if doctorTask}<p class="small">After the image status check, the doctor reviews the signed report. <ChartCitation line={doctorTask.line} label="Doctor instruction" /></p>{/if}
+			<button class="button" type="submit" formaction="?/approve" name="taskId" value={nurseTask.id} disabled={Boolean(busy)}>Sign and send to nurse</button>
 		{/if}
-		{#if record.priorStudyRequest}<p class="request-receipt">Imaging Records request queued · {record.priorStudyRequest.accession} · {record.priorStudyRequest.requestedBy}</p>{/if}
-		{#if nurseTask}<div class="route-next"><div><span class="kicker">Receiving nurse</span><p>{nurseTask.text} <ChartCitation line={nurseTask.line} label="Nurse instruction" /></p></div>
-			<button class="button" class:secondary={Boolean(record.summary.adminAction && !record.priorStudyRequest)} type="submit" formaction="?/approve" name="taskId" value={nurseTask.id} disabled={Boolean(busy)}>Sign and send to nurse</button></div>{/if}
 	{:else}
 		<h2>Awaiting administrative handoff</h2><p>Administrative staff will route the documented follow-up to nursing.</p>
 	{/if}
-	{#if delivery && admin && record?.summary.adminAction && !record.summary.issues.length}
-		<details class="return-menu"><summary>Records follow-up{record.priorStudyRequest ? ' · Queued' : ''}</summary>
+	{#if admin && record?.summary.adminAction && !record.summary.issues.length}
+		<details class="return-menu"><summary>{record.priorStudyRequest ? 'Prior study request · Queued' : 'Request the prior study (optional)'}</summary>
 			{#if record.priorStudyRequest}<p class="small">Study {record.priorStudyRequest.accession} requested by {record.priorStudyRequest.requestedBy}.</p>
-			{:else}<p class="small">{record.summary.adminAction.text}</p><button class="button secondary" type="submit" formaction="?/requestPriorStudy" disabled={Boolean(busy)} formnovalidate>Request study from Imaging Records</button>{/if}
+			{:else}<p class="small">{record.summary.adminAction.text}
+				{#each record.summary.adminAction.evidence.slice(0,1) as ev (ev.documentId + ev.line)}<ChartCitation line={ev.line} doc={ev.documentId} label="Clerk instruction" />{/each}
+			</p><button class="button secondary" type="submit" formaction="?/requestPriorStudy" disabled={Boolean(busy)} formnovalidate>Request study from Imaging Records</button>{/if}
 		</details>
 	{/if}
 	{#if busy}<span class="sr" role="status">Processing request.</span>{/if}

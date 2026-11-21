@@ -29,6 +29,8 @@
 	const filedDestination = $derived(filedLine < 0 ? '' : transferSource[filedLine].split(' | Destination: ')[1]);
 	const editable = $derived(admin && !!data.record);
 	const plans = $derived(data.record?.carePlans ?? []);
+	const currentPlan = $derived(plans.findLast(plan => plan.visitId === data.document.id));
+	const currentDestination = $derived(currentPlan ? [currentPlan.receivingFacility, currentPlan.receivingDepartment].filter(Boolean).join(' · ') || 'Unassigned' : filedDestination);
 	const notes = $derived(data.record?.operationalNotes ?? []);
 	function destination(facility: string, department: string) {
 		if (!facility) return department ? 'Department · ' + department : '';
@@ -40,10 +42,13 @@
 </script>
 
 <section class="paper-card path-card" aria-label="Patient path">
-	<header><div><p class="kicker">Visit coordination</p><h2>Patient path</h2></div><span class="small">Recorded → planned</span></header>
+	<header><h2>Patient path</h2></header>
 	<ol class="team-route" aria-label="Handoff sequence">{#each route as stage, index (index)}
 		<li aria-current={stage.state === 'Current' ? 'step' : undefined}><span><strong>{stage.role}</strong>{#if stage.name}<span>{stage.name}</span>{/if}{#if stage.state}<small>{stage.state}</small>{/if}</span></li>
 	{/each}</ol>
+	{#if currentDestination}<p class="destination-summary"><span>{currentPlan ? 'Planned destination' : 'Filed destination'}</span><strong>{currentDestination}</strong></p>{/if}
+	<details class="visit-coordination">
+		<summary>{editable ? 'Visit history and plan editor' : 'Visit history and plans'}</summary>
 	<ol class="path-rail">
 		{#each visitIds as visitId (visitId)}
 			{@const plan = plans.findLast(item => item.visitId === visitId)}
@@ -67,7 +72,7 @@
 				<input type="hidden" name="version" value={data.version} /><input type="hidden" name="visitId" value={selected} />
 				<h3>Edit planned destination · {selected}</h3>
 				<label for="plan-doctor">Next doctor</label><select id="plan-doctor" name="doctorId" value={selectedPlan?.doctorId ?? ''}><option value="">Unassigned</option>{#each data.doctors as doctor (doctor.id)}<option value={doctor.id}>{doctor.name}</option>{/each}</select>
-				<label for="plan-facility">Receiving facility</label><input id="plan-facility" name="receivingFacility" maxlength="120" list="known-hospitals" value={selectedPlan?.receivingFacility ?? ''} />
+				<label for="plan-facility">Receiving facility</label><input id="plan-facility" name="receivingFacility" maxlength="120" list="known-hospitals" value={selectedPlan?.receivingFacility ?? (selected === 'ED-104' ? filedDestination : '')} />
 				<datalist id="known-hospitals"><option value={data.chart.patient.hospital}></option></datalist>
 				<label for="plan-department">Receiving department</label><input id="plan-department" name="receivingDepartment" maxlength="120" value={selectedPlan?.receivingDepartment ?? ''} />
 				<label for="plan-priority">Staff-assigned coordination priority</label><select id="plan-priority" name="priority" value={selectedPlan?.priority ?? 'unspecified'}><option value="unspecified">Unspecified</option><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="critical">Critical</option></select>
@@ -76,6 +81,7 @@
 			</form>
 		{/key}
 	{/if}
+	</details>
 	<details class="note-editor"><summary>Operational notes{notes.length ? ' (' + notes.length + ')' : ''}</summary>
 		<label for="note-visit">Visit</label><select id="note-visit" bind:value={noteVisit}>{#each [...new Set(encounters.map(item => item.visitId))] as visitId (visitId)}<option value={visitId}>{visitId}</option>{/each}</select>
 		{#if editable}

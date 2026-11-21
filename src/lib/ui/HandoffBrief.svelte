@@ -2,8 +2,7 @@
 	import type { PageData } from '../../routes/handoffs/$types';
 	import ChartCitation from './ChartCitation.svelte';
 
-	let { record, documents, administrative = false }: {
-		administrative?: boolean;
+	let { record, documents }: {
 		record: NonNullable<PageData['record']>;
 		documents: PageData['chart']['documents'];
 	} = $props();
@@ -36,7 +35,7 @@
 		</div>
 	{/if}
 	{#if record.summary.crossChecks?.length}
-		<details class="reconcile" open={administrative}>
+		<details class="reconcile">
 			<summary>Compare current and prior records</summary>
 			{#each record.summary.crossChecks as check (check.label)}
 				<div class="finding">
