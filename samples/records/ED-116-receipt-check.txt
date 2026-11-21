@@ -1,0 +1,12 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY DEPARTMENT
+Synthetic chart · Fictional patient and staff
+Document: Nursing paperwork confirmation
+Chart identity: C-116 | visit ED-116 | Mossbridge Community Hospital
+Patient: Casey Rowan
+Date: 2026-11-20
+
+16:46 · Signed task receipt
+Assigned to: Riley Ortiz, RN
+Task: Verify delivery of Casey’s large-type visit instructions.
+Riley Ortiz verified the 16:40 receipt documented by Devon Park, RN. The paperwork task was closed.
+Signed by Riley Ortiz, RN (fictional).

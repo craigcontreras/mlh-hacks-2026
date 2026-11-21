@@ -1,0 +1,11 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY DEPARTMENT
+Fictional training record · Synthetic patient and facility
+Document: Physician progress note
+Chart identity: C-116 | visit ED-116 | Mossbridge Community Hospital
+Patient: Casey Rowan
+Date: 2026-11-20
+
+16:18 · Follow-up discussion
+Casey and the attending physician reviewed the change in symptoms and the questions Casey had about going home.
+Casey requested the written visit instructions in large type.
+Signed by Priya Lane, MD (fictional).

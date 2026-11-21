@@ -16,7 +16,6 @@
 	const returned = $derived(record?.status === 'returned');
 	const reviewed = $derived(record?.status === 'reviewed');
 	const owner = $derived(!delivery || returned ? 'Administrative staff' : delivery.recipientName ?? delivery.recipient);
-	const ownsDelivery = $derived(delivery && !returned && (delivery.recipientAccountId ? delivery.recipientAccountId === data.account?.id : delivery.recipient === data.account?.role));
 	const submit: SubmitFunction = ({submitter,cancel}) => {
 		if (busy) { cancel(); return; }
 		busy = submitter?.getAttribute('value') || 'saving';
@@ -34,7 +33,10 @@
 <form method="POST" use:enhance={submit} aria-busy={Boolean(busy)} class="paper-card action-card">
 	<input type="hidden" name="version" value={data.version} />
 	<div class="action-bar"><p class="kicker">{reviewed ? 'Review complete' : 'Next action'}</p><span class="owner-chip">{reviewed ? 'Signed' : 'Owner · ' + owner}</span></div>
-	{#if !record}
+	{#if !record && !admin}
+		<h2>Awaiting administrative review</h2><p>The clerk prepares the transfer. The original records are available in the patient chart.</p>
+		<a class="button secondary" href={resolve('/patients?patient=J-104')}>Open patient record</a>
+	{:else if !record}
 		<h2>Prepare the transfer brief</h2><p>Summarize the current transfer and prior visit.</p>
 		<button class="button" type="submit" formaction="?/summarize" name="mode" value="local" disabled={Boolean(busy)}>{busy === 'local' ? 'Preparing…' : 'Prepare transfer brief'}</button>
 		<details class="return-menu"><summary>Parser options</summary>
@@ -52,6 +54,12 @@
 			<button type="submit" class="button" formaction="?/reassign" disabled={Boolean(busy)}>Sign and reassign</button>{/if}
 	{:else if reviewed && delivery?.reviewed}
 		<h2>Report review signed</h2><p>{delivery.reviewed.reviewedBy} signed the review for this transfer.</p>
+		{#if record.imageFollowup}
+			<p>{record.imageFollowup.resolvedAt ? 'Comparison images arrived. Follow-up complete.' : 'Next action · ' + record.imageFollowup.recipientName + ' will recheck the outstanding images.'}</p>
+			{#if !record.imageFollowup.resolvedAt && record.imageFollowup.recipientAccountId === data.account?.id}
+				<a class="button" href={resolve('/inbox/[patientId]', {patientId: data.chart.patient.id})}>Open my assignment</a>
+			{/if}
+		{/if}
 	{:else if delivery}
 		<h2>{delivery.recipient === 'Nurse' ? 'Check comparison image status' : 'Review the signed report'}</h2>
 		{#if record.flow === 'admin-nurse-doctor'}
@@ -59,10 +67,10 @@
 			{#if delivery.recipient === 'Nurse'}<p>For this handoff, nursing records the image status, then sends the report to the doctor for sign-off.</p>
 			{:else}<p>The assigned doctor can sign the report review or return the assignment to administration.</p>{/if}
 		{:else}<p>Handoff signed by {delivery.signedBy}.</p>{/if}
-		{#if ownsDelivery}<a class="button" href={resolve('/inbox?case=ED-104')}>Open my assignment</a>{/if}
+		{#if data.ownsDelivery}<a class="button" href={resolve('/inbox/[patientId]', {patientId: data.chart.patient.id})}>Open my assignment</a>{/if}
 	{:else if record.summary.issues.length}
 		<h2>Resolve source verification</h2><p>Review the flagged evidence or regenerate the brief with the local parser.</p>
-		<button class="button secondary" type="submit" formaction="?/summarize" name="mode" value="local" disabled={Boolean(busy)}>Retry with local parser</button>
+		{#if admin}<button class="button secondary" type="submit" formaction="?/summarize" name="mode" value="local" disabled={Boolean(busy)}>Retry with local parser</button>{/if}
 	{:else if admin}
 		<h2>Send the handoff to nursing</h2>
 		{#if nurseTask}

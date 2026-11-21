@@ -13,7 +13,7 @@
 		background: none;
 		border: 0;
 		padding: 2px 0;
-		color: #285b48;
+		color: #4f4f4f;
 		font: 600 13px/1.45 Inter, Arial, sans-serif;
 		text-decoration: underline;
 		text-underline-offset: 3px;

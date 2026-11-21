@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { AccountId, DemoAccount } from './accounts';
 import { ClinicalStore } from './clinical-store';
+import { PatientRegistry } from './patient-registry';
 import { resolveDraft, type Draft, type Evidence, type Field } from './extraction';
 import { fixtures, type FixtureId } from './fixtures';
 
@@ -35,6 +36,7 @@ function stale() {
 export class PacketStore {
 	private db: DatabaseSync;
 	readonly clinical: ClinicalStore;
+	readonly patients: PatientRegistry;
 
 	constructor(filename: string) {
 		if (filename !== ':memory:') mkdirSync(dirname(filename), { recursive: true });
@@ -47,6 +49,7 @@ export class PacketStore {
 				CHECK((status='approved') = (receipt IS NOT NULL))
 			)`);
 		this.clinical = new ClinicalStore(this.db);
+		this.patients = new PatientRegistry(this.db);
 	}
 
 	get(id: FixtureId): PacketRecord | null {

@@ -2,19 +2,27 @@
 
 **MT-haCks 2026 · MedTech + Design · November 21 demo specification**
 
+## Hospital patient overview
+
+All three staff roles start at a black-and-gray patient overview for Mossbridge. Patient records, care documentation and review routing each open a distinct workflow. A patient has multiple visits. Each visit collects dated records and staff updates. The list shows a dated finding and who owns the current work. Each clinician’s inbox lists patients. Opening a row navigates to that patient’s own assignment page.
+
+Casey’s chart follows a nursing reassessment, a physician discussion, and delivery of written instructions during a visit within the hospital. Maya can append a coordination update to any recorded visit. The chart stores her name and the time, and the next worker can read it. Jordan’s chart connects the same patient view to an active report-review workflow.
+
 ## Medical document handoff
 
-**Primary demo.** During an ER transfer, staff need to distinguish a current signed report from comparison images held under an earlier encounter. A clerk, doctor or nurse can find the original evidence in the chart. Each worker signs only those actions assigned to their account. [Synthetic transfer note](samples/records/ED-104-transfer-note.pdf) · [Demo walkthrough](README.md#three-minute-walkthrough)
+During Jordan’s ER transfer, staff need to distinguish a current signed report from comparison images held under an earlier encounter. A clerk, doctor or nurse can find the original evidence in the chart. Each worker signs only those actions assigned to their account. [Synthetic transfer note](samples/records/ED-104-transfer-note.pdf) · [Demo walkthrough](README.md#three-minute-walkthrough)
 
 | Acceptance example | Observable result |
 | --- | --- |
-| Maya signs in and opens the active transfer. | The administrative workspace shows Jordan Vale's next action and the documented visit path. Riley Ortiz and each doctor land in their own inboxes. The server enforces role and assigned-account permissions. |
+| Sign in as Maya, Riley, or either doctor. | Each account lands in Patient overview. Open Jordan for the documented visit path. The assigned clinician can open their task, and the server enforces signing permissions. |
 | Generate a brief from Jordan’s chart. | Four facts and the documented assignments link to the original text. Cross-checks cite evidence across five documents from two visits. The document list opens to a short summary. The source viewer highlights the specific cited passage. |
 | Inspect the current study and prior visit. | Codex reads the visit ID, side marker and training watermark on the current synthetic image. The earlier intake and archive identify the prior study. The current checklist says those images are outstanding. The offline parser labels the image data as coming from the manifest. |
 | Maya edits the planned path and saves a note. | A plan records the next doctor, destination, department, staff-entered priority and coordination impact. The graph distinguishes internal routing from a planned hospital transfer. Notes and plans carry author and time. |
 | Maya requests the study and sends the assignment to Riley. | A single local request stores accession MB-082-LA and its evidence. Riley records the comparison image status and signs the documented report-review task to the planned doctor. |
 | Avery opens the doctor case. | Avery can sign report review or return it to Maya with a reason. Maya can send the returned assignment to another doctor account. The chain records which account owned, acted on and completed the review. |
-| Search the patient directory for Casey. | Both completed visits have two documents each. Opening Casey’s chart shows Casey’s paperwork. |
+| Morgan signs after Riley records that the comparison images are pending. | The same SQLite transaction records Morgan’s signature and opens Riley’s follow-up. A pending recheck keeps it open. Recording arrival closes it. Images already marked as arrived require no follow-up. |
+| Prepare the brief offline with the bundled PDFs. | The local parser reads and verifies the original transfer and radiology PDFs when Poppler is installed. The chart labels the verified-transcript fallback on machines without Poppler. The live-demo budget is under one second from click to signable brief on the event laptop. |
+| Search for Casey or a prior visit ID. | Casey’s chart spans two visits. The source link on the nursing reassessment opens the original passage. A new coordination update survives a refresh and appears only on the selected patient’s chart. |
 | A participant tries the demo. | Capture whether they identify the next owner, distinguish the report from the outstanding images, and locate the supporting passage. Record time, prompts and a retest after addressing an observed issue. |
 
 ## Registration packet workflow
@@ -25,7 +33,7 @@ A clerk opens a synthetic ER transfer packet. The transfer form lists callback e
 
 ## User and problem
 
-**Primary users** — Administrative staff reconcile transfer paperwork. The receiving doctor reviews the available report and the nurse can check for outstanding images. The separate registration example focuses on the clerk preparing a callback for the registration desk.
+**Primary users** — In Jordan’s case, administrative staff reconcile the transfer paperwork, the nurse records whether the requested images are available, and the receiving doctor signs their review of the report. The separate registration example focuses on the clerk preparing a callback for the registration desk.
 
 **Team goal** — Help doctors and nurses find information that already exists in a patient's paperwork sooner. Drawing on document-parsing experience at GUILD, the team proposed extracting facts from synthetic intake and discharge documents, showing the source to a clerk, and forwarding the reviewed information after sign-off. The meeting’s estimated wait times are brainstorming figures. Time spent finding paperwork and any effect on admission time remain unmeasured. [Team meeting questions](docs/meeting-questions.md)
 

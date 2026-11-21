@@ -20,7 +20,7 @@ describe('ED transfer note', () => {
 		expect(summary.facts[1].text).toContain('report is attached and documents lateral soft tissue swelling');
 		expect(summary.facts[2].text).toBe('Lateral soft tissue swelling. No acute fracture identified on these views.');
 		expect(summary.facts[3].text).toContain('requested and had not arrived');
-		expect(summary.tasks.map((item) => [item.id, item.role])).toEqual([['review-report', 'Doctor'], ['check-images', 'Nurse']]);
+		expect(summary.tasks.map((item) => [item.id, item.role])).toEqual([['check-images', 'Nurse'], ['review-report', 'Doctor']]);
 		for (const item of [...summary.facts, ...summary.tasks]) {
 			expect(clinicalDocument.text.split('\n')[item.line - 1]).toBe(item.quote);
 			expect(item.quote).toContain(item.text);
@@ -43,7 +43,7 @@ describe('ED transfer note', () => {
 
 	it('blocks a final report cited as pending, swapped roles, omitted evidence, duplicates and a new recommendation', () => {
 		const raw = modelReply();
-		const [reason, report, impression, , doctor, nurse] = raw.items;
+		const [reason, report, impression, , nurse, doctor] = raw.items;
 		for (const items of [raw.items.map((item) => item.kind === 'pending' ? { ...report, kind: 'pending' } : item),
 			raw.items.map((item) => item.kind === 'review-report' ? { ...nurse, kind: 'review-report' } : item),
 			raw.items.filter((item) => item !== reason), [...raw.items, doctor],

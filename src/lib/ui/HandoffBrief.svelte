@@ -29,6 +29,7 @@
 		<h2>Chart summary</h2>
 		<span class="method-chip">{record.summary.method === 'codex' ? 'Codex' : 'Local parser'} · {record.elapsedMs < 1000 ? record.elapsedMs + ' ms' : (record.elapsedMs / 1000).toFixed(1) + ' s'}</span>
 	</div>
+	{#if record.summary.pdfInput}<p class="small">{record.summary.pdfInput === 'pdf-text' ? 'Read and verified the transfer note and radiology PDFs.' : 'Used verified transcripts of the transfer note and radiology PDFs.'}</p>{/if}
 	{#if record.summary.issues.length}
 		<div class="notice issues" role="alert"><strong>Source verification needs review</strong>
 			<ul>{#each record.summary.issues as issue (issue)}<li>{issue}</li>{/each}</ul>

@@ -139,6 +139,32 @@ describe('SQLite clinical handoffs', () => {
 		expect(clinical.get()).toEqual(reassigned);
 	});
 
+	it.each(['still-pending', 'unable-to-confirm', 'arrived'] as const)('opens and closes the remaining image check when the signed review starts with %s', initial => {
+		const workflow = store.clinical;
+		const draft = workflow.saveSummary(workflow.version(), summary, 2, sourceText, chartDocuments);
+		const assigned = workflow.approve(draft.version, admin, 'check-images');
+		const noted = workflow.recordImageStatus(assigned.version, nurse, initial);
+		const forwarded = workflow.forward(noted.version, nurse, 'review-report');
+		const signed = workflow.signReview(forwarded.version, doctor);
+		if (initial === 'arrived') {
+			expect(signed.imageFollowup).toBeUndefined();
+			expect(() => workflow.updateImageFollowup(signed.version, nurse, 'arrived')).toThrow(/no open/);
+			return;
+		}
+		expect(signed.imageFollowup).toMatchObject({ openedBy: doctor.name, recipientAccountId: nurse.id, initial: noted.imageStatus });
+		expect(() => workflow.updateImageFollowup(signed.version, doctor, 'arrived')).toThrow(/requires the assigned nurse/);
+		const pending = workflow.updateImageFollowup(signed.version, nurse, 'still-pending');
+		expect(pending.imageFollowup?.resolvedAt).toBeUndefined();
+		expect(workflow.updateImageFollowup(signed.version, nurse, 'still-pending')).toEqual(pending);
+		const closed = workflow.updateImageFollowup(pending.version, nurse, 'arrived');
+		expect(closed.history).toEqual(signed.history);
+		expect(closed.imageStatus?.status).toBe('arrived');
+		expect(closed.imageFollowup?.initial).toEqual(noted.imageStatus);
+		expect(closed.imageFollowup?.observations.map(event => event.status)).toEqual(['still-pending', 'arrived']);
+		expect(closed.imageFollowup?.resolvedAt).toEqual(expect.any(String));
+		expect(() => workflow.updateImageFollowup(closed.version, nurse, 'still-pending')).toThrow(/no open/);
+	});
+
 	it.each([
 		['review-report', 'Doctor', doctor, 'check-images', nurse],
 		['check-images', 'Nurse', nurse, 'review-report', doctor]

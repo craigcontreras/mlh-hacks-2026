@@ -1,22 +1,23 @@
 # Intake Desk
 
-Intake Desk helps hospital staff answer a question during transfer: **Which information can I pass on, and where did it come from?** A clerk cross-checks current paperwork against earlier visits and sends the documented follow-up to nursing. The assigned nurse records image status and sends the report to the doctor. The doctor signs the review or sends the assignment back to the clerk. All people, facilities, records and images in this demo are fictional.
+Intake Desk is a shared patient portal for the fictional Mossbridge Community Hospital. Administrative staff, doctors, and nurses can see the latest recorded update, open the original document, and find who owns the next task. One chart follows care inside the hospital. A second follows an imaging report through a transfer and reassignment. All patients, staff, records and images are synthetic.
 
 ## Run locally
 
-The demo was built with Node.js 26.3.1 and npm 11.16.0. Install the Codex CLI on the demo machine and sign in with your own account for model extraction. The server uses the same CLI login as your terminal. Check the CLI supports the flags in `codex exec --help`, including `--ignore-user-config`, `--output-schema` and `--ephemeral`. The demo was tested with Codex CLI 0.163.0.
+The demo was built with Node.js 26.3.1 and npm 11.16.0. For the local PDF demonstration, put Poppler’s `pdftotext` on your path (`brew install poppler` on macOS).
 
 ```sh
 npm ci
-codex login status
 npm run dev -- --host 127.0.0.1
 ```
 
-Open the local URL printed by Vite. If you need to sign in, run `codex login`. The template parser also works offline. Each teammate can use a separate checkout and database. Use one laptop for the demo so both views read the same SQLite file.
+Open the local URL printed by Vite. For optional model extraction, install the Codex CLI and run `codex login` under your own account. The server uses that CLI login. This path was tested with Codex CLI 0.163.0. Use one server for the demo so all staff accounts see the same SQLite records.
 
 ## Three-minute walkthrough
 
 Open **/login** and select an account. **Fill passcode** enters its demo credential. Sign out to switch users in the same window. Separate browser profiles also work when they point to the same local server.
+
+Start in **Patient overview**. Open **Casey Rowan** for a visit within Mossbridge. In **Patient log**, open the nursing reassessment, physician progress note, and paperwork receipt to see what each person documented. Maya can use **Add coordination update** to record a new entry against a visit. Reopen Casey as a nurse or doctor to see the same dated entry and author. **All patients** shows both charts. **My assignments** filters to work currently assigned to the signed-in account or its administrative queue.
 
 | Account | Demo passcode | Workspace |
 | --- | --- | --- |
@@ -25,14 +26,17 @@ Open **/login** and select an account. **Fill passcode** enters its demo credent
 | Dr. Avery Shah · doctor | `avery-demo-104` | Open the source report and sign the review or return the task with a reason. |
 | Dr. Morgan Lee · doctor | `morgan-demo-104` | Open a reassigned review from an independent inbox. |
 
-1. **Maya opens Jordan Vale’s transfer** and selects **Prepare transfer brief** to use the local parser. For model extraction, choose **Parser options → Summarize with Codex**. Expand **Compare current and prior records**. The prior imaging archive lists study **MB-082-LA**, and the current transfer checklist says its images are still outstanding. Click either source to see the highlighted passage in the original document.
+1. **Maya opens Jordan Vale → Open transfer workspace → Prepare transfer brief** to use the local parser. For model extraction, choose **Parser options → Summarize with Codex**. Expand **Compare current and prior records**. The prior imaging archive lists study **MB-082-LA**, and the current transfer checklist says its images are still outstanding. Click either source to see the highlighted passage in the original document.
 2. **Maya sends the documented image check to Riley.** To show the archive request first, expand **Request the prior study (optional)**. The request enters the local Imaging Records queue. **Sign and send to nurse** assigns the check. Open **Visit history and plan editor** to see earlier visits or change a destination.
-3. **Riley opens Jordan from My inbox.** Record **Still pending** for the comparison images. Sign and send the documented report-review task to the doctor. The nursing update is visible on the doctor’s assignment.
-4. **Avery opens Jordan from My inbox.** Inspect the signed report and sign the review. To demonstrate reassignment, return the handoff instead and enter a reason. Maya opens the returned task and reassigns it to Morgan. Morgan then signs from their own inbox. The history shows the return, the new owner and the signed review.
+3. **Riley opens My inbox → Jordan Vale.** Casey’s completed paperwork check has its own page. For Jordan, choose **Still pending → Record image status → Sign and send report to doctor**. Riley’s observation goes to Dr. Avery Shah by default. The source link shows where the sending team requested the review.
+4. **Avery opens My inbox → Jordan Vale → Read signed radiology impression.** For the reassignment demo, select **Return to administrative staff**, enter “Called to another patient,” and click **Return handoff to admin**. Maya opens Jordan’s transfer workspace, selects **Dr. Morgan Lee**, and clicks **Sign and reassign**. Morgan opens Jordan in **My inbox**, checks the report and clicks **Sign report review**.
+5. **Riley closes the outstanding image check.** Morgan’s signature creates a follow-up for Riley because the prior images were still pending. Back in Jordan’s inbox page, choose **Arrived → Save follow-up status**. The patient log retains both the signature and the later image update. If Riley had recorded **Arrived** before the doctor signed, the workflow would already be complete.
+
+Use the [illustrated doctor walkthrough](docs/Jordan-doctor-walkthrough.pdf) to rehearse. When demonstrating the sign-off, say “Morgan can review today’s report now. Riley still owns the missing images, and both decisions are recorded in Jordan’s chart.”
 
 A plan can record the next doctor, facility, department, staff-entered priority and coordination impact. Same-hospital updates show an internal handoff. A different facility shows a planned external transfer. Original documents, saved plan revisions and the signed handoff each retain their own provenance.
 
-The [transfer PDF](samples/records/ED-104-transfer-note.pdf), [source text](samples/records/ED-104-transfer-note.txt), [synthetic X-ray](samples/records/ED-104-ankle.png) and [visit records](samples/records) are bundled. Select the local parser for an offline rehearsal. Its image labels come from the file manifest.
+Jordan’s [transfer note](samples/records/ED-104-transfer-note.pdf), [signed radiology report](samples/records/ED-104-radiology.pdf) and [two-view synthetic X-ray](samples/records/ED-104-ankle.png) are bundled. Casey has a separate [physician progress note](samples/records/ED-116-physician.pdf). A document opens to a short summary. **See passage** opens the cited text, with the matching PDF available in the source viewer.
 
 ## Registration packet walkthrough
 
@@ -44,6 +48,10 @@ The [transfer PDF](samples/records/ED-104-transfer-note.pdf), [source text](samp
 For the Design entry, run the five-minute volunteer task and record one observed issue, the change made and the retest result. The form and judging plan are in [SPEC.md](SPEC.md). [Meeting questions and project answers](docs/meeting-questions.md) covers the team's open questions.
 
 ## Extraction and storage
+
+**Prepare transfer brief** reads Jordan’s two original PDFs with Poppler, compares the extracted passages with the bundled transcripts, and checks them against three other records. If Poppler is unavailable, the demo can use its verified transcripts and labels that method on the brief. The local parser uses the image manifest for printed labels. The signed radiology report supplies the findings.
+
+On the event laptop, ten production-preview runs took **49–120 ms from clicking Prepare transfer brief to seeing Sign and send to nurse**, with a **50 ms median**. Server PDF extraction and verification took 12–34 ms. These measurements cover the bundled Jordan packet using Poppler. The optional full Codex extraction took 16.6 seconds in a separate run and passed the same source checks.
 
 **Codex** receives the selected synthetic chart in a temporary CLI session with a read-only sandbox. For Jordan’s handoff, the current image is passed as an image attachment alongside numbered text. The verifier checks patient and visit identity, the original quotes, signed report agreement, study identifiers, documented ownership, and the printed image markers. An inconsistent or incomplete draft blocks sign-off. The generated X-ray illustrates the current visit. Clinical findings are quoted from a fictional signed report. The supported fixtures have a known structure.
 

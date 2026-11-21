@@ -1,25 +1,30 @@
 import { error } from '@sveltejs/kit';
-const pdfName = 'ED-104-transfer-note.pdf';
-const imageName = 'ED-104-ankle.png';
+import { chartDocuments, clinicalDocument } from './chart';
+import { chartSnapshot, type ClinicalState } from './clinical-store';
+const binaryAssets = import.meta.glob<string>('../../../samples/records/*.{pdf,png}', {
+	query: '?inline', import: 'default'
+});
 const textAssets = import.meta.glob<string>('../../../samples/records/*.txt', {
 	query: '?raw', import: 'default', eager: true
 });
 
-export async function sampleResponse(filename: string, attachment = false): Promise<Response> {
+export async function sampleResponse(filename: string, attachment = false, record?: ClinicalState | null): Promise<Response> {
+	if (record && filename.endsWith('.pdf')) {
+		const canonical = chartDocuments.find(doc => doc.sourceUrl === '/samples/' + filename.replace(/\.pdf$/, '.txt'));
+		if (canonical) {
+			const saved = chartSnapshot(record).documents.find(doc => doc.id === canonical.id);
+			if (saved?.text !== canonical.text || (canonical.id === clinicalDocument.id && record.sourceText !== canonical.text)) {
+				error(409, 'This PDF does not match the saved chart. Read the signed source text instead.');
+			}
+		}
+	}
 	const text = textAssets['../../../samples/records/' + filename];
 	if (text !== undefined) return textResponse(text, filename, attachment);
 
-	let dataUrl: string;
-	let type: string;
-	if (filename === pdfName) {
-		dataUrl = (await import('../../../samples/records/ED-104-transfer-note.pdf?inline')).default;
-		type = 'application/pdf';
-	} else if (filename === imageName) {
-		dataUrl = (await import('../../../samples/records/ED-104-ankle.png?inline')).default;
-		type = 'image/png';
-	} else {
-		error(404, 'This document is unavailable.');
-	}
+	const binary = binaryAssets['../../../samples/records/' + filename];
+	if (!binary) error(404, 'This document is unavailable.');
+	const dataUrl = await binary();
+	const type = filename.endsWith('.pdf') ? 'application/pdf' : 'image/png';
 	const bytes = Uint8Array.from(Buffer.from(dataUrl.slice(dataUrl.indexOf(',') + 1), 'base64'));
 	return new Response(bytes, { headers: sampleHeaders(filename, type, attachment) });
 }

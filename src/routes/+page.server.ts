@@ -1,5 +1,5 @@
 import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
-import { accountHome, requireAccount, requireAccountRole } from '../lib/server/accounts';
+import { requireAccount, requireAccountRole } from '../lib/server/accounts';
 import { fixtures, isFixtureId, type FixtureId } from '../lib/server/fixtures';
 import { parsePacket } from '../lib/server/extraction';
 import { parseWithCodex, ProviderError } from '../lib/server/codex';
@@ -7,7 +7,10 @@ import { packetStore, ReviewError } from '../lib/server/store';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals, url }) => {
-	if (!url.search) redirect(307, accountHome(requireAccount(locals)));
+	if (!url.search) {
+		requireAccount(locals);
+		redirect(307, '/patients');
+	}
 	requireAccountRole(locals, 'Administrative staff');
 	const sample = url.searchParams.get('sample');
 	const sampleId = isFixtureId(sample) ? sample : 'corrected';

@@ -81,7 +81,3 @@ export function requireAccountRole<Role extends AccountRole>(
 	if (!roles.some((role) => role === account.role)) error(403, 'This view is unavailable to your account.');
 	return account as DemoAccount & { role: Role };
 }
-
-export function accountHome(account: DemoAccount) {
-	return account.role === 'Administrative staff' ? '/handoffs' : '/inbox';
-}

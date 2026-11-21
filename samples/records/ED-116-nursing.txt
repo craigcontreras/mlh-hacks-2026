@@ -1,0 +1,11 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY DEPARTMENT
+Fictional training record · Synthetic patient and facility
+Document: Nursing reassessment
+Chart identity: C-116 | visit ED-116 | Mossbridge Community Hospital
+Patient: Casey Rowan
+Date: 2026-11-20
+
+15:45 · Bedside reassessment
+Casey reported that the headache had eased since arrival and asked when the team would return.
+Casey's question was passed to the attending physician during rounds.
+Recorded by Devon Park, RN (fictional).

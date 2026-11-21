@@ -25,6 +25,7 @@ export interface ClinicalHandoff {
 }
 
 export type ImageStatus = 'arrived' | 'still-pending' | 'unable-to-confirm';
+type ImageObservation = { status: ImageStatus; recordedBy: string; recordedByAccountId: AccountId; recordedAt: string };
 export type CarePriority = 'unspecified' | 'routine' | 'urgent' | 'critical';
 
 interface VisitEntry {
@@ -65,7 +66,12 @@ interface StoredState {
 	priorStudyRequest?: PriorStudyRequest;
 	operationalNotes?: (VisitEntry & { text: string })[];
 	carePlans?: CarePlan[];
-	imageStatus?: { status: ImageStatus; recordedBy: string; recordedByAccountId: AccountId; recordedAt: string };
+	imageStatus?: ImageObservation;
+	imageFollowup?: {
+		recipientAccountId: AccountId; recipientName: string; openedAt: string; openedBy: string;
+		initial: ImageObservation; resolvedAt?: string;
+		observations: { id: string; status: ImageStatus; at: string; by: string }[];
+	};
 }
 
 export interface ClinicalState extends StoredState {
@@ -82,6 +88,13 @@ function recipientId(event: ClinicalHandoff) {
 
 export function isAssignedTo(event: ClinicalHandoff | undefined, account: DemoAccount) {
 	return !!event && event.recipient === account.role && recipientId(event) === account.id;
+}
+
+export function plannedReportDoctor(state: StoredState) {
+	const id = state.carePlans?.findLast(plan => plan.visitId === clinicalDocument.visitId)?.doctorId ?? 'doctor';
+	const doctor = doctorAccounts.find(candidate => candidate.id === id);
+	if (!doctor) throw new ReviewError('Choose a doctor account for the report review.', 400);
+	return doctor;
 }
 
 function requireOwner(state: StoredState | null, account: DemoAccount) {
@@ -125,6 +138,11 @@ function requireAdministrator(account: DemoAccount) {
 function requireBrief(state: StoredState | null) {
 	if (!state) throw new ReviewError('Prepare the chart brief before adding an operational update.');
 	return state;
+}
+
+function checkedStatus(status: string): ImageStatus {
+	if (status === 'arrived' || status === 'still-pending' || status === 'unable-to-confirm') return status;
+	throw new ReviewError('Choose a valid comparison image status.', 400);
 }
 
 export class ClinicalStore {
@@ -224,20 +242,17 @@ export class ClinicalStore {
 				}
 				if (!state.imageStatus) throw new ReviewError('Record the comparison image status before forwarding.', 400);
 			}
-			const doctorId = state.carePlans?.findLast((plan) => plan.visitId === clinicalDocument.visitId)?.doctorId;
-			return send(state, taskId, account, doctorId ?? undefined);
+			return send(state, taskId, account, plannedReportDoctor(state).id);
 		});
 	}
 
 	recordImageStatus(version: string, account: DemoAccount, status: string): ClinicalState {
 		if (account.role !== 'Nurse') throw new ReviewError('This action requires the assigned nurse.', 400);
-		if (status !== 'arrived' && status !== 'still-pending' && status !== 'unable-to-confirm') {
-			throw new ReviewError('Choose a valid comparison image status.', 400);
-		}
+		const observation = checkedStatus(status);
 		return this.change(version, ['image-status', account.id, status], (record) => {
 			const { state, active } = requireOwner(record, account);
 			if (active.taskId !== 'check-images') throw new ReviewError('This assignment does not cover comparison images.', 400);
-			return { ...state, imageStatus: { status, recordedBy: account.name, recordedByAccountId: account.id, recordedAt: new Date().toISOString() } };
+			return { ...state, imageStatus: { status: observation, recordedBy: account.name, recordedByAccountId: account.id, recordedAt: new Date().toISOString() } };
 		});
 	}
 
@@ -247,7 +262,30 @@ export class ClinicalStore {
 			const { state, active } = requireOwner(record, account);
 			if (active.taskId !== 'review-report') throw new ReviewError('This assignment is not for report review.', 400);
 			const reviewed = { reviewedBy: account.name, reviewedByAccountId: account.id, reviewedAt: new Date().toISOString() };
-			return { ...state, status: 'reviewed', history: [...state.history.slice(0, -1), { ...active, reviewed }] };
+			const initial = state.imageStatus;
+			const imageFollowup = initial && initial.status !== 'arrived' && state.flow === 'admin-nurse-doctor'
+				? { initial, recipientAccountId: initial.recordedByAccountId, recipientName: initial.recordedBy,
+					openedAt: reviewed.reviewedAt, openedBy: account.name, observations: [] }
+				: undefined;
+			return { ...state, status: 'reviewed', imageFollowup, history: [...state.history.slice(0, -1), { ...active, reviewed }] };
+		});
+	}
+
+	updateImageFollowup(version: string, account: DemoAccount, status: string): ClinicalState {
+		if (account.role !== 'Nurse') throw new ReviewError('This follow-up requires the assigned nurse.', 400);
+		const observation = checkedStatus(status);
+		return this.change(version, ['image-followup', account.id, observation], state => {
+			const followup = state?.imageFollowup;
+			if (!state || !followup || followup.resolvedAt || followup.recipientAccountId !== account.id) {
+				throw new ReviewError('There is no open image follow-up assigned to this account.');
+			}
+			const at = new Date().toISOString();
+			return {
+				...state,
+				imageStatus: { status: observation, recordedAt: at, recordedBy: account.name, recordedByAccountId: account.id },
+				imageFollowup: { ...followup, resolvedAt: observation === 'arrived' ? at : undefined,
+					observations: [...followup.observations, { id: randomUUID(), at, by: account.name, status: observation }] }
+			};
 		});
 	}
 

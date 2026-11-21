@@ -9,5 +9,5 @@ export const GET: RequestHandler = ({ locals, params }) => {
 	const document = record?.sources?.find((source) => source.sourceUrl === '/samples/' + params.filename);
 	if (document) return textResponse(document.text, params.filename, false);
 	if (record && params.filename === 'ED-104-transfer-note.txt') return textResponse(record.sourceText, params.filename, false);
-	return sampleResponse(params.filename);
+	return sampleResponse(params.filename, false, record);
 };

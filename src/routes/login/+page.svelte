@@ -12,7 +12,7 @@
 	<section class="welcome">
 		<p class="kicker">Mossbridge Community Hospital</p>
 		<h1>Intake Desk</h1>
-		<p class="lead">The transfer workspace for administrative staff, doctors, and nurses.</p>
+		<p class="lead">Find a patient, read the latest update, and see who owns the next task.</p>
 		<div class="welcome-line"><span class="brandmark" aria-hidden="true"></span><span>Fictional hospital · Synthetic patient records</span></div>
 	</section>
 	<section class="paper-card login-card">

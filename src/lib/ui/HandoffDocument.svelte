@@ -3,6 +3,9 @@
 	import { onMount, tick } from 'svelte';
 	import type { ChartDocument } from '../server/chart';
 	import SourceRecord from './SourceRecord.svelte';
+	import transferText from '../../../samples/records/ED-104-transfer-note.txt?raw';
+	import radiologyText from '../../../samples/records/ED-104-radiology.txt?raw';
+	import physicianText from '../../../samples/records/ED-116-physician.txt?raw';
 
 	let { documents }: { documents: ChartDocument[] } = $props();
 	const visits = $derived([...new Map(documents.map(doc => [doc.visitId, doc.date])).entries()].sort((a,b) => b[1].localeCompare(a[1])));
@@ -14,6 +17,9 @@
 		'ED-082-intake': /^Visit services: /,
 		'ED-082-study': /^Archive entry: /,
 		'ED-116-registration': /^Casey requested /,
+		'ED-116-nursing': /^Casey reported /,
+		'ED-116-receipt-check': /^Riley Ortiz verified /,
+		'ED-116-physician': /^Casey and /,
 		'ED-116-visit-receipt': /^A large-type printed copy /,
 		'ED-071-intake': /^Casey requested /,
 		'ED-071-access': /^Large-type printed instructions /
@@ -24,6 +30,7 @@
 	let activeLine = $state<number>();
 	let returnFocus: HTMLElement | undefined;
 	const title = $derived(selected === 'image' ? 'Left ankle X-ray' : selected?.title);
+	const pdfSources: Record<string, string> = { 'ED-104-radiology': radiologyText, 'ED-116-physician': physicianText };
 
 	function documentSummary(doc: ChartDocument) {
 		const selector = overviewFields[doc.id];
@@ -114,7 +121,10 @@
 	{#if selected && selected !== 'image'}
 		<div class="source-meta">
 			{#if activeLine}<span><mark></mark> Cited passage · Line {activeLine}</span>{/if}
-			{#if selected.id === 'ED-104'}<a href={resolve('/handoffs/source?format=pdf')} target="_blank" rel="noopener">Open transfer PDF</a>{/if}
+			{#if selected.id === 'ED-104' && selected.text === transferText}<a href={resolve('/handoffs/source?format=pdf')} target="_blank" rel="noopener">Open transfer PDF</a>
+			{:else if pdfSources[selected.id] === selected.text}
+				<a href={resolve('/samples/[filename]', {filename: selected.id + '.pdf'})} download={selected.id + '.pdf'}>Download original PDF</a>
+			{/if}
 		</div>
 	{/if}
 	<div class="source-scroll">
@@ -139,11 +149,11 @@
 	.source-dialog {
 		width: min(800px, calc(100% - 26px)); max-width: none;
 		max-height: calc(100dvh - 32px); padding: 0; border-radius: 12px;
-		background: #f0f3eb; color: var(--ink); border: 1px solid #aabc9f;
-		box-shadow: 0 24px 70px #102c2652; overflow: hidden;
+		background: #f2f2f2; color: var(--ink); border: 1px solid #b6b6b6;
+		box-shadow: 0 24px 70px #26262652; overflow: hidden;
 	}
 	.source-dialog[open] { display: flex; flex-direction: column; }
-	.source-dialog::backdrop { background: #142f2ac0; }
+	.source-dialog::backdrop { background: #292929c0; }
 	.source-toolbar, .source-meta {
 		display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
 		gap: 8px 16px; padding: 14px 18px; background: var(--paper);
@@ -151,7 +161,7 @@
 	.source-toolbar { border-bottom: 1px solid var(--line); flex-shrink: 0; }
 	.source-toolbar h2 { margin-top: 3px; font-size: 21px; }
 	.source-meta { color: var(--muted); font-size: 13px; flex-shrink: 0; padding-block: 8px; }
-	.source-meta mark { display: inline-block; width: 10px; height: 10px; margin-right: 3px; background: #f8e5ae; }
+	.source-meta mark { display: inline-block; width: 10px; height: 10px; margin-right: 3px; background: #e5e5e5; }
 	.source-scroll { min-height: 0; overflow: auto; padding: clamp(8px,3vw,22px); overscroll-behavior: contain; }
 	.image-paper { margin: 0; }
 	.image-paper img { display: block; max-height: 68dvh; max-width: 100%; margin: auto; object-fit: contain; border-radius: 6px; }

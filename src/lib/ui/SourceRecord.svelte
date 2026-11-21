@@ -32,10 +32,10 @@
 
 <style>
 	.record {
-		--record-ink: #283738;
-		--record-accent: #24574e;
-		--record-rule: #d1d9d6;
-		--record-tint: #eaf1ee;
+		--record-ink: #343434;
+		--record-accent: #4b4b4b;
+		--record-rule: #d7d7d7;
+		--record-tint: #efefef;
 		box-sizing: border-box;
 		width: 100%;
 		max-width: 56rem;
@@ -43,14 +43,14 @@
 		padding: clamp(13px, 3%, 34px) clamp(11px, 3%, 34px) clamp(17px, 4%, 40px);
 		background: #fff;
 		color: var(--record-ink);
-		border: 1px solid #cbd2cf;
+		border: 1px solid #d0d0d0;
 		border-top: 4px solid var(--record-accent);
-		box-shadow: 0 2px 6px #1c302b0e;
+		box-shadow: 0 2px 6px #2b2b2b0e;
 		font: 400 15px/1.53 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
 		text-align: left;
 	}
-	.radiology { --record-accent: #334d6a; --record-tint: #eef2f6; }
-	.archive { --record-accent: #5c5440; --record-tint: #f3f1eb; }
+	.radiology { --record-accent: #4a4a4a; --record-tint: #f1f1f1; }
+	.archive { --record-accent: #545454; --record-tint: #f1f1f1; }
 	.record-lines { padding: 0; margin: 0; list-style: none; }
 	.record-lines li {
 		display: grid;
@@ -62,7 +62,7 @@
 	}
 	.record-lines li::before {
 		content: attr(data-line);
-		color: #63706b;
+		color: #6d6d6d;
 		text-align: right;
 		font: 400 10px/1.5 'IBM Plex Mono', ui-monospace, monospace;
 		padding-top: .42em;
@@ -71,28 +71,28 @@
 	.institution .source-text { color: var(--record-accent); line-height: 1.2; }
 	.hospital { font-size: 1.05em; letter-spacing: .08em; font-weight: 750; }
 	.service { font-size: .75em; font-weight: 650; letter-spacing: .045em; }
-	.training .source-text { color: #56635e; font-size: .78em; }
+	.training .source-text { color: #606060; font-size: .78em; }
 	.record-lines .title { margin: .66em 0 .15em; }
 	.title .source-text { color: var(--record-accent); font: 600 clamp(20px, 2.1vw, 28px)/1.17 'Source Sans 3','Helvetica Neue',Arial,sans-serif; letter-spacing: -.025em; }
 	.title .field { font-size: .54em; letter-spacing: 0; }
-	.record-lines .identity { background: #f6f8f7; font-size: .88em; }
+	.record-lines .identity { background: #f8f8f8; font-size: .88em; }
 	.field { font-weight: 700; }
 	.record-lines .section { padding-block: .38em; border-bottom: 1px solid var(--record-rule); margin-bottom: .35em; }
 	.section .source-text { color: var(--record-accent); font: 650 .89em/1.45 'Source Sans 3','Helvetica Neue',Arial,sans-serif; }
 	.record-lines .entry, .record-lines .assignment { background: var(--record-tint); margin-block: .23em; }
 	.record-lines .assignment { border-inline-start: 2px solid var(--record-accent); }
-	.record-lines .signature { margin-top: .35em; color: #4f5a56; font: italic .9em/1.5 'Spectral',Georgia,serif; }
+	.record-lines .signature { margin-top: .35em; color: #575757; font: italic .9em/1.5 'Spectral',Georgia,serif; }
 	.record-lines .blank { min-height: .65em; padding-block: 0; }
 	.blank::before { visibility: hidden; }
 	.record-lines li:target, .record-lines li.highlight, .record-lines li:focus-visible {
-		background: #fff4c8; outline: 2px solid #926e20; outline-offset: -1px; color: #302a19;
+		background: #f3f3f3; outline: 2px solid #707070; outline-offset: -1px; color: #2a2a2a;
 	}
 	@media (max-width: 450px) {
 		.record { font-size: 14px; padding: 12px 8px 18px; }
 		.record-lines li { column-gap: .55em; }
 	}
 	@media print {
-		.record { box-shadow: none; border: 0; border-top: 2pt solid #344940; padding: 6mm 0; max-width: none; color: #000; font-size: 10pt; }
+		.record { box-shadow: none; border: 0; border-top: 2pt solid #444444; padding: 6mm 0; max-width: none; color: #000; font-size: 10pt; }
 		.record-lines li { break-inside: avoid; padding-block: .15em; }
 		.record-lines .section, .record-lines .title, .record-lines .institution { break-after: avoid; }
 		.record-lines li:target, .record-lines li.highlight, .record-lines li:focus-visible { background: transparent; outline: 0; }

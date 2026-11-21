@@ -1,20 +1,22 @@
 import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { doctorAccounts, requireAccount, requireAccountRole } from '../../lib/server/accounts';
-import { clinicalDocument, chartDocuments } from '../../lib/server/chart';
-import { summarizeDocument } from '../../lib/server/clinical-summary';
-import { chartSnapshot, clinicalStore, documentedEncounters } from '../../lib/server/clinical-store';
+import { clinicalDocument } from '../../lib/server/chart';
+import { prepareClinicalChart } from '../../lib/server/clinical-summary';
+import { chartSnapshot, clinicalStore, documentedEncounters, isAssignedTo } from '../../lib/server/clinical-store';
+import { ingestJordanPdfs } from '../../lib/server/pdf-ingest';
 import { ProviderError } from '../../lib/server/codex';
 import { ReviewError } from '../../lib/server/store';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals }) => {
-	requireAccount(locals);
+	const account = requireAccount(locals);
 	const store = clinicalStore();
 	const record = store.get();
 	const chart = chartSnapshot(record);
 	return {
 		document: { ...clinicalDocument, text: record?.sourceText ?? clinicalDocument.text, sourceUrl: '/handoffs/source' },
 		record, chart, doctors: doctorAccounts, recordedEncounters: documentedEncounters(chart.documents),
+		ownsDelivery: isAssignedTo(record?.history.at(-1), account),
 		version: record?.version ?? store.version()
 	};
 };
@@ -29,7 +31,7 @@ type Command = 'summarize' | 'approve' | 'requestPriorStudy' | 'reassign' | 'sav
 
 function action(command: Command) {
 	return async ({ locals, request }: RequestEvent) => {
-		const account = command === 'summarize' ? requireAccount(locals) : requireAccountRole(locals, 'Administrative staff');
+		const account = requireAccountRole(locals, 'Administrative staff');
 		const form = await request.formData();
 		const version = form.get('version');
 		if (typeof version !== 'string') return fail(400, { message: 'Reload the document before continuing.' });
@@ -42,11 +44,14 @@ function action(command: Command) {
 				const mode = form.get('mode');
 				if (mode !== 'codex' && mode !== 'local') throw new ReviewError('Choose an available summary method.', 400);
 				const start = performance.now();
-				const summary = await summarizeDocument(mode);
-				store.saveSummary(version, summary, Math.round(performance.now() - start), clinicalDocument.text, chartDocuments);
+				const { summary, documents } = await prepareClinicalChart(mode);
+				const transfer = documents.find(doc => doc.id === clinicalDocument.id)!;
+				store.saveSummary(version, summary, Math.round(performance.now() - start), transfer.text, documents);
 			} else if (command === 'approve') {
 				const task = form.get('taskId');
 				if (typeof task !== 'string') throw new ReviewError('Select a documented action.', 400);
+				const record = store.get();
+				if (record?.status === 'draft') await ingestJordanPdfs(chartSnapshot(record).documents);
 				store.approve(version, account, task);
 			} else if (command === 'requestPriorStudy') {
 				store.requestPriorStudy(version, account);

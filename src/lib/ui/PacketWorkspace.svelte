@@ -52,8 +52,8 @@
 					<h3>Extract the intake fields</h3>
 					<p>Read the bundled documents for the patient name, sending facility, and callback extension. You’ll review the source lines before signing off.</p>
 					<div class="buttons">
-						<button type="submit" class="button" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="codex" disabled={Boolean(pending)}>{pending === 'codex' ? 'Parsing with Codex…' : 'Parse with Codex'}</button>
-						<button type="submit" class="button secondary" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="local" disabled={Boolean(pending)}>{pending === 'local' ? 'Parsing locally…' : 'Use local parser'}</button>
+						<button type="submit" class="button" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="local" disabled={Boolean(pending)}>{pending === 'local' ? 'Parsing locally…' : 'Use local parser'}</button>
+						<button type="submit" class="button secondary" formaction={'?/extract&sample=' + data.sampleId} name="mode" value="codex" disabled={Boolean(pending)}>{pending === 'codex' ? 'Parsing with Codex…' : 'Parse with Codex'}</button>
 					</div>
 					<p class="small">Codex reads only this synthetic packet. The local parser runs offline.</p>
 				</div>

@@ -15,6 +15,8 @@
 			nodes.push({role:event.recipient, name:event.recipientName ?? '', state:last && !event.returned ? (event.reviewed ? 'Signed' : 'Current') : ''});
 			if (event.returned) nodes.push({role:'Admin',name:history[i + 1]?.signedBy ?? '',state:last ? 'Current' : ''});
 		}
+		const followup = data.record?.imageFollowup;
+		if (followup) nodes.push({role:'Nurse',name:followup.recipientName,state:followup.resolvedAt ? 'Completed' : 'Current'});
 		if (!history.length) nodes.push({role:'Nurse',name:'',state:'Planned'},{role:'Doctor',name:'',state:'Planned'});
 		else if (data.record?.flow === 'admin-nurse-doctor' && history.at(-1)?.recipient === 'Nurse') nodes.push({role:'Doctor',name:'',state:'Planned'});
 		return nodes;
