@@ -20,7 +20,9 @@
 	const finished = $derived(data.record?.status === 'reviewed');
 	const imageReceived = $derived(data.imagingNotice?.status === 'received');
 	const requestManaged = $derived(imageReceived || data.imagingNotice?.status === 'requested');
-	const nurseAction = $derived(requestManaged ? 'Send the report for doctor review' : 'Check comparison image status');
+	const automatic = $derived(current?.assignmentOrigin === 'automatic');
+	const nurseAction = $derived(automatic && data.imagingNotice?.status === 'requested'
+		? 'Check the pending X-ray' : requestManaged ? 'Send the report for doctor review' : 'Check comparison image status');
 	const submit: SubmitFunction = ({cancel}) => {
 		if (busy) { cancel(); return; }
 		busy = true; message = '';
@@ -59,7 +61,7 @@
 				<h2>{data.role === 'Nurse' ? nurseAction : 'Review the final report'}</h2>
 			{/if}
 			{#if requestManaged && !finished}
-				<p class="request-receipt">{imageReceived ? 'The earlier X-ray is available in the shared chart.' : 'Imaging Records has the request for the earlier X-ray.'}
+				<p class="request-receipt">{imageReceived ? 'The earlier X-ray is available in the shared chart.' : 'Pending · Imaging Records has the request for the earlier X-ray.'}
 					<a href={resolve('/patients?patient=J-104&tab=documents#imaging-request')}>View imaging status</a></p>
 			{/if}
 			{#if data.role === 'Doctor' && data.record.imageStatus && !imageReceived}
@@ -70,7 +72,7 @@
 			{/if}
 			{#if data.role === 'Doctor' && impression}<ChartCitation doc={'documentId' in impression ? impression.documentId : 'ED-104'} line={impression.line} label="Read signed radiology impression" />{/if}
 			{#if !finished || !current.reviewed}
-				<p class="small">Handoff from {current.signedBy}.</p>
+				<p class="small">{automatic ? 'Intake Desk assigned this check automatically.' : 'Handoff from ' + current.signedBy + '.'}</p>
 				{#if task}<ChartCitation line={task.line} label={data.role + ' assignment in transfer note'}/>{/if}
 				{#if plan}<div class="routing-context"><p class="kicker">Routing plan · {plan.savedBy}</p><p><strong>Priority</strong> <span class:raised-priority={plan.priority === 'urgent' || plan.priority === 'critical'}>{plan.priority ?? 'unspecified'}</span> · <strong>Impact</strong> {plan.impact || 'Unspecified'}</p>
 					{#if plan.receivingFacility || plan.receivingDepartment}<p><strong>Planned destination</strong> {[plan.receivingFacility,plan.receivingDepartment].filter(Boolean).join(' · ')}</p>{/if}
@@ -88,7 +90,7 @@
 							<select id="image-status" name="imageStatus" required>
 								<option value="">Choose status</option>
 								<option value="arrived">Arrived</option>
-								<option value="still-pending">Still pending</option>
+								{#if !automatic || !requestManaged}<option value="still-pending">Still pending</option>{/if}
 								<option value="unable-to-confirm">Unable to confirm</option>
 							</select>
 							<button class="button secondary" type="submit" formaction="?/recordImageStatus" disabled={busy}>Record image status</button>
@@ -128,6 +130,6 @@
 	{:else if data.deliveries.length}
 		<section class="paper-card empty"><h2>Past handoffs</h2>
 			{#if data.closedFollowup}<p class="request-receipt">Comparison images arrived · Follow-up closed by {data.closedFollowup.by}.</p>{/if}
-			{#each data.deliveries as item (item.id)}<div class="archived-delivery"><strong>Signed by {item.signedBy}</strong><p>{item.returned ? 'Returned to administrative staff · ' + item.returned.reason : 'Previously assigned to you.'}</p></div>{/each}
+			{#each data.deliveries as item (item.id)}<div class="archived-delivery"><strong>{item.assignmentOrigin === 'automatic' ? 'Assigned automatically by Intake Desk' : 'Signed by ' + item.signedBy}</strong><p>{item.returned ? 'Returned to administrative staff · ' + item.returned.reason : 'Previously assigned to you.'}</p></div>{/each}
 			<a class="button secondary" href={resolve('/handoffs')}>Open patient chart</a></section>
 	{:else}<section class="paper-card empty"><h2>No assignment for this case</h2><a class="button secondary" href={resolve('/inbox')}>Return to my inbox</a></section>{/if}

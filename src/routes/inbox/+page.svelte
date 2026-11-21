@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { refreshAll } from '$app/navigation';
 	import type { PageProps } from './$types';
 	import '#lib/ui/flow.css';
 
@@ -10,6 +11,7 @@
 	]);
 </script>
 
+<svelte:window onfocus={() => { void refreshAll(); }} />
 <svelte:head><title>{data.role} inbox · Intake Desk</title></svelte:head>
 <header class="pagehead flow-title"><div><p class="kicker">{data.account?.name} · {data.role}</p><h1>My inbox</h1></div></header>
 {#each groups as group (group.label)}

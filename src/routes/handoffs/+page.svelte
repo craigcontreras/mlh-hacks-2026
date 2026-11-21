@@ -44,9 +44,13 @@
 			{:else}
 				<p>The source records need a human check. Open <b>Review file match</b> to see why.</p>
 			{/if}
-			<p>To demonstrate the separate clinical handoff, return here.</p>
+			<p>To demonstrate report review, switch to the person who owns the handoff.</p>
 			<ol>
-				<li><strong>Maya, administrator.</strong> Prepare the brief. Expand <b>Compare current and prior records</b>, open a source, then sign and send to nursing.</li>
+				{#if data.record?.history[0]?.assignmentOrigin === 'automatic'}
+					<li><strong>Intake Desk.</strong> The missing picture already has a pending check in Riley’s inbox. Open <b>Activity history</b> for the routing time.</li>
+				{:else if !data.record?.history.length}
+					<li><strong>Maya, administrator.</strong> Open the source and review the transfer before routing the handoff.</li>
+				{/if}
 				<li><strong>Riley, nurse.</strong> Open Jordan in <b>My inbox</b>. Check the displayed image status and choose <b>Sign and send report to doctor</b>. If receipt is unclear, record the observation first.</li>
 				<li><strong>Receiving doctor.</strong> Open the signed radiology impression and sign the review. To practice reassignment, Avery can return it with a reason, and Maya can send it to Morgan.</li>
 			</ol>

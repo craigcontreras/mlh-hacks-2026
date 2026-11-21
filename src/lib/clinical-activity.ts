@@ -17,7 +17,9 @@ export function clinicalActivity(record: ClinicalState, currentVisit: string): P
 		events.push({ id, at, title, source, text, visitId, documentId: null, line: null });
 	}
 	for (const item of record.history) {
-		add(item.id, item.sentAt, 'Assignment routed', item.signedBy, item.signedBy + ' routed to ' + (item.recipientName ?? item.recipient));
+		const automatic = item.assignmentOrigin === 'automatic';
+		add(item.id, item.sentAt, automatic ? 'Image check assigned automatically' : 'Assignment routed', item.signedBy,
+			automatic ? 'Intake Desk assigned the pending X-ray check to ' + item.recipientName : item.signedBy + ' routed to ' + (item.recipientName ?? item.recipient));
 		if (item.acknowledgedAt) {
 			const name = item.acknowledgedBy ?? item.recipient;
 			add(item.id + '-receipt', item.acknowledgedAt, 'Receipt acknowledged', name, name + ' acknowledged receipt');

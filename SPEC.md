@@ -20,10 +20,10 @@ During Jordan’s ER transfer, staff need to distinguish a current signed report
 | Prepare Jordan’s transfer packet. | Four facts and the documented assignments link to the original text. Cross-checks cite evidence across five documents from two visits. The document list opens to a short summary. The source viewer highlights the specific cited passage. |
 | Inspect the current study and prior visit. | Codex reads the visit ID, side marker and training watermark on the current synthetic image. The earlier intake and archive identify the prior study. The current checklist says those images are outstanding. The offline parser labels the image data as coming from the manifest. |
 | Maya edits the planned path and saves a note. | A plan records the next doctor, destination, department, staff-entered priority and coordination impact. The graph distinguishes internal routing from a planned hospital transfer. Notes and plans carry author and time. |
-| Open the original Jordan chart before anyone signs. | Intake Desk has queued one request to the local Imaging Records inbox. Its message identifies MB-082-LA from the archive and transfer checklist. A refresh preserves the receipt. Conflicting identifiers need review. |
+| Sign in as Riley first, then open My inbox and Jordan. | Intake Desk recorded a pending check for Riley and queued one request to the local Imaging Records inbox without staff confirmation. Its message identifies MB-082-LA from the archive and transfer checklist. A refresh preserves the receipt. Conflicting identifiers need review. |
 | Simulate a matched file delivery. | The earlier X-ray becomes available to every signed-in demo care-team account. The receipt keeps its original request time, and the doctor’s review remains independent. |
 | Avery opens the doctor case. | Avery can sign report review or return it to Maya with a reason. Maya can send the returned assignment to another doctor account. The chain records which account owned, acted on and completed the review. |
-| Morgan signs after Riley records that the comparison images are pending. | The same SQLite transaction records Morgan’s signature and opens Riley’s follow-up. A pending recheck keeps it open. Recording arrival closes it. Images already marked as arrived require no follow-up. |
+| Morgan signs after Riley adds a separate personal observation that the comparison images are pending. | The same SQLite transaction records Morgan’s signature and opens Riley’s follow-up. A pending recheck keeps it open. Recording arrival closes it. Images already marked as arrived require no follow-up. |
 | Maya starts another practice sample before or after sign-off. | Jordan starts again with no signatures. His checklist and prior imaging archive agree on a new study number. Riley can open the later Imaging Records reply and use it to report the current status. Consecutive randomized samples change both the number and reply. The original sample is available for a scripted rehearsal. |
 | Prepare the brief offline with the bundled PDFs. | The local parser reads and verifies the original transfer and radiology PDFs when Poppler is installed. The chart labels the verified-transcript fallback on machines without Poppler. The live-demo budget is under one second from click to signable brief on the event laptop. |
 | Search for Casey or a prior visit ID. | Casey’s chart spans two visits. The source link on the nursing reassessment opens the original passage. A new coordination update survives a refresh and appears only on the selected patient’s chart. |
@@ -37,7 +37,7 @@ A clerk opens a synthetic ER transfer packet. The transfer form lists callback e
 
 ## User and problem
 
-**Primary users** — In Jordan’s case, administrative staff reconcile the transfer paperwork, the nurse records whether the requested images are available, and the receiving doctor signs their review of the report. The separate registration example focuses on the clerk preparing a callback for the registration desk.
+**Primary users** — In Jordan’s case, the receiving nurse gets a pending image check automatically, the doctor signs the report review, and administrative staff handle unclear paperwork and returned assignments. The separate registration example focuses on the clerk preparing a callback for the registration desk.
 
 **Team goal** — Help doctors and nurses find information that already exists in a patient's paperwork sooner. Drawing on document-parsing experience at GUILD, the team proposed extracting facts from synthetic intake and discharge documents, showing the source to a clerk, and forwarding the reviewed information after sign-off. The meeting’s estimated wait times are brainstorming figures. Time spent finding paperwork and any effect on admission time remain unmeasured. [Team meeting questions](docs/meeting-questions.md)
 
@@ -45,7 +45,7 @@ A clerk opens a synthetic ER transfer packet. The transfer form lists callback e
 
 **Working hypothesis** — A clerk comparing a transfer form with a later correction could pass along an outdated callback. The two extensions in this demo illustrate that possibility. To validate the scenario, ask someone familiar with registration to describe the last time two documents disagreed, what they checked, and who received the correction. Record their role and the workflow without collecting patient details.
 
-**Design goal** — A first-time participant can distinguish the current report from the outstanding images, open both supporting sources and route the documented follow-up without coaching. From the receiving inbox, a second participant can name the sender and explain the assignment. In the separate registration example the equivalent task is to identify the corrected callback and approving clerk.
+**Design goal** — A first-time participant can distinguish the current report from the outstanding images, open both supporting sources and find the automatic nursing assignment without coaching. From the receiving inbox, a second participant can name the sender and explain the assignment. In the separate registration example the equivalent task is to identify the corrected callback and approving clerk.
 
 ## The clerk's experience
 
@@ -106,8 +106,8 @@ Use the repo’s SvelteKit and TypeScript starter, npm, and one local SQLite dat
 
 Run the signed-in transfer workspace with a real person at the event. A neighboring participant can test usability. Record their actual role. A clerk or clinician familiar with intake can also speak to workflow fit.
 
-1. Start at Maya’s transfer workspace. Say **“Jordan’s transfer has arrived. Find what imaging is available, show me how you know, and get the next task to the person who needs it.”** Give the participant control. Let them choose their own route.
-2. Observe their first action, whether they distinguish the attached report from the pending comparison images, the source they point to, whether they need a prompt and whether they recognize that their sign-off sent it. Afterward ask **“What changed when you signed the records request?”**
+1. Sign in as Riley before opening the original chart as anyone else. Say **“Jordan’s transfer arrived. Show me what came in, what is outstanding, and who already knows about it.”** Give the participant control. Let them choose their own route.
+2. Observe their first action, whether they distinguish the attached report from the pending comparison images, the source they point to, whether they need a prompt and whether they can identify who created the assignment. Afterward ask **“Which part had already happened before you opened the inbox?”**
 3. Capture one screen before editing, change one detail in response to something observed, and repeat the same task from reset. Show judges the original, the observation, and the change. Record a second person's first attempt if time permits.
 
 | Evidence to fill in at the event | Actual result |
@@ -134,8 +134,8 @@ Suggested split, adjustable between teammates. **Craig** owns the review and rec
 
 | Demo time | What the judges see |
 | --- | --- |
-| 0:00–0:25 | Sign in as Maya. Jordan's transfer has arrived and references an earlier X-ray. |
-| 0:25–1:10 | Generate the brief. Open the older archive entry and the current transfer checklist to show which images are still pending. |
+| 0:00–0:25 | Sign in as Riley. Show Jordan’s pending task before anyone has signed a handoff. |
+| 0:25–1:10 | Open the cited records. Read the older archive entry and the current transfer checklist to show which images are still pending. |
 | 1:10–1:50 | Show the automatic request in Documents. Riley can forward the separate report review to the doctor. |
 | 1:50–2:25 | Avery opens the cited report and signs the review. Show the signed history or demonstrate the return and reassignment path. |
 | 2:25–3:00 | Show any observed usability finding and retest result. Identify the supported synthetic documents and the next question for staff. |

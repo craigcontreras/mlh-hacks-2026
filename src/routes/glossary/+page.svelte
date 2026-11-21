@@ -58,7 +58,7 @@
 			<li>
 				<div class="node-label"><span class="mark task" aria-hidden="true">→</span>Action</div>
 				<strong>Check whether the images arrived.</strong>
-				<p>Line 17 asks the receiving nurse, Riley Ortiz in this example, to record their status.</p>
+				<p>Line 17 assigns the check to the receiving nurse. Intake Desk matches the study and puts the pending check in Riley Ortiz’s inbox.</p>
 			</li>
 		</ol>
 		<p class="context"><strong>Chart context</strong> means the chart records a detail, such as a relative’s medical history, without assigning a task for it.</p>

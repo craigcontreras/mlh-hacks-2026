@@ -1,19 +1,18 @@
 import { expect, test } from 'vitest';
 import { demoAccounts } from './accounts';
-import { chartDocuments, clinicalDocument } from './chart';
-import { verifyChartSummary } from './clinical-summary';
 import { inboxFor } from './patient-inbox';
 import { PacketStore } from './store';
 
 test('the nurse sees two separate patient rows, and retains access to the signed Casey receipt', () => {
 	const store = new PacketStore(':memory:');
-	const [admin, avery, nurse] = demoAccounts;
+	const [, avery, nurse] = demoAccounts;
 	try {
 		const flow = store.clinical;
-		const prepared = flow.saveSummary(flow.version(), verifyChartSummary(chartDocuments, 'local'), 0, clinicalDocument.text, chartDocuments);
-		const sent = flow.approve(prepared.version, admin, 'check-images');
+		const sent = flow.get()!;
 		const inbox = inboxFor(nurse, store);
 		expect(inbox.rows.map(row => [row.patientId,row.active])).toEqual([['J-104',true],['C-116',false]]);
+		expect(inbox.rows[0].text).toBe('Earlier X-ray pending · Nursing check');
+		expect(sent.history[0]).toMatchObject({recipientAccountId: nurse.id, signedBy: 'Intake Desk', assignmentOrigin: 'automatic'});
 		const receipt = inbox.completed[0];
 		expect(receipt.document.text.split('\n')[receipt.completion.line! - 1]).toBe(receipt.completion.text);
 		expect(receipt.completion.text).toContain('Riley Ortiz verified');

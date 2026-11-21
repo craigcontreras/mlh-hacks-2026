@@ -9,7 +9,9 @@
 	const admin = $derived(data.account?.role === 'Administrative staff');
 	const route = $derived.by(() => {
 		const history = data.record?.history ?? [];
-		const nodes: {role:string; name:string; state:string}[] = [{role:'Admin', name:history[0]?.signedBy ?? '', state:history.length ? '' : 'Current'}];
+		const nodes: {role:string; name:string; state:string}[] = [];
+		if (history[0]?.assignmentOrigin === 'automatic') nodes.push({role:'Intake Desk', name:'Automatic routing', state:''});
+		else nodes.push({role:'Admin', name:history[0]?.signedBy ?? '', state:history.length ? '' : 'Current'});
 		for (const [i,event] of history.entries()) {
 			const last = i === history.length - 1;
 			nodes.push({role:event.recipient, name:event.recipientName ?? '', state:last && !event.returned ? (event.reviewed ? 'Signed' : 'Current') : ''});

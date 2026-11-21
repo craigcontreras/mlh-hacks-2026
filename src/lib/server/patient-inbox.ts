@@ -18,6 +18,7 @@ export function inboxFor(account: DemoAccount, store = packetStore()) {
 		const task = record?.summary.tasks.find(task => task.id === last?.taskId);
 		const active = !!record && (followup || record.status !== 'reviewed');
 		const text = followup ? 'Check outstanding comparison images' :
+			active && last?.assignmentOrigin === 'automatic' && imagingNotice.status === 'requested' ? 'Earlier X-ray pending · Nursing check' :
 			active && task?.id === 'check-images' && imagingNotice.status !== 'needs-review' ? 'Send the report for doctor review' :
 			active ? task?.text ?? 'Review handoff' : closedFollowup ? 'Comparison images arrived' : record?.status === 'reviewed' ? 'Report review signed' : 'View your handoff history';
 		rows.unshift({ patientId: chartPatient.id, name: chartPatient.name, visitId: clinicalDocument.visitId, active, text });

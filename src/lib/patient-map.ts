@@ -43,7 +43,7 @@ function handoffActions(id: string, documents: ChartDocument[], patient: Patient
 	const active = event && record?.history.at(-1)?.id === event.id;
 	const workspace = patient.assignedToMe ? patient.workspace : null;
 	const action: Action = {
-		title: doctor ? 'Review the final X-ray report' : 'Check and record image receipt',
+		title: doctor ? 'Review the final X-ray report' : 'Check the earlier X-ray',
 		status: 'Awaiting assignment',
 		person: doctor ? 'Receiving doctor' : 'Receiving nurse',
 		citation
@@ -84,11 +84,11 @@ function handoffActions(id: string, documents: ChartDocument[], patient: Patient
 	}
 	if (!event) return [action];
 	return [{
-		...action, status: active ? 'Assigned' : 'Previously assigned',
+		...action, status: active && event.assignmentOrigin === 'automatic' ? 'Assigned automatically' : active ? 'Assigned' : 'Previously assigned',
 		person: event.recipientName ?? event.recipient,
 		detail: event.reassignedFrom
 			? event.signedBy + ' reassigned this review from ' + event.reassignedFrom.name + '.'
-			: 'Sent by ' + event.signedBy + '.',
+			: event.assignmentOrigin === 'automatic' ? 'The transfer checklist and archive identify the missing study. Intake Desk routed its check to nursing.' : 'Sent by ' + event.signedBy + '.',
 		workspace: active ? workspace : null
 	}];
 }

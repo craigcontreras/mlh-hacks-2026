@@ -1,8 +1,7 @@
 import { expect, test, vi } from 'vitest';
 import { demoAccounts } from './accounts';
-import { chartDocuments, chartPatient, clinicalDocument, practiceDocuments, type ChartDocument, type ImageStatus } from './chart';
+import { chartDocuments, chartPatient, practiceDocuments, type ChartDocument, type ImageStatus } from './chart';
 import { prepareChartBrief, summarizeChartDocuments, summarizePatientChart } from './chart-brief';
-import { verifyChartSummary } from './clinical-summary';
 import { PacketStore } from './store';
 
 test('both chart briefs condense verified sources across visits without mixing patient or family histories', async () => {
@@ -65,9 +64,7 @@ test('only matching current and prior study identifiers support an image status 
 test('every chart and saved packet document also has a verifiable standalone overview', () => {
 	const store = new PacketStore(':memory:');
 	try {
-		const draft = store.clinical.saveSummary(store.clinical.version(), verifyChartSummary(chartDocuments, 'local'), 5,
-			clinicalDocument.text, chartDocuments);
-		const saved = store.clinical.approve(draft.version, demoAccounts[0], 'check-images');
+		const saved = store.clinical.get()!;
 		for (const id of ['J-104','C-116']) {
 			const view = store.patients.view(demoAccounts[0], saved, '', false, id);
 			for (const doc of view.documents) {

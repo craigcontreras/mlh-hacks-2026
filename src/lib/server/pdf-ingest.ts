@@ -5,11 +5,24 @@ import radiologyPdf from '../../../samples/records/ED-104-radiology.pdf?inline';
 import { chartDocuments, type ChartDocument } from './chart';
 import { ProviderError } from './codex';
 
-// These fingerprints pair the checked PDF bytes with their verified numbered transcript for installations without Poppler.
+// Each fingerprint binds one bundled PDF to its checked, numbered transcript.
 const sources = [
 	{ documentId: 'ED-104', pdf: transferPdf, fingerprint: 'ed1cc8e0fc8e7db9af592cc4a0580144a5414e81664611470aef2400d06cd8d7' },
 	{ documentId: 'ED-104-radiology', pdf: radiologyPdf, fingerprint: '7847fcb4eeb27ed72ef80dd04d39917f77398c4df5efaf17220ec50518072af8' }
-];
+].map(source => ({
+	...source, bytes: Buffer.from(source.pdf.slice(source.pdf.indexOf(',') + 1), 'base64')
+}));
+
+function transcriptMatches(source: (typeof sources)[number], text: string) {
+	return createHash('sha256').update(source.bytes).update('\0').update(text).digest('hex') === source.fingerprint;
+}
+
+export function hasVerifiedPdfTranscripts(documents: ChartDocument[]) {
+	return sources.every(source => {
+		const document = documents.find(doc => doc.id === source.documentId);
+		return document && transcriptMatches(source, document.text);
+	});
+}
 
 export function extractPdfText(bytes: Buffer): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -52,14 +65,12 @@ export async function ingestJordanPdfs(documents: ChartDocument[] = chartDocumen
 	const parsed = await Promise.all(sources.map(async source => {
 		const document = documents.find(doc => doc.id === source.documentId);
 		if (!document) throw new ProviderError('The transfer is missing a required source document. Reopen the chart.');
-		const bytes = Buffer.from(source.pdf.slice(source.pdf.indexOf(',') + 1), 'base64');
 		let text: string;
 		try {
-			text = numberedPdfTranscript(await extract(bytes), document.visitId);
+			text = numberedPdfTranscript(await extract(source.bytes), document.visitId);
 		} catch (error) {
 			if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-				const signature = createHash('sha256').update(bytes).update('\0').update(document.text).digest('hex');
-				if (signature === source.fingerprint) {
+				if (transcriptMatches(source, document.text)) {
 					method.push('verified-transcripts');
 					return document;
 				}

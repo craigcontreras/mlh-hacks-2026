@@ -1,8 +1,7 @@
 import { expect, test } from 'vitest';
 import { demoAccounts } from './server/accounts';
-import { chartDocuments, clinicalDocument, practiceDocuments } from './server/chart';
+import { practiceDocuments } from './server/chart';
 import { summarizePatientChart } from './server/chart-brief';
-import { verifyChartSummary } from './server/clinical-summary';
 import { PacketStore } from './server/store';
 import { reconcileImagingNotice } from './server/imaging-notice';
 import { buildEvidenceMap } from './patient-map';
@@ -20,11 +19,11 @@ test('the same report keeps its original instruction as nursing, reassignment, s
 		}
 		expect(finding('family-history').actions).toEqual([]);
 		expect(finding('medical-history').actions).toEqual([]);
-		expect(finding('comparison-images').actions).toMatchObject([{
-			title: 'Request the earlier X-ray', person: 'Requested by Intake Desk', status: 'Queued for Imaging Records'
-		}]);
-		const draft = flow.saveSummary(flow.version(), verifyChartSummary(chartDocuments, 'local'), 1, clinicalDocument.text, chartDocuments);
-		const nursing = flow.approve(draft.version, admin, 'check-images');
+		const nursing = flow.get()!;
+		expect(finding('comparison-images').actions).toMatchObject([
+			{title:'Check the earlier X-ray', person:riley.name, status:'Assigned automatically'},
+			{title:'Request the earlier X-ray', person:'Requested by Intake Desk', status:'Queued for Imaging Records'}
+		]);
 		expect(finding('comparison-images', riley).actions[0]).toMatchObject({person: riley.name, workspace: '/inbox/J-104'});
 		expect(finding('radiology', riley).actions[0].workspace).toBeFalsy();
 		const checked = flow.recordImageStatus(nursing.version, riley, 'still-pending');

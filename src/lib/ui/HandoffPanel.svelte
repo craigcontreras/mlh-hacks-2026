@@ -15,7 +15,8 @@
 	const plan = $derived(record?.carePlans?.findLast(item => item.visitId === 'ED-104'));
 	const returned = $derived(record?.status === 'returned');
 	const reviewed = $derived(record?.status === 'reviewed');
-	const nurseAction = $derived(data.imagingNotice?.status === 'needs-review' ? 'Check comparison image status' : 'Send the report for doctor review');
+	const nurseAction = $derived(delivery?.assignmentOrigin === 'automatic' && data.imagingNotice.status === 'requested'
+		? 'Check the pending X-ray' : data.imagingNotice.status === 'needs-review' ? 'Check comparison image status' : 'Send the report for doctor review');
 	const owner = $derived(!delivery || returned ? 'Administrative staff' : delivery.recipientName ?? delivery.recipient);
 	const submit: SubmitFunction = ({submitter,cancel}) => {
 		if (busy) { cancel(); return; }
@@ -65,7 +66,8 @@
 		<h2>{delivery.recipient === 'Nurse' ? nurseAction : 'Review the signed report'}</h2>
 		{#if record.flow === 'admin-nurse-doctor'}
 			{#if record.imageStatus && data.imagingNotice?.status !== 'received'}<p>{record.imageStatus.recordedBy} recorded the comparison images as <strong>{record.imageStatus.status.replaceAll('-', ' ')}</strong>.</p>{/if}
-			{#if delivery.recipient === 'Nurse'}<p>Nursing sends today’s report to the receiving doctor for sign-off.</p>
+			{#if delivery.assignmentOrigin === 'automatic'}<p>Intake Desk assigned the image check to {delivery.recipientName} when the records showed the earlier X-ray was missing.</p>
+			{:else if delivery.recipient === 'Nurse'}<p>Nursing sends today’s report to the receiving doctor for sign-off.</p>
 			{:else}<p>The assigned doctor can sign the report review or return the assignment to administration.</p>{/if}
 		{:else}<p>Handoff signed by {delivery.signedBy}.</p>{/if}
 		{#if data.ownsDelivery}<a class="button" href={resolve('/inbox/[patientId]', {patientId: data.chart.patient.id})}>Open my assignment</a>{/if}

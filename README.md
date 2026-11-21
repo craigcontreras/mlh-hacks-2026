@@ -15,20 +15,17 @@ Open the local URL printed by Vite. For optional model extraction, install the C
 
 ## Watch the walkthrough
 
-Open **Glossary → Watch the walkthrough** to rehearse the optional clinical handoff in Jordan’s case. The shorter walkthrough below shows the automatic file request. Follow Maya’s sign-off, Riley’s image check, Avery’s return and Morgan’s signed review. Use **Reset and randomize sample** in Maya’s transfer workspace when you want another round. [Download the narrated video](docs/Intake-Desk-walkthrough.mp4)
+Open **Glossary → Watch the walkthrough** to follow Jordan from Riley’s inbox to the doctor’s signed review. [Download the narrated video](docs/Intake-Desk-walkthrough.mp4)
 
 ## Show the benefit in 30 seconds
 
-Let Craig drive as Maya and Yousif narrate. Start with the original Jordan sample. If someone already rehearsed on this laptop, Maya can open **Jordan Vale → Open transfer workspace → Demo controls → Reset handoff demo** to restart it.
+Let Craig drive as Riley Ortiz and Yousif narrate. Use the original Jordan sample. If someone has already rehearsed, Maya can restart it under **Open transfer workspace → Demo controls → Reset handoff demo**. Reset is a presenter control.
 
-1. Open **Patients → Jordan Vale**. Read **Imaging result** in the five-point summary. “Today's written X-ray report is already here.”
-2. Click **Earlier X-ray requested automatically → View request**. Show the message to Imaging Records and the study number **MB-082-LA**. Open a cited passage. “The checklist names the missing pictures. The September archive identifies the study and where it is held. Intake Desk already sent the request to the demo inbox.”
-3. In **Documents → Demo controls**, click **Simulate file arrival**, then **Open earlier X-ray**. “We're playing the part of the imaging office replying. The chart went from seven of eight files to eight of eight. Riley and both doctors can open that same picture.”
-4. Open **Ontology → Imaging result** to show the separate doctor's review. “Filing an image doesn't sign a doctor's name. The receiving doctor opens the report and signs their own review.”
+1. Sign in as **Riley Ortiz → My inbox → Jordan Vale**. “Riley is the first person to open the chart. The earlier X-ray is already pending, and this task already belongs to Riley.”
+2. Click **View imaging status**, then open **View request**. “The transfer checklist identifies the missing pictures. The archive supplies the matching study number, MB-082-LA. Imaging Records has the request, and Riley can see the same evidence.”
+3. Return to Riley’s assignment. Click **Sign and send report to doctor**. “Today’s written report is available, so Avery can review it while the earlier pictures are on their way.”
 
-If a judge asks how the summary was made, click a source in **Ontology** to highlight the original sentence. Family history has a source there too. Jordan’s older intake records their mother’s osteoporosis. The chart has no accompanying genetic test result.
-
-The automatic request uses the bundled chart’s records and a local Imaging Records inbox. Ordinary staff uploads are filed for the selected visit. An unfamiliar filename or a mention of an X-ray alone cannot establish which study is missing. [One-page visual dictionary](docs/Intake-Desk-visual-dictionary.pdf)
+For an AI example, open **Jordan Vale → Summary → Summary options → Order findings with Codex**. The signed-in Codex CLI orders the chart’s verified findings. The running app uses the source evidence to assign the task locally. The assignment can be opened even when the model is unavailable. [Visual dictionary](docs/Intake-Desk-visual-dictionary.pdf)
 
 ## End-of-day file check
 
@@ -53,21 +50,21 @@ For the first rehearsal, Craig can drive and Yousif can narrate. Swap for the se
 
 | On screen | What the narrator can say |
 | --- | --- |
-| **Maya Chen · administrator.** In **Patient overview**, open **Jordan Vale → Open transfer workspace → Prepare transfer brief**. Expand **Compare current and prior records → Current transfer checklist**. Point to the highlighted sentence about the missing images. Close it and click **Sign and send to nurse**. | “Here’s exactly where the paper says the older pictures are missing. Imaging Records already has the request. Maya hands over the clinical paperwork.” |
-| **Riley Ortiz · nurse.** Open **My inbox → Jordan Vale**. For the shortest path, click **Sign and send report to doctor**. To rehearse a separate nursing observation, expand **Add an image observation (optional)** and record **Still pending** before signing. Point to the receiving doctor’s name before sending. | “The paperwork told us what was missing at departure. Riley reviews the handoff and can add what they actually observed. Avery receives the report for a clinical decision.” |
+| **Riley Ortiz · nurse.** Open **My inbox → Jordan Vale**. Read the pending image status and open **View imaging status → View request** to inspect the request and its supporting records. | “The chart gives Riley a check to follow and asks Imaging Records for the file. Both happened automatically when the packet was loaded.” |
+| **Riley.** Return to the assignment and click **Sign and send report to doctor**. | “Riley reviews the handoff and sends today’s written report to Avery. Riley can add a new observation if something has changed.” |
 | **Dr. Avery Shah · first doctor.** Open **My inbox → Jordan Vale → Read signed radiology impression**. Close the source. Expand **Return to administrative staff**, enter “Called to another patient,” and click **Return handoff to admin**. | “This is the original report author’s conclusion. Avery can read it, but another patient needs Avery’s attention. The return records why someone else must take this review.” |
 | **Maya, then Dr. Morgan Lee.** As Maya, reopen Jordan’s transfer workspace. Choose **Dr. Morgan Lee → Sign and reassign**. As Morgan, open **My inbox → Jordan Vale → Read signed radiology impression**, close the source, and click **Sign report review**. Pause on the confirmation. | “Morgan just signed that they reviewed today’s report. The imaging request already exists. We can check its status on the chart.” |
 | **Any care-team account.** Open Jordan’s **Documents** and show the Imaging Records receipt. As Maya use **Demo controls → Simulate file arrival**, then **Open earlier X-ray**. | “The next shift can see who reviewed the report and when the picture became available.” |
 
 **Check you can explain it.** Ask your teammate to show who requested the earlier picture, who reviewed today’s report and which source supports each action. The answers are in the Imaging Records receipt and Morgan’s signed review. If you have one minute, Avery can sign directly.
 
-**Rehearse a different answer.** As Maya, open Jordan’s transfer workspace and click **Reset and randomize sample**, then **Prepare transfer brief**. This starts a fresh Jordan handoff. Find the new lookup number for the older X-ray in the prior imaging archive and the current transfer checklist. As Riley, click **Read Imaging Records reply** and record the status that office actually reports. If the images have arrived, the doctor’s signature finishes the work. If they are still pending or their arrival is unconfirmed, show who owns the follow-up. Ask your teammate to predict which outcome you’ll see before the doctor signs.
+**Rehearse a different answer.** In Maya’s transfer workspace, click **Reset and randomize sample**. Use the new study number to find the Imaging Records reply. A verified missing study produces a pending assignment in Riley’s inbox. An already available study needs no missing-file task. An unclear match goes to review.
 
 **What you can claim.** You demonstrated a source lookup, a named handoff and a follow-up that survives sign-off. The timed result below measures how quickly the sample brief appears. Time saved by hospital staff or patients would require observation in a real workflow. [Timing and method](#extraction-and-storage) · [Illustrated doctor walkthrough](docs/Jordan-doctor-walkthrough.pdf)
 
 **If a judge asks whether this is only for transfers**, open **Patient overview → Casey Rowan** and click **Patient log**. Show the nursing reassessment and physician progress note from the same hospital visit. Maya can add a dated entry with **Add coordination update**. Open Casey under another account to see the same update and author.
 
-**Other controls for Jordan.** **Visit history and plan editor** shows the earlier visits and lets Maya edit a planned destination. **Parser options → Summarize with Codex** runs optional model extraction.
+**Other controls for Jordan.** **Visit history and plan editor** shows the earlier visits and lets Maya edit a planned destination. On packets awaiting preparation, **Parser options → Summarize with Codex** runs optional model extraction. Chart-summary ordering is available after routing.
 
 A plan can record the next doctor, facility, department, staff-entered priority and coordination impact. Same-hospital updates show an internal handoff. A different facility shows a planned external transfer. Original documents, saved plan revisions and the signed handoff each retain their own provenance.
 
@@ -84,13 +81,13 @@ For the Design entry, run the five-minute volunteer task and record one observed
 
 ## Extraction and storage
 
-**Prepare transfer brief** reads Jordan’s two original PDFs with Poppler, compares the extracted passages with the bundled transcripts, and checks them against three other records. If Poppler is unavailable, the demo can use its verified transcripts and labels that method on the brief. The local parser uses the image manifest for printed labels. The signed radiology report supplies the findings.
+The automatic route verifies the bundled transcripts against the original PDFs and matches the transfer note, archive and documented nursing task. On packets awaiting manual preparation, **Prepare transfer brief** reads Jordan’s two original PDFs with Poppler, compares the extracted passages with the bundled transcripts, and checks them against three other records. If Poppler is unavailable, the demo can use its verified transcripts and labels that method on the brief. The local parser uses the image manifest for printed labels. The signed radiology report supplies the findings.
 
-On the event laptop, ten production-preview runs took **49–120 ms from clicking Prepare transfer brief to seeing Sign and send to nurse**, with a **50 ms median**. Server PDF extraction and verification took 12–34 ms. These measurements cover the bundled Jordan packet using Poppler. The optional full Codex extraction took 16.6 seconds in a separate run and passed the same source checks.
+In the earlier manual-preparation workflow on the event laptop, ten production-preview runs took **49–120 ms from clicking Prepare transfer brief to seeing Sign and send to nurse**, with a **50 ms median**. Server PDF extraction and verification took 12–34 ms. These measurements cover the bundled Jordan packet using Poppler. The optional full Codex extraction took 16.6 seconds in a separate run and passed the same source checks.
 
 **Codex** receives the selected synthetic chart in a temporary CLI session with a read-only sandbox. For Jordan’s handoff, the current image is passed as an image attachment alongside numbered text. The verifier checks patient and visit identity, the original quotes, signed report agreement, study identifiers, documented ownership, and the printed image markers. An inconsistent or incomplete draft blocks sign-off. The generated X-ray illustrates the current visit. Clinical findings are quoted from a fictional signed report. The supported fixtures have a known structure.
 
-**SQLite** stores signed tasks, nurse status, doctor review or return, the named records request, operational note and plan revisions, and reviewed document snapshots at `.data/intake.sqlite` by default. The server derives the signer and recipient permissions from the signed-in account. Repeating a request or refreshing the app preserves the receipt. Demo sessions expire and require another sign-in after a server restart. Use the app on loopback with the bundled synthetic data. Imaging Records and the staff inboxes are local to this demo.
+**SQLite** stores the automatic assignment, signed tasks, nurse observations, doctor review or return, the named records request, operational note and plan revisions, and reviewed document snapshots at `.data/intake.sqlite` by default. The server derives the signer and recipient permissions from the signed-in account. Repeating a request or refreshing the app preserves the receipt. Demo sessions expire and require another sign-in after a server restart. Use the app on loopback with the bundled synthetic data. Imaging Records and the staff inboxes are local to this demo.
 
 Optional server settings are `INTAKE_DB_PATH` for a different SQLite file and `INTAKE_CODEX_MODEL` to choose a model available to your CLI account. The event laptop uses `INTAKE_DB_PATH=.data/workflow-demo.sqlite` for this walkthrough. Set the same path when restarting to reopen the same handoffs. Maya can use **Demo controls → Reset handoff demo** to rehearse Jordan’s transfer from the beginning.
 

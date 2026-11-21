@@ -4,8 +4,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { demoAccounts } from './accounts';
-import { chartDocuments, clinicalDocument } from './chart';
-import { verifyChartSummary } from './clinical-summary';
 import { PacketStore } from './store';
 
 const [admin, avery, riley, morgan] = demoAccounts;
@@ -61,10 +59,11 @@ test('my assignments follow the actual handoff owner and completed review keeps 
 	try {
 		const workflow = store.clinical;
 		const current = (account: typeof avery) => store.patients.view(account, workflow.get(), '', true, null).matches;
-		const draft = workflow.saveSummary(workflow.version(), verifyChartSummary(chartDocuments, 'local'), 5, clinicalDocument.text, chartDocuments);
-		expect(current(admin)).toHaveLength(1);
-		const nurse = workflow.approve(draft.version, admin, 'check-images');
-		expect(current(riley)[0].workspace).toBe('/inbox/J-104');
+		const nurse = workflow.get()!;
+		expect(current(admin)).toEqual([]);
+		expect(current(riley)[0]).toMatchObject({owner:riley.name, workspace:'/inbox/J-104'});
+		const originalChart = store.patients.view(admin, nurse, '', false, 'J-104');
+		expect(originalChart.timeline).toContainEqual(expect.objectContaining({title:'Image check assigned automatically', source:'Intake Desk'}));
 		expect(current(avery)).toEqual([]);
 		const checked = workflow.recordImageStatus(nurse.version, riley, 'still-pending');
 		const sent = workflow.forward(checked.version, riley, 'review-report');

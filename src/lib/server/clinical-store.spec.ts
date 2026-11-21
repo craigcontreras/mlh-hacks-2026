@@ -31,42 +31,83 @@ describe('SQLite clinical handoffs', () => {
 		rmSync(directory, { recursive: true, force: true });
 	});
 
-	it('records one named admin-to-nurse sign-off across duplicate requests and reopening', () => {
-		const clinical = store.clinical;
-		const initial = clinical.version();
-		const draft = clinical.saveSummary(initial, summary, 4, sourceText);
-		expect(clinical.saveSummary(initial, summary, 4, sourceText)).toEqual(draft);
-		expect(() => clinical.saveSummary(initial, summary, 5, sourceText)).toThrow(/changed/);
-		const sent = clinical.approve(draft.version, admin, 'check-images');
-		expect(sent).toMatchObject({
-			status: 'sent', flow: 'admin-nurse-doctor', elapsedMs: 4, sourceText,
-			history: [{ recipient: 'Nurse', recipientAccountId: nurse.id, signedBy: admin.name, signedByAccountId: admin.id, taskId: 'check-images', acknowledgedAt: null }]
+	// Reopen the same SQLite file with a known practice outcome instead of relying on random selection.
+	function openPractice(status: 'arrived' | 'unable-to-confirm' | 'still-pending') {
+		store.close();
+		const db = new DatabaseSync(path);
+		try {
+			db.prepare('UPDATE clinical_handoff SET data=NULL, imaging_notice=NULL, practice=?, last_request=NULL WHERE singleton=1')
+				.run(JSON.stringify({ accession: 'MB-082-508', status }));
+		} finally { db.close(); }
+		store = new PacketStore(path);
+		return store.clinical;
+	}
+
+	it('assigns verified pending images to the nurse exactly once without a staff signature or observation', () => {
+		const initial = store.clinical.snapshot();
+		expect(initial.record).toMatchObject({
+			status: 'sent', flow: 'admin-nurse-doctor', sourceText,
+			history: [{ recipient: 'Nurse', recipientAccountId: nurse.id, assignmentOrigin: 'automatic',
+				signedBy: 'Intake Desk', taskId: 'check-images', acknowledgedAt: null }]
 		});
+		expect(initial.record!.history).toHaveLength(1);
+		expect(initial.record!.history[0].signedByAccountId).toBeUndefined();
+		expect(initial.record!.imageStatus).toBeUndefined();
 		store.close();
 		store = new PacketStore(path);
-		expect(store.clinical.approve(draft.version, admin, 'check-images')).toEqual(sent);
-		expect(() => store.clinical.approve(draft.version, admin, 'review-report')).toThrow(/changed/);
-		expect(() => store.clinical.saveSummary(sent.version, summary, 4, sourceText + '\n')).toThrow(/read-only/);
-		expect(store.clinical.get()).toEqual(sent);
+		expect(store.clinical.snapshot()).toEqual(initial);
+		expect(() => store.clinical.approve(initial.version, admin, 'check-images')).toThrow(/draft/);
+		expect(() => store.clinical.saveSummary(initial.version, summary, 4, sourceText)).toThrow(/read-only/);
+		expect(store.clinical.get()).toEqual(initial.record);
+	});
+
+	it('migrates an unsigned verified draft once and keeps its notes and verified summary', () => {
+		const draft = { status: 'draft', sourceText, summary, history: [], elapsedMs: 17,
+			operationalNotes: [{ id: 'existing-note', visitId: 'ED-104', text: 'Call via the intake office.',
+				savedBy: admin.name, savedByAccountId: admin.id, savedAt: '2026-11-21T13:00:00Z' }]
+		};
+		store.close();
+		const legacy = new DatabaseSync(path);
+		try { legacy.prepare('UPDATE clinical_handoff SET version=?, data=?').run('old-version', JSON.stringify(draft)); }
+		finally { legacy.close(); }
+		store = new PacketStore(path);
+		const assigned = store.clinical.get()!;
+		expect(assigned).toMatchObject({ status:'sent', operationalNotes:draft.operationalNotes, elapsedMs:17, summary });
+		expect(assigned.history[0]).toMatchObject({ assignmentOrigin:'automatic', recipientAccountId:nurse.id });
+		expect(() => store.clinical.approve('old-version', admin, 'check-images')).toThrow(/changed/);
+	});
+
+	it('holds the nursing handoff when a saved transcript differs from its matching PDF', () => {
+		const sources = chartDocuments.map(doc => doc.id === 'ED-104-radiology' ? { ...doc, text: doc.text + '\n' } : doc);
+		const draft = { status: 'draft', sourceText, sources, summary: verifyChartSummary(sources, 'local'),
+			history: [], elapsedMs: 4 };
+		expect(draft.summary.issues).toEqual([]);
+		store.close();
+		const existing = new DatabaseSync(path);
+		try { existing.prepare('UPDATE clinical_handoff SET data=?').run(JSON.stringify(draft)); }
+		finally { existing.close(); }
+		store = new PacketStore(path);
+		expect(store.clinical.get()).toMatchObject({ status: 'draft', history: [] });
 	});
 
 	it('validates reviewing roles and documented tasks, and blocks a draft with extraction issues', () => {
-		const clinical = store.clinical;
-		const draft = clinical.saveSummary(clinical.version(), summary, 8, sourceText);
+		const clinical = openPractice('unable-to-confirm');
+		const docs = clinical.snapshot().chart.documents;
+		const unclear = verifyChartSummary(docs, 'local');
+		const draft = clinical.saveSummary(clinical.version(), unclear, 8, sourceText, docs);
 		expect(() => clinical.approve(draft.version, nurse, 'review-report')).toThrow(/administrator/);
 		expect(() => clinical.approve(draft.version, admin, 'invented-task')).toThrow(/documented image-status task/);
 		expect(() => clinical.approve(draft.version, admin, 'review-report')).toThrow(/Nurse first/);
 		expect(() => clinical.acknowledge(draft.version, doctor)).toThrow(/active handoff/);
 		expect(clinical.get()).toEqual(draft);
-		const blocked = clinical.saveSummary(draft.version, { ...summary, issues: ['Unverified source.'] }, 9, sourceText);
+		const blocked = clinical.saveSummary(draft.version, { ...unclear, issues: ['Unverified source.'] }, 9, sourceText, docs);
 		expect(() => clinical.approve(blocked.version, admin, 'check-images')).toThrow(/extraction issues/);
 		expect(clinical.get()).toEqual(blocked);
 	});
 
 	it('preserves the assigned nurse’s image observation when routing to the doctor', () => {
 		const clinical = store.clinical;
-		const draft = clinical.saveSummary(clinical.version(), summary, 4, sourceText);
-		const sent = clinical.approve(draft.version, admin, 'check-images');
+		const sent = clinical.get()!;
 		expect(() => clinical.acknowledge(sent.version, admin)).toThrow(/receiving role/);
 		expect(() => clinical.acknowledge(sent.version, doctor)).toThrow(/active handoff/);
 		expect(() => clinical.recordImageStatus(sent.version, doctor, 'arrived')).toThrow(/assigned nurse/);
@@ -99,7 +140,7 @@ describe('SQLite clinical handoffs', () => {
 
 	it('preserves audited plans, notes and chart evidence while returning and reassigning a doctor', () => {
 		const clinical = store.clinical;
-		const draft = clinical.saveSummary(clinical.version(), summary, 4, sourceText, chartDocuments);
+		const draft = clinical.get()!;
 		expect(() => clinical.saveNote(draft.version, doctor, 'ED-104', 'Coordination note')).toThrow(/administrator/);
 		expect(() => clinical.saveCarePlan(draft.version, admin, 'ED-999', 'doctor', 'External facility')).toThrow(/documented visit/);
 		expect(() => clinical.saveCarePlan(draft.version, admin, 'ED-104', 'nurse', 'External facility')).toThrow(/doctor account/);
@@ -114,8 +155,7 @@ describe('SQLite clinical handoffs', () => {
 			{ visitId: 'ED-104', doctorId: morgan.id, receivingFacility: 'Alder Crossing', priority: 'urgent',
 				impact: 'Arrange callback', receivingDepartment: 'Emergency Department', savedBy: admin.name }
 		]);
-		const sent = clinical.approve(planned.version, admin, 'check-images');
-		const checked = clinical.recordImageStatus(sent.version, nurse, 'unable-to-confirm');
+		const checked = clinical.recordImageStatus(planned.version, nurse, 'unable-to-confirm');
 		const forwarded = clinical.forward(checked.version, nurse, 'review-report');
 		expect(isAssignedTo(forwarded.history.at(-1), morgan)).toBe(true);
 		expect(isAssignedTo(forwarded.history.at(-1), doctor)).toBe(false);
@@ -134,14 +174,13 @@ describe('SQLite clinical handoffs', () => {
 			doctorId: doctor.id, priority: 'urgent', impact: 'Arrange callback', receivingDepartment: 'Emergency Department'
 		});
 		expect(reassigned.sources).toEqual(chartDocuments);
-		expect(reassigned.summary).toEqual(summary);
+		expect(reassigned.summary).toEqual({ ...summary, pdfInput: 'verified-transcripts' });
 		expect(clinical.get()).toEqual(reassigned);
 	});
 
 	it.each(['still-pending', 'unable-to-confirm', 'arrived'] as const)('opens and closes the remaining image check when the signed review starts with %s', initial => {
 		const workflow = store.clinical;
-		const draft = workflow.saveSummary(workflow.version(), summary, 2, sourceText, chartDocuments);
-		const assigned = workflow.approve(draft.version, admin, 'check-images');
+		const assigned = workflow.get()!;
 		const noted = workflow.recordImageStatus(assigned.version, nurse, initial);
 		const forwarded = workflow.forward(noted.version, nurse, 'review-report');
 		const signed = workflow.signReview(forwarded.version, doctor);
@@ -169,8 +208,8 @@ describe('SQLite clinical handoffs', () => {
 		['check-images', 'Nurse', nurse, 'review-report', doctor]
 	] as const)('preserves old %s assignments and resolves a single legacy account', (taskId, recipient, owner, nextTask, receiver) => {
 		const clinical = store.clinical;
-		const { version, ...draft } = clinical.saveSummary(clinical.version(), summary, 3, sourceText);
-		const old = { ...draft, status: 'sent', history: [{
+		const { version } = clinical.snapshot();
+		const old = { sourceText, summary, elapsedMs: 3, status: 'sent', history: [{
 			id: 'legacy-event', taskId, recipient, signedBy: admin.name,
 			sentAt: '2026-11-21T12:00:00Z', acknowledgedAt: null
 		}] };
@@ -193,28 +232,31 @@ describe('SQLite clinical handoffs', () => {
 		}
 	});
 
-	it('queues the validated study independently from a handoff and preserves its evidence on approval', () => {
-		const clinical = store.clinical;
-		const draft = clinical.saveSummary(clinical.version(), summary, 4, sourceText, chartDocuments);
+	it('preserves the stored manual request and its evidence on a legacy draft', () => {
+		const clinical = openPractice('unable-to-confirm');
+		const docs = clinical.snapshot().chart.documents;
+		const extracted = verifyChartSummary(docs, 'local');
+		const draft = clinical.saveSummary(clinical.version(), extracted, 4, sourceText, docs);
 		expect(() => clinical.requestPriorStudy(draft.version, doctor)).toThrow(/administrator/);
 		const queued = clinical.requestPriorStudy(draft.version, admin);
 		expect(queued.status).toBe('draft');
 		expect(queued.history).toEqual([]);
 		expect(queued.priorStudyRequest).toMatchObject({
-			...summary.adminAction, requestedBy: admin.name, requestedByAccountId: admin.id, status: 'Queued for imaging records'
+			...extracted.adminAction, requestedBy: admin.name, requestedByAccountId: admin.id, status: 'Queued for imaging records'
 		});
 		expect(queued.priorStudyRequest?.requestedAt).toBeTypeOf('string');
 		expect(clinical.requestPriorStudy(draft.version, admin)).toEqual(queued);
 		expect(clinical.requestPriorStudy(queued.version, admin)).toEqual(queued);
-		expect(() => clinical.saveSummary(queued.version, summary, 5, sourceText + '\n', chartDocuments)).toThrow(/already cites/);
+		expect(() => clinical.saveSummary(queued.version, extracted, 5, sourceText + '\n', docs)).toThrow(/already cites/);
 		const sent = clinical.approve(queued.version, admin, 'check-images');
 		expect(sent.priorStudyRequest).toEqual(queued.priorStudyRequest);
-		expect(sent.sources).toEqual(chartDocuments);
+		expect(sent.sources).toEqual(docs);
 	});
 
 	it('preserves the draft after a failed write and allows one successful sign-off retry', () => {
-		const clinical = store.clinical;
-		const draft = clinical.saveSummary(clinical.version(), summary, 12, sourceText);
+		const clinical = openPractice('unable-to-confirm');
+		const docs = clinical.snapshot().chart.documents;
+		const draft = clinical.saveSummary(clinical.version(), verifyChartSummary(docs, 'local'), 12, sourceText, docs);
 		const faultDb = new DatabaseSync(path);
 		try {
 			faultDb.exec("CREATE TRIGGER fail_handoff BEFORE UPDATE ON clinical_handoff BEGIN SELECT RAISE(ABORT, 'test write failure'); END;");
@@ -233,25 +275,25 @@ describe('SQLite clinical handoffs', () => {
 		store.saveDraft('corrected', '', parsePacket(fixtures.corrected));
 		const clinical = store.clinical;
 		const initial = clinical.version();
-		const draft = clinical.saveSummary(initial, summary, 4, sourceText);
-		const sent = clinical.approve(draft.version, admin, 'check-images');
+		const sent = clinical.get()!;
 		clinical.reset(sent.version);
 		const resetVersion = clinical.version();
 		clinical.reset(sent.version);
 		expect(clinical.version()).toBe(resetVersion);
-		expect(clinical.get()).toBeNull();
+		expect(clinical.get()?.history).toHaveLength(1);
+		expect(clinical.get()?.history[0].id).not.toBe(sent.history[0].id);
 		expect(store.get('corrected')).toBeTruthy();
 		expect(() => clinical.saveSummary(initial, summary, 4, sourceText)).toThrow(/changed/);
 		expect(() => clinical.acknowledge(sent.version, doctor)).toThrow(/changed/);
-		expect(clinical.saveSummary(resetVersion, summary, 4, sourceText).history).toEqual([]);
+		expect(clinical.get()?.history[0].assignmentOrigin).toBe('automatic');
 	});
 
-	it('persists a new unsent practice packet, rejects stale writes and cites the same study throughout the workflow', async () => {
+	it('persists each new practice outcome, rejects stale writes and cites the same study throughout the workflow', async () => {
 		const initial = store.clinical.version();
 		expect(() => store.clinical.randomize(initial, nurse)).toThrow(/administrator/);
 		store.clinical.randomize(initial, admin);
 		const first = store.clinical.snapshot();
-		expect(first.record).toBeNull();
+		expect(Boolean(first.record)).toBe(first.practice!.status === 'still-pending');
 		expect(first.practice).toBeTruthy();
 		store.close();
 		store = new PacketStore(path);
@@ -272,21 +314,20 @@ describe('SQLite clinical handoffs', () => {
 		expect(extracted.issues).toEqual([]);
 		expect(reply.quote).toContain(first.practice!.accession);
 		expect(documents.find(doc => doc.id === 'ED-082-study')?.text).toContain(first.practice!.accession);
-		expect(() => workflow.saveSummary(first.version, summary, 5, sourceText, chartDocuments)).toThrow(/current practice packet/);
-		const draft = workflow.saveSummary(first.version, extracted, 5, sourceText, documents);
-		const assigned = workflow.approve(draft.version, admin, 'check-images');
+		expect(() => workflow.saveSummary(first.version, summary, 5, sourceText, chartDocuments)).toThrow(/current practice packet|read-only/);
+		const assigned = first.record ?? workflow.approve(workflow.saveSummary(first.version, extracted, 5, sourceText, documents).version, admin, 'check-images');
 		const observed = workflow.recordImageStatus(assigned.version, nurse, first.practice!.status);
 		const sent = workflow.forward(observed.version, nurse, 'review-report');
 		const signed = workflow.signReview(sent.version, doctor);
 		expect(!!signed.imageFollowup).toBe(first.practice!.status !== 'arrived');
 		workflow.randomize(signed.version, admin);
 		const next = workflow.snapshot();
-		expect(next.record).toBeNull();
+		expect(Boolean(next.record)).toBe(next.practice!.status === 'still-pending');
 		expect(next.practice!.accession).not.toBe(first.practice!.accession);
 		expect(next.practice!.status).not.toBe(first.practice!.status);
 		expect(() => workflow.saveSummary(first.version, extracted, 5, sourceText, documents)).toThrow(/changed/);
 		workflow.reset(next.version);
-		expect(workflow.snapshot()).toMatchObject({ record: null, practice: null, chart: { documents: chartDocuments } });
+		expect(workflow.snapshot()).toMatchObject({ record: { status: 'sent' }, practice: null, chart: { documents: chartDocuments } });
 	});
 
 	it.each(['arrived', 'unable-to-confirm', 'still-pending'] as const)('uses the 13:42 %s reply to determine whether a new image request is available', status => {
@@ -296,20 +337,16 @@ describe('SQLite clinical handoffs', () => {
 		expect(extracted.crossChecks).toContainEqual(expect.objectContaining({
 			label: 'Imaging Records reply at 13:42', evidence: [practiceReplyEvidence(docs)]
 		}));
-		const workflow = store.clinical;
-		const draft = workflow.saveSummary(workflow.version(), extracted, 5, sourceText, docs);
-		if (status === 'arrived') {
-			expect(extracted.adminAction).toBeUndefined();
-			expect(() => workflow.requestPriorStudy(draft.version, admin)).toThrow(/verified request/);
-		} else {
-			expect(extracted.adminAction?.accession).toBe('MB-082-508');
-			expect(workflow.requestPriorStudy(draft.version, admin).priorStudyRequest?.accession).toBe('MB-082-508');
-		}
+		const workflow = openPractice(status);
+		const state = workflow.snapshot();
+		expect(state.imagingNotice.status).toBe({arrived: 'received', 'unable-to-confirm': 'needs-review', 'still-pending': 'requested'}[status]);
+		if (status === 'still-pending') expect(state.record!.history[0].assignmentOrigin).toBe('automatic');
+		else expect(state.record).toBeNull();
+
 	});
 
 	it('adds practice support to an older database without disturbing the active signed assignment', () => {
-		const draft = store.clinical.saveSummary(store.clinical.version(), summary, 4, sourceText, chartDocuments);
-		const sent = store.clinical.approve(draft.version, admin, 'check-images');
+		const sent = store.clinical.forward(store.clinical.version(), nurse, 'review-report');
 		store.close();
 		const legacy = new DatabaseSync(path);
 		try { legacy.exec('ALTER TABLE clinical_handoff DROP COLUMN practice'); } finally { legacy.close(); }

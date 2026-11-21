@@ -3,8 +3,9 @@ import type { DatabaseSync } from 'node:sqlite';
 import { demoAccounts, doctorAccounts, type AccountId, type DemoAccount } from './accounts';
 import { chartDocuments, chartPatient, clinicalDocument, practiceDocuments, type ChartDocument, type ChartEvidence, type ImageStatus, type PracticeRound } from './chart';
 import { reconcileImagingNotice, type ImagingNotice } from './imaging-notice';
-import type { ClinicalSummary } from './clinical-summary';
+import { verifyChartSummary, type ClinicalSummary } from './clinical-summary';
 import { packetStore, ReviewError } from './store';
+import { hasVerifiedPdfTranscripts } from './pdf-ingest';
 
 export type ClinicalRecipientRole = 'Doctor' | 'Nurse';
 
@@ -15,6 +16,7 @@ export interface ClinicalHandoff {
 	recipientAccountId?: AccountId;
 	recipientName?: string;
 	signedBy: string;
+	assignmentOrigin?: 'automatic';
 	signedByAccountId?: AccountId;
 	sentAt: string;
 	acknowledgedAt: string | null;
@@ -106,7 +108,7 @@ function requireOwner(state: StoredState | null, account: DemoAccount) {
 	return { state, active };
 }
 
-function send(state: StoredState, taskId: string, account: DemoAccount, doctorId?: AccountId): StoredState {
+function send(state: StoredState, taskId: string, account: DemoAccount | null, doctorId?: AccountId): StoredState {
 	const task = state.summary.tasks.find((candidate) => candidate.id === taskId);
 	if (!task || !isRecipient(task.role)) throw new ReviewError('Choose a documented task.', 400);
 	if (state.status !== 'returned' && state.history.some((event) => event.taskId === task.id)) {
@@ -119,10 +121,26 @@ function send(state: StoredState, taskId: string, account: DemoAccount, doctorId
 	const event: ClinicalHandoff = {
 		id: randomUUID(), taskId: task.id, recipient: task.role,
 		recipientAccountId: receiver.id, recipientName: receiver.name,
-		signedBy: account.name, signedByAccountId: account.id,
+		...(account ? { signedBy: account.name, signedByAccountId: account.id } : { signedBy: 'Intake Desk', assignmentOrigin: 'automatic' }),
 		sentAt: new Date().toISOString(), acknowledgedAt: null
 	};
 	return { ...state, status: 'sent', history: [...state.history, event] };
+}
+
+function assignPendingImages(data: StoredState | null, documents: ChartDocument[], notice: ImagingNotice): StoredState | null {
+	if (notice.status !== 'requested' || (data && (data.status !== 'draft' || data.history.length || data.summary.issues.length))) return data;
+	const started = performance.now();
+	const verified = verifyChartSummary(documents, 'local');
+	const task = verified.tasks.find(item => item.id === 'check-images');
+	const note = documents.find(doc => doc.id === clinicalDocument.id);
+	if (verified.issues.length || !task || !note || !hasVerifiedPdfTranscripts(documents)) return data;
+	if (data && (data.sourceText !== note.text || !data.summary.tasks.some(item =>
+		item.id === task.id && item.role === task.role && item.quote === task.quote && item.line === task.line))) return data;
+	const draft: StoredState = data ?? {
+		status: 'draft', history: [], sourceText: note.text, sources: documents, summary: { ...verified, pdfInput: 'verified-transcripts' },
+		elapsedMs: Math.round(performance.now() - started)
+	};
+	return send({ ...draft, flow: 'admin-nurse-doctor' }, 'check-images', null);
 }
 
 function visitEntry(state: StoredState, visitId: string, account: DemoAccount): VisitEntry {
@@ -170,7 +188,13 @@ export class ClinicalStore {
 			}
 			const { data, version, practice, imagingNotice } = this.read();
 			const record = data && { ...data, version };
-			const notice = reconcileImagingNotice(chartSnapshot(record, practice).documents, record, imagingNotice, new Date().toISOString());
+			const { documents } = chartSnapshot(record, practice);
+			const notice = reconcileImagingNotice(documents, record, imagingNotice, new Date().toISOString());
+			const assigned = assignPendingImages(data, documents, notice);
+			if (assigned !== data) {
+				db.prepare('UPDATE clinical_handoff SET data=?, version=?, last_request=NULL WHERE singleton=1')
+					.run(JSON.stringify(assigned), randomUUID());
+			}
 			db.prepare('UPDATE clinical_handoff SET imaging_notice=? WHERE singleton=1 AND imaging_notice IS NOT ?')
 				.run(JSON.stringify(notice), JSON.stringify(notice));
 			db.exec('COMMIT');
@@ -207,13 +231,15 @@ export class ClinicalStore {
 		if (before.lastRequest === key) return before.data && { ...before.data, version: before.version };
 		if (before.version !== version) throw new ReviewError('This handoff changed. Review the latest version.');
 
-		const data = update(before.data, before.practice, before.imagingNotice);
+		let data = update(before.data, before.practice, before.imagingNotice);
 		const practice = newPractice ? newPractice(before.practice) : before.practice;
 		if (!newPractice && data === before.data && practice === before.practice) return data && { ...data, version: before.version };
 		const newVersion = randomUUID();
 		const record = data && { ...data, version: newVersion };
-		const imagingNotice = reconcileImagingNotice(chartSnapshot(record, practice).documents, record,
+		const { documents } = chartSnapshot(record, practice);
+		const imagingNotice = reconcileImagingNotice(documents, record,
 			newPractice ? null : before.imagingNotice, new Date().toISOString());
+		data = assignPendingImages(data, documents, imagingNotice);
 		const saved = this.db.prepare('UPDATE clinical_handoff SET version=?, data=?, last_request=?, practice=?, imaging_notice=? WHERE singleton=1 AND version=?')
 			.run(newVersion, data && JSON.stringify(data), key, practice && JSON.stringify(practice), JSON.stringify(imagingNotice), version);
 		if (!saved.changes) {
@@ -229,7 +255,7 @@ export class ClinicalStore {
 			throw new ReviewError('The extraction needs its source text and elapsed time.', 400);
 		}
 		return this.change(version, ['save', summary, elapsedMs, sourceText, sources], (state, practice) => {
-			if (state && state.status !== 'draft') throw new ReviewError('The signed summary is read-only.');
+			if (state && state.status !== 'draft') throw new ReviewError('The routed summary is read-only.');
 			if (practice && JSON.stringify(sources) !== JSON.stringify(practiceDocuments(practice))) {
 				throw new ReviewError('Prepare the brief from the current practice packet.');
 			}

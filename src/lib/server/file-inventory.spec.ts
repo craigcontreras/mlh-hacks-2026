@@ -1,8 +1,7 @@
 import { expect, test, vi } from 'vitest';
 import { GET as getSample } from '../../routes/samples/[filename]/+server';
 import { demoAccounts, type DemoAccount } from './accounts';
-import { chartDocuments, chartPatient, clinicalDocument, practiceDocuments } from './chart';
-import { verifyChartSummary } from './clinical-summary';
+import { chartDocuments, chartPatient } from './chart';
 import { patientFileInventory, priorImageFilename } from './file-inventory';
 import * as storeModule from './store';
 
@@ -29,19 +28,16 @@ test('the shared inventory includes every expected source and flags a missing no
 test('an arrived reply must identify the archived study and nurse observations supersede the handoff snapshot', () => {
 	const store = new storeModule.PacketStore(':memory:');
 	try {
-		const practice = {accession: 'MB-082-147', status: 'arrived' as const};
-		const docs = practiceDocuments(practice);
+		const practice = {accession: 'MB-082-LA', status: 'arrived' as const};
 		const view = store.patients.view(demoAccounts[0], null, '', false, chartPatient.id, practice);
 		const inventory = patientFileInventory(chartPatient, view.documents, null);
 		expect(inventory).toMatchObject({ available: 8, expected: 8, priorImage: { status: 'available',
-			url: '/samples/ED-082-ankle.png?study=MB-082-147' } });
+			url: '/samples/ED-082-ankle.png?study=MB-082-LA' } });
 		const unsigned = view.documents.map(doc => doc.id === 'ED-104-registration'
-			? {...doc, text: doc.text.replace('now shows the comparison images for study MB-082-147', 'now shows the comparison images for study MB-082-148')} : doc);
+			? {...doc, text: doc.text.replace('now shows the comparison images for study MB-082-LA', 'now shows the comparison images for study MB-082-148')} : doc);
 		expect(patientFileInventory(chartPatient, unsigned, null).priorImage).toMatchObject({ status: 'unconfirmed', url: null });
 		const flow = store.clinical;
-		const draft = flow.saveSummary(flow.version(), verifyChartSummary(docs, 'local'), 1, clinicalDocument.text, docs);
-		const sent = flow.approve(draft.version, demoAccounts[0], 'check-images');
-		const pending = flow.recordImageStatus(sent.version, demoAccounts[2], 'unable-to-confirm');
+		const pending = flow.recordImageStatus(flow.version(), demoAccounts[2], 'unable-to-confirm');
 		expect(patientFileInventory(chartPatient, view.documents, pending).priorImage).toMatchObject({ status: 'unconfirmed', owner: 'Riley Ortiz', url: null });
 		const arrived = flow.recordImageStatus(pending.version, demoAccounts[2], 'arrived');
 		const unmatched = view.documents.map(doc => doc.id === 'ED-082-study' ? {...doc,text:doc.text.replace(practice.accession, 'OTHER-STUDY')} : doc);
@@ -60,9 +56,7 @@ test('the earlier film requires a session and current study receipt, and the sam
 		await expect(open()).rejects.toMatchObject({status:303});
 		await expect(open(demoAccounts[0], 'MB-082-LA')).rejects.toMatchObject({status:404});
 		const flow = store.clinical;
-		const draft = flow.saveSummary(flow.version(), verifyChartSummary(chartDocuments, 'local'), 0, clinicalDocument.text, chartDocuments);
-		const nursing = flow.approve(draft.version, demoAccounts[0], 'check-images');
-		const arrived = flow.recordImageStatus(nursing.version, demoAccounts[2], 'arrived');
+		const arrived = flow.recordImageStatus(flow.version(), demoAccounts[2], 'arrived');
 		await expect(open(demoAccounts[0])).rejects.toMatchObject({status:404});
 		await expect(open(demoAccounts[0], 'UNKNOWN')).rejects.toMatchObject({status:404});
 		for (const account of demoAccounts) {
@@ -92,12 +86,11 @@ test('matching delivered bytes are immediately available to each role and a late
 			expect(new Uint8Array(await response.arrayBuffer()).slice(0,4)).toEqual(new Uint8Array([137,80,78,71]));
 		};
 		expect(patientFileInventory(chartPatient, chartDocuments, null, 0, flow.snapshot().imagingNotice).priorImage?.owner).toBe('Imaging Records');
+		const routed = flow.get()!;
 		flow.receiveImagingDelivery(flow.version(), {patientId: chartPatient.id, visitId:'ED-104', accession:'MB-082-LA'});
-		expect(flow.get()).toBeNull();
+		expect(flow.get()?.history).toEqual(routed.history);
 		for (const account of demoAccounts) await openChart(account);
-		const draft = flow.saveSummary(flow.version(), verifyChartSummary(chartDocuments,'local'), 0, clinicalDocument.text, chartDocuments);
-		const assigned = flow.approve(draft.version, demoAccounts[0], 'check-images');
-		flow.recordImageStatus(assigned.version, demoAccounts[2], 'still-pending');
+		flow.recordImageStatus(flow.version(), demoAccounts[2], 'still-pending');
 		await openChart(demoAccounts[2]);
 	} finally { access.mockRestore(); store.close(); }
 });
