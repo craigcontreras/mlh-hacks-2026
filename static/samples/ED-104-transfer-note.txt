@@ -1,0 +1,21 @@
+MOSSBRIDGE COMMUNITY HOSPITAL | EMERGENCY DEPARTMENT
+Fictional training record · Synthetic patient and facilities
+
+ED transfer note · ED-104 · 21 November 2026
+Patient: Jordan Vale | Sending unit: Mossbridge ED | Destination: Alder Crossing ED
+Prepared by: Kai Bell, RN | Transfer packet closed at 13:20
+
+13:12 · Packet reconciliation
+Transport has the transfer form and dictated ED note. The final left ankle X-ray report is attached and documents lateral soft tissue swelling.
+
+11:38 · Triage history transcribed into transfer record
+Jordan came to the ED for persistent left ankle pain after a fall yesterday. An older ankle study was mentioned during registration, but its images were not in the local viewer.
+
+13:16 · Telephone handoff with Alder Crossing ED
+Receiving doctor: Review the attached final left ankle X-ray report.
+The sending clerk spoke with Mossbridge Outpatient Imaging at 12:45. The earlier comparison images were requested and had not arrived by departure.
+Receiving nurse: Check whether the requested comparison images have arrived and record their receipt status.
+
+Attachment 1 of 1 · Final radiology report · 12:32
+Study: Left ankle X-ray, three views. Impression: Lateral soft tissue swelling. No acute fracture identified on these views.
+Report signed by Quinn Moss, MD (fictional). No outside image files accompany this packet.

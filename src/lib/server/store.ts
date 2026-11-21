@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { ClinicalStore } from './clinical-store';
 import { resolveDraft, type Draft, type Evidence, type Field } from './extraction';
 import { fixtures, type FixtureId } from './fixtures';
 
@@ -31,6 +32,7 @@ function stale() {
 
 export class PacketStore {
 	private db: DatabaseSync;
+	readonly clinical: ClinicalStore;
 
 	constructor(filename: string) {
 		if (filename !== ':memory:') mkdirSync(dirname(filename), { recursive: true });
@@ -42,6 +44,7 @@ export class PacketStore {
 				draft TEXT NOT NULL, receipt TEXT,
 				CHECK((status='approved') = (receipt IS NOT NULL))
 			)`);
+		this.clinical = new ClinicalStore(this.db);
 	}
 
 	get(id: FixtureId): PacketRecord | null {

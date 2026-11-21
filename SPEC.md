@@ -2,6 +2,18 @@
 
 **MT-haCks 2026 · MedTech + Design · Proposed build for November 21**
 
+## Medical document handoff
+
+**Primary demo.** A doctor or administrative worker receives fictional record ED-104. They need to distinguish the report that is already attached from the earlier images still outstanding, then send the appropriate documented follow-up to its owner. Use the [one-page medical document](static/samples/ED-104-transfer-note.pdf) and [demo walkthrough](README.md#three-minute-walkthrough).
+
+- A generated brief shows the reason for the visit, available report, documented radiology impression, and pending information. Each item opens the supporting line. The signed impression keeps its negative finding and qualifier.
+- Two follow-ups come from explicit role assignments in the note. A reviewer chooses one and signs as a doctor or administrative worker. A draft has no recipient until sign-off succeeds.
+- The doctor or nurse receives the task with the brief and its source. They can acknowledge receipt and sign the remaining documented task onward. The SQLite record retains both workers' sign-offs, times and the source text reviewed.
+- An absent or unsupported citation blocks release. An unavailable Codex session permits an explicit offline retry. Refreshing a saved brief reuses the stored result.
+- **Event-day design task.** Give a participant the note and ask them to find which imaging material is available, point to the wording, and get the outstanding work to the appropriate colleague. Record the source they choose, recipient, task time, and any prompt. Actual impact on hospital wait time requires separate measurement.
+
+## Registration packet workflow
+
 A clerk opens a synthetic ER transfer packet. The transfer form lists callback extension **214**. A signed amendment corrects it to **241**. The clerk sees both lines together, accepts the correction, and signs off once. The receiving registration desk then sees **241**, who approved it, and when. If the paperwork leaves the answer unclear, the clerk can hold the packet.
 
 [Open the interactive design](design/intake-desk.html). It exercises the review decision with sample values. The SvelteKit app implements source-text extraction and SQLite storage. See the [local demo instructions](README.md).

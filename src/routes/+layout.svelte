@@ -15,10 +15,10 @@
 <a class="skip-link" href="#content">Skip to content</a>
 <header class="mast">
 	<div class="shell topbar">
-		<a class="brand" href={resolve('/')} aria-label="Intake Desk home"><span class="brandmark" aria-hidden="true"></span>Intake Desk</a>
+		<a class="brand" href={resolve('/handoffs')} aria-label="Intake Desk home"><span class="brandmark" aria-hidden="true"></span>Intake Desk</a>
 		<nav class="workspace-nav" aria-label="Workspaces">
-			<a href={resolve('/')} aria-current={page.url.pathname === resolve('/') ? 'page' : undefined}>Intake</a>
-			<a href={resolve('/desk')} aria-current={page.url.pathname === resolve('/desk') ? 'page' : undefined}>Registration desk</a>
+			<a href={resolve('/handoffs')} aria-current={page.url.pathname === resolve('/handoffs') ? 'page' : undefined}>Handoff review</a>
+			<a href={resolve('/inbox')} aria-current={page.url.pathname === resolve('/inbox') ? 'page' : undefined}>Worker inbox</a>
 		</nav>
 		<span class="demo-flag"><i aria-hidden="true"></i>Synthetic data</span>
 	</div>
@@ -26,3 +26,11 @@
 <main id="content" class="shell main" tabindex="-1">
 	{@render children()}
 </main>
+
+<footer class="shell app-footer">
+	<nav aria-label="Registration workflow">
+		<span>Registration workflow</span>
+		<a href={resolve('/?sample=corrected')} aria-current={page.url.pathname === resolve('/') ? 'page' : undefined}>Transfer packets</a>
+		<a href={resolve('/desk')} aria-current={page.url.pathname === resolve('/desk') ? 'page' : undefined}>Registration desk</a>
+	</nav>
+</footer>

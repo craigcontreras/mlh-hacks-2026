@@ -6,6 +6,7 @@ import { packetStore, ReviewError } from '../lib/server/store';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ url }) => {
+	if (!url.search) redirect(307, '/handoffs');
 	const sample = url.searchParams.get('sample');
 	const sampleId = isFixtureId(sample) ? sample : 'corrected';
 	return {
