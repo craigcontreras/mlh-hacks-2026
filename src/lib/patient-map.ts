@@ -63,7 +63,7 @@ function handoffActions(id: string, documents: ChartDocument[], patient: Patient
 	}
 	if (event?.returned) {
 		return [{
-			...action, status: 'Awaiting reassignment', person: 'Administrative staff',
+			...action, status: 'Awaiting reassignment', person: 'Triage agent',
 			detail: event.returned.returnedBy + ' returned the assignment. ' + event.returned.reason,
 			workspace: active && record?.status === 'returned' ? workspace : null
 		}];

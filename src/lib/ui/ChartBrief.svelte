@@ -5,7 +5,10 @@
 	import ChartFindings from './ChartFindings.svelte';
 
 	type BriefResult = { patientId?: string; chartBrief?: ChartBrief; briefError?: string };
-	let { patientId, initial, result }: { patientId: string; initial: ChartBrief; result?: BriefResult | null } = $props();
+	let { patientId, initial, result, rankingProvider }: {
+		patientId: string; initial: ChartBrief; result?: BriefResult | null; rankingProvider: 'codex' | 'gemini'
+	} = $props();
+	const providerNames = { codex: 'Codex', gemini: 'Gemini' };
 	let pending = $state(false);
 	let networkError = $state('');
 	const response = $derived(result?.patientId === patientId ? result : null);
@@ -42,8 +45,8 @@
 	{#if brief.items.length > 1}
 		<details class="options"><summary>Summary options</summary>
 			<form method="POST" {action} use:enhance={submit}>
-				<p>{brief.mode === 'codex' ? 'Codex ordered these findings.' : 'The local parser summarized the chart.'}</p>
-				<button class="button secondary" type="submit" name="mode" value="codex" disabled={pending}>Order findings with Codex</button>
+				<p>{brief.mode === 'local' ? 'The local parser summarized the chart.' : providerNames[brief.mode] + ' ordered these findings.'}</p>
+				<button class="button secondary" type="submit" name="mode" value={rankingProvider} disabled={pending}>Order findings with {providerNames[rankingProvider]}</button>
 			</form>
 		</details>
 	{/if}

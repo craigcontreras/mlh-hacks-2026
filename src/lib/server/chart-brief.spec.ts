@@ -117,20 +117,21 @@ test('generic chart sections preserve personal, reported family, and documented 
 	expect(summarizeChartDocuments(patient, [{...familyOnly, text:familyOnly.text.replace('visit V-9', 'visit V-8')}]).items).toEqual([]);
 });
 
-test('Codex may reorder existing points without changing, duplicating, dropping, or adding conclusions', async () => {
+test.each(['codex', 'gemini'] as const)('%s may reorder existing points without changing, duplicating, dropping, or adding conclusions', async mode => {
 	const store = new PacketStore(':memory:');
 	try {
 		const chart = store.patients.view(demoAccounts[1], null, '', false, 'C-116');
 		const local = summarizePatientChart(chart);
 		const ids = local.items.map(point => point.id).reverse();
-		const approved = await prepareChartBrief(chart, 'codex', () => Promise.resolve({ ids }));
+		const approved = await prepareChartBrief(chart, mode, () => Promise.resolve({ ids }));
+		expect(approved.mode).toBe(mode);
 		expect(approved.items).toEqual([...local.items].reverse());
 		for (const raw of [{ ids: [...ids.slice(1), 'foreign'] }, { ids, opinion: 'A conclusion' }, { ids: ids.slice(1) }, { ids: [...ids.slice(1), ids[1]] }]) {
-			await expect(prepareChartBrief(chart, 'codex', () => Promise.resolve(raw))).rejects.toThrow(/unverified/);
+			await expect(prepareChartBrief(chart, mode, () => Promise.resolve(raw))).rejects.toThrow(/unverified/);
 		}
 		const wrong = { ...chart, documents: chart.documents.map(doc => ({ ...doc, text: doc.text.replace('Patient: Casey Rowan','Patient: Jordan Vale') })) };
 		const select = vi.fn();
-		await expect(prepareChartBrief(wrong, 'codex', select)).rejects.toThrow(/No verified/);
+		await expect(prepareChartBrief(wrong, mode, select)).rejects.toThrow(/No verified/);
 		expect(select).not.toHaveBeenCalled();
 	} finally { store.close(); }
 });

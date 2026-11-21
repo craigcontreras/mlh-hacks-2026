@@ -26,7 +26,7 @@ export function clinicalActivity(record: ClinicalState, currentVisit: string): P
 		}
 		if (item.returned) {
 			const { returnedBy, returnedAt, reason } = item.returned;
-			add(item.id + '-return', returnedAt, 'Assignment returned', returnedBy, returnedBy + ' returned to admin · ' + reason);
+			add(item.id + '-return', returnedAt, 'Assignment returned', returnedBy, returnedBy + ' returned the handoff to the triage agent · ' + reason);
 		}
 		if (item.reviewed) {
 			const { reviewedBy, reviewedAt } = item.reviewed;

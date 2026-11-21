@@ -18,7 +18,7 @@
 	<section class="empty paper-card">
 		<span class="tray-mark" aria-hidden="true"></span>
 		<h2>Waiting for the first handoff</h2>
-		<p>When an intake clerk approves a packet, its reviewed fields and signature appear here.</p>
+		<p>When the triage agent approves a packet, its reviewed fields and signature appear here.</p>
 		<a href={resolve('/?sample=corrected')} class="button secondary">Open intake workspace</a>
 	</section>
 {/if}

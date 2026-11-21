@@ -9,11 +9,11 @@ export interface DemoAccount {
 	id: AccountId;
 	name: string;
 	role: AccountRole;
-	label: 'Admin' | 'Doctor' | 'Nurse';
+	label: 'Triage agent' | 'Doctor' | 'Nurse';
 }
 
 export const demoAccounts: readonly DemoAccount[] = [
-	{ id: 'admin', name: 'Maya Chen', role: 'Administrative staff', label: 'Admin' },
+	{ id: 'admin', name: 'Maya Chen', role: 'Administrative staff', label: 'Triage agent' },
 	{ id: 'doctor', name: 'Dr. Avery Shah', role: 'Doctor', label: 'Doctor' },
 	{ id: 'nurse', name: 'Riley Ortiz', role: 'Nurse', label: 'Nurse' },
 	{ id: 'doctor-morgan', name: 'Dr. Morgan Lee', role: 'Doctor', label: 'Doctor' }

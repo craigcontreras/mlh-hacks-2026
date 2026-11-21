@@ -42,7 +42,7 @@ function action(command: Command) {
 				const { record, chart, version: currentVersion } = store.snapshot();
 				if (currentVersion !== version) throw new ReviewError('This document changed. Reload it before summarizing.');
 				if (record && record.status !== 'draft') throw new ReviewError('This handoff has already been sent.');
-				const mode = form.get('mode');
+				const mode = form.get('mode') ?? 'local';
 				if (mode !== 'codex' && mode !== 'local') throw new ReviewError('Choose an available summary method.', 400);
 				const start = performance.now();
 				const { summary, documents } = await prepareClinicalChart(mode, chart.documents);

@@ -4,7 +4,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals, url }) => {
 	if (locals.account) redirect(303, url.searchParams.get('guide') === 'jordan' ? '/patients?guide=jordan' : '/patients');
-	const stage = { Admin: 0, Nurse: 1, Doctor: 2 };
+	const stage = { 'Triage agent': 0, Nurse: 1, Doctor: 2 };
 	return { accounts: demoAccounts.toSorted((a, b) => stage[a.label] - stage[b.label]) };
 };
 

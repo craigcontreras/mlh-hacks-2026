@@ -58,10 +58,11 @@ try {
 	await step(3).click(); // Riley sends today’s report to Avery.
 	await step(4).click();
 	await step(5).click();
-	await step(6).click();
+	await page.locator('summary', { has: step(6), hasText: 'Return for reassignment' }).click();
 	await page.getByRole('textbox', { name: /Step 7\..*Reason for returning/ }).fill('Covering a higher-priority case.');
-	await step(8).click();
+	await page.getByRole('button', { name: 'Step 8. Return to triage agent' }).click();
 	await step(9).click(); // Maya opens the returned assignment.
+	await page.getByText('Triage agent · Demo', { exact: true }).waitFor();
 	await page.getByRole('combobox', { name: /Step 10\..*New receiving doctor/ }).selectOption('doctor-morgan');
 	await step(11).click();
 	await step(12).click(); // Morgan opens the signed source before signing the review.

@@ -95,7 +95,7 @@ describe('SQLite clinical handoffs', () => {
 		const docs = clinical.snapshot().chart.documents;
 		const unclear = verifyChartSummary(docs, 'local');
 		const draft = clinical.saveSummary(clinical.version(), unclear, 8, sourceText, docs);
-		expect(() => clinical.approve(draft.version, nurse, 'review-report')).toThrow(/administrator/);
+		expect(() => clinical.approve(draft.version, nurse, 'review-report')).toThrow(/triage agent/);
 		expect(() => clinical.approve(draft.version, admin, 'invented-task')).toThrow(/documented image-status task/);
 		expect(() => clinical.approve(draft.version, admin, 'review-report')).toThrow(/Nurse first/);
 		expect(() => clinical.acknowledge(draft.version, doctor)).toThrow(/active handoff/);
@@ -141,7 +141,7 @@ describe('SQLite clinical handoffs', () => {
 	it('preserves audited plans, notes and chart evidence while returning and reassigning a doctor', () => {
 		const clinical = store.clinical;
 		const draft = clinical.get()!;
-		expect(() => clinical.saveNote(draft.version, doctor, 'ED-104', 'Coordination note')).toThrow(/administrator/);
+		expect(() => clinical.saveNote(draft.version, doctor, 'ED-104', 'Coordination note')).toThrow(/triage agent/);
 		expect(() => clinical.saveCarePlan(draft.version, admin, 'ED-999', 'doctor', 'External facility')).toThrow(/documented visit/);
 		expect(() => clinical.saveCarePlan(draft.version, admin, 'ED-104', 'nurse', 'External facility')).toThrow(/doctor account/);
 		const noted = clinical.saveNote(draft.version, admin, 'ED-104', 'Verify the contact channel.');
@@ -237,7 +237,7 @@ describe('SQLite clinical handoffs', () => {
 		const docs = clinical.snapshot().chart.documents;
 		const extracted = verifyChartSummary(docs, 'local');
 		const draft = clinical.saveSummary(clinical.version(), extracted, 4, sourceText, docs);
-		expect(() => clinical.requestPriorStudy(draft.version, doctor)).toThrow(/administrator/);
+		expect(() => clinical.requestPriorStudy(draft.version, doctor)).toThrow(/triage agent/);
 		const queued = clinical.requestPriorStudy(draft.version, admin);
 		expect(queued.status).toBe('draft');
 		expect(queued.history).toEqual([]);
@@ -290,7 +290,7 @@ describe('SQLite clinical handoffs', () => {
 
 	it('persists each new practice outcome, rejects stale writes and cites the same study throughout the workflow', async () => {
 		const initial = store.clinical.version();
-		expect(() => store.clinical.randomize(initial, nurse)).toThrow(/administrator/);
+		expect(() => store.clinical.randomize(initial, nurse)).toThrow(/triage agent/);
 		store.clinical.randomize(initial, admin);
 		const first = store.clinical.snapshot();
 		expect(Boolean(first.record)).toBe(first.practice!.status === 'still-pending');

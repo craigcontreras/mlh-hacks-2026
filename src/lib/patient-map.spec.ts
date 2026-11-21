@@ -32,7 +32,7 @@ test('the same report keeps its original instruction as nursing, reassignment, s
 		expect(review).toMatchObject({person: avery.name, workspace: '/inbox/J-104', citation: {documentId: 'ED-104', line: 15}});
 		const returned = flow.returnToAdmin(sent.version, avery, 'Covering another emergency.');
 		expect(finding('radiology', avery).actions[0].workspace).toBeFalsy();
-		expect(finding('radiology', admin).actions[0]).toMatchObject({status: 'Awaiting reassignment', workspace: '/handoffs'});
+		expect(finding('radiology', admin).actions[0]).toMatchObject({status: 'Awaiting reassignment', person: admin.label, workspace: '/handoffs'});
 		const reassigned = flow.reassign(returned.version, admin, morgan.id);
 		expect(finding('radiology', avery).actions[0].workspace).toBeFalsy();
 		expect(finding('radiology', morgan).actions[0]).toMatchObject({person: morgan.name, workspace: '/inbox/J-104', citation: review.citation});

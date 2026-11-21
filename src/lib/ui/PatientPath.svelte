@@ -11,11 +11,11 @@
 		const history = data.record?.history ?? [];
 		const nodes: {role:string; name:string; state:string}[] = [];
 		if (history[0]?.assignmentOrigin === 'automatic') nodes.push({role:'Intake Desk', name:'Automatic routing', state:''});
-		else nodes.push({role:'Admin', name:history[0]?.signedBy ?? '', state:history.length ? '' : 'Current'});
+		else nodes.push({role:'Triage agent', name:history[0]?.signedBy ?? '', state:history.length ? '' : 'Current'});
 		for (const [i,event] of history.entries()) {
 			const last = i === history.length - 1;
 			nodes.push({role:event.recipient, name:event.recipientName ?? '', state:last && !event.returned ? (event.reviewed ? 'Signed' : 'Current') : ''});
-			if (event.returned) nodes.push({role:'Admin',name:history[i + 1]?.signedBy ?? '',state:last ? 'Current' : ''});
+			if (event.returned) nodes.push({role:'Triage agent',name:history[i + 1]?.signedBy ?? '',state:last ? 'Current' : ''});
 		}
 		const followup = data.record?.imageFollowup;
 		if (followup) nodes.push({role:'Nurse',name:followup.recipientName,state:followup.resolvedAt ? 'Completed' : 'Current'});

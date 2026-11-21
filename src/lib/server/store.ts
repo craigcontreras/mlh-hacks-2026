@@ -77,7 +77,7 @@ export class PacketStore {
 	}
 
 	change(id: FixtureId, version: string, action: 'hold' | 'resume' | 'approve' | 'reset', account: DemoAccount, selectedRef: string | null = null) {
-		if (account.role !== 'Administrative staff') throw new ReviewError('Registration requires an administrator.', 400);
+		if (account.role !== 'Administrative staff') throw new ReviewError('Registration requires the triage agent.', 400);
 		const record = this.get(id);
 		if (!record) throw stale();
 		// Retries of a completed sign-off read the existing receipt without changing its time.

@@ -10,7 +10,7 @@ Casey’s chart follows a nursing reassessment, a physician discussion, and deli
 
 ## Medical document handoff
 
-During Jordan’s ER transfer, staff need to distinguish a current signed report from comparison images held under an earlier encounter. A clerk, doctor or nurse can find the original evidence in the chart. Each worker signs only those actions assigned to their account. [Synthetic transfer note](samples/records/ED-104-transfer-note.pdf) · [Demo walkthrough](README.md#three-minute-walkthrough)
+During Jordan’s ER transfer, staff need to distinguish a current signed report from comparison images held under an earlier encounter. The triage agent, nurse and doctors share the same source records. Each worker signs only those actions assigned to their account. [Synthetic transfer note](samples/records/ED-104-transfer-note.pdf) · [Demo walkthrough](README.md#three-minute-walkthrough)
 
 | Acceptance example | Observable result |
 | --- | --- |
@@ -18,7 +18,7 @@ During Jordan’s ER transfer, staff need to distinguish a current signed report
 | Open Jordan or Casey. | The chart opens with three to five findings when supported by the records. Selecting a finding opens its evidence map. Each cited passage opens in the original document. History remains available without creating an assignment. |
 | Read the glossary. | A visual dictionary illustrates source, finding, action and responsibility using an example from the chart. |
 | Prepare Jordan’s transfer packet. | Four facts and the documented assignments link to the original text. Cross-checks cite evidence across five documents from two visits. The document list opens to a short summary. The source viewer highlights the specific cited passage. |
-| Inspect the current study and prior visit. | Codex reads the visit ID, side marker and training watermark on the current synthetic image. The earlier intake and archive identify the prior study. The current checklist says those images are outstanding. The offline parser labels the image data as coming from the manifest. |
+| Inspect the current study and prior visit. | The bundled manifest identifies the current synthetic image and printed markers. The earlier intake and archive identify the prior study. The current checklist says those images are outstanding. The signed radiology report supplies the clinical finding. |
 | Maya edits the planned path and saves a note. | A plan records the next doctor, destination, department, staff-entered priority and coordination impact. The graph distinguishes internal routing from a planned hospital transfer. Notes and plans carry author and time. |
 | Sign in as Riley first, then open My inbox and Jordan. | Intake Desk recorded a pending check for Riley and queued one request to the local Imaging Records inbox without staff confirmation. Its message identifies MB-082-LA from the archive and transfer checklist. A refresh preserves the receipt. Conflicting identifiers need review. |
 | Simulate a matched file delivery. | The earlier X-ray becomes available to every signed-in demo care-team account. The receipt keeps its original request time, and the doctor’s review remains independent. |
@@ -37,7 +37,7 @@ A clerk opens a synthetic ER transfer packet. The transfer form lists callback e
 
 ## User and problem
 
-**Primary users** — In Jordan’s case, the receiving nurse gets a pending image check automatically, the doctor signs the report review, and administrative staff handle unclear paperwork and returned assignments. The separate registration example focuses on the clerk preparing a callback for the registration desk.
+**Primary users** — In Jordan’s case, the receiving nurse gets a pending image check automatically, the doctor signs the report review, and Maya, the triage agent, coordinates unclear paperwork and returned assignments. The separate registration example focuses on the clerk preparing a callback for the registration desk.
 
 **Team goal** — Help doctors and nurses find information that already exists in a patient's paperwork sooner. Drawing on document-parsing experience at GUILD, the team proposed extracting facts from synthetic intake and discharge documents, showing the source to a clerk, and forwarding the reviewed information after sign-off. The meeting’s estimated wait times are brainstorming figures. Time spent finding paperwork and any effect on admission time remain unmeasured. [Team meeting questions](docs/meeting-questions.md)
 
@@ -51,7 +51,7 @@ A clerk opens a synthetic ER transfer packet. The transfer form lists callback e
 
 | Moment | What the clerk sees | What the system does |
 | --- | --- | --- |
-| Open sample | One transfer packet marked synthetic. The patient display name and sending facility are already filled in. A text label identifies the callback conflict. | Read the two bundled text documents and attach the source document and line to each extracted value. |
+| Open sample and click **Parse** | One transfer packet marked synthetic. The patient display name and sending facility are already filled in. A text label identifies the callback conflict. | Read the two bundled text documents and attach the source document and line to each extracted value. |
 | Review evidence | The earlier form and the signed correction appear together, each with its document label and source wording. Both values are legible without relying on color. | Leave the callback unresolved until the clerk acts. Agreed fields require no individual confirmation. |
 | Resolve or hold | Selecting the documented correction makes the draft ready for sign-off. The clerk can change the choice or use **Hold for clarification**. For an entirely consistent packet, sign-off is the only required action. | A hold keeps the packet in the clerk's workspace. Reopening it returns the clerk to review. The receiving desk sees only approved handoffs. |
 | Sign off | One action names both the approval and the destination. The named demo clerk reviews the final three values before committing. | Validate the decision on the server and record the reviewed values, evidence, clerk, destination and server time together. |
@@ -76,9 +76,9 @@ The build starts from bundled synthetic plain text. Two documents belonging to t
 
 ## Implementation contract
 
-Use the repo’s SvelteKit and TypeScript starter, npm, and one local SQLite database. The clinical workspace and staff inbox support transfers. Registration has its own review and receiving-desk views. The team subsequently selected Codex for extraction. The server supplies the bundled synthetic documents to the signed-in Codex CLI and verifies its structured response. The standalone clickable design uses prefilled fields. For an offline demo, use the local labeled-text parser and show which method produced the draft.
+Use the repo’s SvelteKit and TypeScript starter, npm, and one local SQLite database. The clinical workspace and staff inbox support transfers. Registration has its own review and receiving-desk views. On the app’s **Parse** action, a local parser extracts the supported synthetic fields and citations. Jordan’s verified case routes on intake. A separate, optional chart summary action lets Gemini or Codex rank verified findings. Reassignment and physician sign-off belong to the staff accounts. The standalone clickable design uses prefilled fields.
 
-1. **Extract and verify.** Ask Codex for candidate values for the three administrative fields, each with a document and line reference. Check each value against the cited field and line. For the bounded demo template, also scan the labeled source lines so a missing candidate cannot silently erase a conflict. Flag a mismatch or omission for review. If Codex is unavailable, the clerk can use the local parser for the same fixture. Both paths apply the same correction and approval rules.
+1. **Extract and verify.** Scan all labeled lines for the three administrative fields and attach the source document and line to each candidate. Keep conflicting values visible until the clerk resolves the correction. An incomplete packet goes to review.
 2. **Review.** Store the clerk's draft or hold against the packet identifier. The browser sends the selected source reference to the server. The server derives the final values from the source and checks the allowed transition. A held packet must return to review before approval.
 3. **Approve.** Store one approved snapshot per packet in SQLite. Commit the values, source references, demo reviewer, destination and approval time atomically. A repeated approval returns the existing receipt. A failed write leaves the draft available, shows a retry message and creates no receiving-desk entry.
 4. **Receive.** Query approved records for the receiving view. Keep the snapshot immutable. Show its original time after refresh. Use a separate demo reset outside the sign-off flow for rehearsal.
@@ -100,7 +100,7 @@ Use the repo’s SvelteKit and TypeScript starter, npm, and one local SQLite dat
 | A7 | Make a local write fail, then restore storage and retry. | The clerk sees the failure and keeps the draft. The successful retry creates exactly one receipt. |
 | A8 | Complete the corrected case by keyboard and inspect it at a 375 px viewport. | Every action is reachable, focus is visible, status uses words, and both source values and the destination are readable without horizontal scrolling. |
 | A9 | Open a complete packet with matching values and no correction. | All three fields show their sources. One explicit sign-off creates the handoff without per-field confirmation. |
-| A10 | Supply a model result with an unsupported value or with the amendment omitted, then simulate a provider outage. | The unsupported draft cannot be approved. An offline retry visibly identifies the local parser, recovers both source values, and still requires human review and sign-off. |
+| A10 | Supply a model ordering with unknown or duplicated finding IDs or simulate a provider outage. | The original source-linked summary is available. Routing and sign-off remain available under their existing rules. |
 
 ## Five-minute Design test
 

@@ -2,13 +2,15 @@ import { fail, type Action } from '@sveltejs/kit';
 import { requireAccount } from '../../lib/server/accounts';
 import { prepareChartBrief } from '../../lib/server/chart-brief';
 import { ProviderError } from '../../lib/server/codex';
+import { chartRankingProvider } from '../../lib/server/gemini';
 import { packetStore } from '../../lib/server/store';
 
 export const prepareBrief = (async ({ locals, request, url }) => {
 	const account = requireAccount(locals);
 	const patientId = url.searchParams.get('patient') ?? '';
-	const mode = (await request.formData()).get('mode');
-	if (!patientId || (mode !== 'local' && mode !== 'codex')) {
+	const requested = (await request.formData()).get('mode');
+	const mode = requested === 'local' ? 'local' : chartRankingProvider();
+	if (!patientId || requested !== mode) {
 		return fail(400, { patientId, briefError: 'Open a patient chart and select an available brief method.' });
 	}
 	try {

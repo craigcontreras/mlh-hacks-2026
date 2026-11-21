@@ -138,7 +138,7 @@
 				{/if}
 			</section>
 		{:else if data.chartBrief}
-			<ChartBrief patientId={data.patient.id} initial={data.chartBrief} result={form} />
+			<ChartBrief patientId={data.patient.id} initial={data.chartBrief} rankingProvider={data.rankingProvider} result={form} />
 			<section class="paper-card current" id="current-work" aria-label="Current work">
 				<div><p class="kicker">Current work</p><h2>{data.patient.status}</h2>
 					{#if data.patient.owner}<p class="muted">Owner · {data.patient.owner}</p>{/if}

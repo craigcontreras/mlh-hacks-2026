@@ -26,7 +26,7 @@ describe('SQLite clerk handoffs', () => {
 		store.saveDraft('corrected', '', draft);
 		const version = store.get('corrected')!.version;
 		expect(() => store.change('corrected', version, 'approve', admin, 'transfer:4')).toThrow();
-		expect(() => store.change('corrected', version, 'approve', doctor, draft.correctionRef)).toThrow(/administrator/);
+		expect(() => store.change('corrected', version, 'approve', doctor, draft.correctionRef)).toThrow(/triage agent/);
 		expect(store.receipts()).toEqual([]);
 		store.change('corrected', version, 'approve', admin, draft.correctionRef);
 		const [receipt] = store.receipts();

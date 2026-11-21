@@ -110,10 +110,10 @@
 					{#if !imageReceived && data.record.imageStatus && data.record.imageStatus.status !== 'arrived'}<p class="small">Signing sends the outstanding image check back to {data.record.imageStatus.recordedBy}.</p>{/if}
 					<button class="button" type="submit" formaction="?/signReview" disabled={busy}><DemoStep n={16} owner="doctor-morgan"/>Sign report review</button>
 					<details class="return-menu">
-						<summary><DemoStep n={6} owner="doctor"/>Return to administrative staff</summary>
+						<summary><DemoStep n={6} owner="doctor"/>Return for reassignment</summary>
 						<label for="return-reason"><DemoStep n={7} owner="doctor"/>Reason for returning</label>
 						<textarea id="return-reason" name="reason" rows="2" maxlength="500"></textarea>
-						<button class="button secondary" type="submit" formaction="?/returnToAdmin" disabled={busy}><DemoStep n={8} owner="doctor"/>Return handoff to admin</button>
+						<button class="button secondary" type="submit" formaction="?/returnToAdmin" disabled={busy}><DemoStep n={8} owner="doctor"/>Return to triage agent</button>
 					</details>
 				{:else}
 					{#if !current.acknowledgedAt}<button class="button" type="submit" formaction="?/acknowledge" disabled={busy}>Acknowledge receipt</button>{:else}<p class="request-receipt">Receipt acknowledged</p>{/if}
@@ -136,6 +136,6 @@
 	{:else if data.deliveries.length}
 		<section class="paper-card empty"><h2>Past handoffs</h2>
 			{#if data.closedFollowup}<p class="request-receipt">Comparison images arrived · Follow-up closed by {data.closedFollowup.by}.</p>{/if}
-			{#each data.deliveries as item (item.id)}<div class="archived-delivery"><strong>{item.assignmentOrigin === 'automatic' ? 'Assigned automatically by Intake Desk' : 'Signed by ' + item.signedBy}</strong><p>{item.returned ? 'Returned to administrative staff · ' + item.returned.reason : 'Previously assigned to you.'}</p></div>{/each}
+			{#each data.deliveries as item (item.id)}<div class="archived-delivery"><strong>{item.assignmentOrigin === 'automatic' ? 'Assigned automatically by Intake Desk' : 'Signed by ' + item.signedBy}</strong><p>{item.returned ? 'Returned to the triage agent · ' + item.returned.reason : 'Previously assigned to you.'}</p></div>{/each}
 			<a class="button secondary" href={resolve('/handoffs')}>Open patient chart</a></section>
 	{:else}<section class="paper-card empty"><h2>No assignment for this case</h2><a class="button secondary" href={resolve('/inbox')}>Return to my inbox</a></section>{/if}

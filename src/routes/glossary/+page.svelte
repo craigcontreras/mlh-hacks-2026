@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import tutorialUrl from '../../../docs/Intake-Desk-walkthrough.mp4?url';
 	import captionsUrl from '../../../docs/Intake-Desk-walkthrough.vtt?url&no-inline';
 	import dictionaryUrl from '../../../docs/Intake-Desk-visual-dictionary.pdf?url';
@@ -21,6 +22,7 @@
 			['Summary', 'A short account of the important findings across the chart.'],
 			['Citation', 'A link to the passage that supports a finding. “Line 16” (L16) locates the text in the source document.'],
 			['Owner', 'The person or team responsible for the named action.'],
+			['Triage agent', 'In this demo, Maya is the staff member who coordinates returned handoffs and assigns a covering doctor. The treating team assesses clinical urgency.'],
 			['Handoff', 'Passing a task and its supporting information to the next person.'],
 			['Sign-off', 'A person records that they completed a specific review or approved a handoff.']
 		] }
@@ -35,7 +37,7 @@
 		<a class="button secondary download" href={dictionaryUrl} rel="external" download="Intake-Desk-visual-dictionary.pdf">Download visual dictionary (PDF)</a>
 	</header>
 
-	<details class="tutorial">
+	<details class="tutorial" id="walkthrough" open={page.url.searchParams.get('watch') === '1'}>
 		<summary>Watch the walkthrough</summary>
 		<video controls preload="none" playsinline aria-label="Jordan’s chart and handoff walkthrough" src={tutorialUrl}>
 			<track kind="captions" srclang="en" label="English" src={captionsUrl} />
@@ -114,7 +116,7 @@
 	@media print {
 		@page { size: letter portrait; margin: 0.55in; }
 		:global(html), :global(body) { background: white; }
-		:global(.mast), :global(.app-footer), :global(.skip-link), .download, .open-map, .tutorial { display: none !important; }
+		:global(.mast), :global(.app-footer), :global(.skip-link), :global(.demo-guide), :global(.guide-entry), .download, .open-map, .tutorial { display: none !important; }
 		:global(main.shell) { width: auto; max-width: none; margin: 0; padding: 0; }
 		.dictionary { font-size: 11pt; }
 		.dictionary .pagehead { margin: 0 0 14pt; }
@@ -129,6 +131,6 @@
 		.chain li p, .terms dd { font-size: 9.5pt; }
 		.terms { gap: 25pt; margin: 15pt 0 0; }
 		.terms h2 { padding-bottom: 6pt; }
-		.terms dl > div { padding: 5.5pt 0; break-inside: avoid; }
+		.terms dl > div { padding: 4pt 0; break-inside: avoid; }
 	}
 </style>

@@ -2,13 +2,14 @@ import { expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import PacketWorkspace from './PacketWorkspace.svelte';
 
-it('keeps the selected packet in both extraction form targets when a server action fails', async () => {
+it('offers one local Parse action for the selected packet', async () => {
 	const model = await render(PacketWorkspace, { data: {
-		account: { id: 'admin', name: 'Maya Chen', label: 'Admin', role: 'Administrative staff' },
+		account: { id: 'admin', name: 'Maya Chen', label: 'Triage agent', role: 'Administrative staff' },
 		sampleId: 'consistent', samples: [], record: null, guide: null,
 		packet: { id: 'ER-020', title: 'Consistent transfer', documents: [] }
 	} });
-	for (const name of ['Parse with Codex', 'Use local parser']) {
-		await expect.element(model.getByRole('button', { name })).toHaveAttribute('formaction', '?/extract&sample=consistent');
-	}
+	const parse = model.getByRole('button', { name: 'Parse', exact: true });
+	await expect.element(parse).toHaveAttribute('formaction', '?/extract&sample=consistent');
+	await expect.element(parse).toHaveAttribute('value', 'local');
+	expect(model.getByRole('button').all()).toHaveLength(1);
 });

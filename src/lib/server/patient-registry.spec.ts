@@ -35,7 +35,7 @@ test('administrative updates persist across startup with role, visit and retry b
 	const id = randomUUID();
 	let store = new PacketStore(filename);
 	try {
-		expect(() => store.patients.addCoordinationUpdate('C-116', 'ED-116', 'Called.', riley, id)).toThrow(/administrative/);
+		expect(() => store.patients.addCoordinationUpdate('C-116', 'ED-116', 'Called.', riley, id)).toThrow(/triage agent/);
 		expect(() => store.patients.addCoordinationUpdate('C-116', 'ED-104', 'Called.', admin, id)).toThrow(/visit/);
 		expect(() => store.patients.addCoordinationUpdate('C-116', 'ED-116', '  ', admin, id)).toThrow(/1 to 1,000/);
 		expect(() => store.patients.addCoordinationUpdate('C-116', 'ED-116', 'Called.', admin, 'broken')).toThrow(/Reopen/);
@@ -70,7 +70,7 @@ test('my assignments follow the actual handoff owner and completed review keeps 
 		expect(current(avery)[0].owner).toBe(avery.name);
 		expect(current(morgan)).toEqual([]);
 		const returned = workflow.returnToAdmin(sent.version, avery, 'Unavailable.');
-		expect(current(admin)[0].status).toBe('Review needs reassignment');
+		expect(current(admin)[0]).toMatchObject({ status: 'Review needs reassignment', owner: admin.label });
 		const reassigned = workflow.reassign(returned.version, admin, 'doctor-morgan');
 		expect(current(morgan)[0].owner).toBe(morgan.name);
 		expect(current(avery)).toEqual([]);

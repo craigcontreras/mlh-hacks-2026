@@ -60,7 +60,7 @@ interface PatientRow {
 function workFor(state: ClinicalState | null, account: DemoAccount) {
 	const active = state?.history.at(-1);
 	const admin = account.role === 'Administrative staff';
-	let owner: string | null = 'Administrative staff';
+	let owner: string | null = 'Triage agent';
 	let assignedToMe = admin;
 	let status = state ? 'Transfer brief prepared' : 'Transfer packet filed';
 	if (state?.imageFollowup && !state.imageFollowup.resolvedAt) {
@@ -166,7 +166,7 @@ export class PatientRegistry {
 	}
 
 	addCoordinationUpdate(patientId: string, visitId: string, text: string, account: DemoAccount, requestId: string) {
-		if (account.role !== 'Administrative staff') throw new ReviewError('Only administrative staff can add coordination updates.', 400);
+		if (account.role !== 'Administrative staff') throw new ReviewError('Only the triage agent can add coordination updates.', 400);
 		const note = text.trim();
 		if (!note || note.length > 1000) throw new ReviewError('Enter a coordination update of 1 to 1,000 characters.', 400);
 		if (!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(requestId)) {

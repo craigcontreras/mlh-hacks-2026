@@ -151,7 +151,7 @@ function visitEntry(state: StoredState, visitId: string, account: DemoAccount): 
 }
 
 function requireAdministrator(account: DemoAccount) {
-	if (account.role !== 'Administrative staff') throw new ReviewError('This action requires an administrator.', 400);
+	if (account.role !== 'Administrative staff') throw new ReviewError('This action requires the triage agent.', 400);
 }
 
 function requireBrief(state: StoredState | null) {
@@ -431,7 +431,7 @@ export class ClinicalStore {
 	}
 
 	requestPriorStudy(version: string, account: DemoAccount): ClinicalState {
-		if (account.role !== 'Administrative staff') throw new ReviewError('A prior-study request requires an administrator.', 400);
+		if (account.role !== 'Administrative staff') throw new ReviewError('A prior-study request requires the triage agent.', 400);
 		return this.change(version, ['request-prior-study', account.id], (state) => {
 			if (state?.priorStudyRequest) return state;
 			if (!state || state.summary.issues.length || !state.summary.adminAction) {

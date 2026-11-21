@@ -38,7 +38,7 @@ function action(command: Command) {
 				if ((current?.version ?? '') !== version || (current && current.status !== 'review')) {
 					throw new ReviewError('This packet changed. Review its current status before parsing again.');
 				}
-				const mode = form.get('mode');
+				const mode = form.get('mode') ?? 'local';
 				if (mode !== 'codex' && mode !== 'local') return fail(400, { message: 'Choose an extraction method.' });
 				const draft = mode === 'codex' ? await parseWithCodex(id) : parsePacket(fixtures[id]);
 				store.saveDraft(id, version, draft);
